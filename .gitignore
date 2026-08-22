@@ -1,0 +1,25 @@
+.env
+.env.*
+!.env.example
+
+node_modules
+dist
+coverage
+*.log
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json
+
+# local infra volumes
+.docker-data/
+serviceAccountKey.json
+
+
+
+# Cloud service-account credentials — never commit
+*-serviceAccountKey.json
+*.serviceaccount.json
+gcp-*.json
+firebase-adminsdk-*.json
+
