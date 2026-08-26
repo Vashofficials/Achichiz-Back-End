@@ -119,6 +119,18 @@ export function mountSwagger(app: Express): void {
       ],
     },
     customSiteTitle: 'Achichiz API',
+    customCss: `
+      /* Fix typography and overlapping code blocks in the authorization modal and descriptions */
+      .swagger-ui .auth-container p { line-height: 2.2 !important; margin-bottom: 12px !important; font-size: 14px; }
+      .swagger-ui .auth-container code { padding: 4px 8px !important; border-radius: 4px !important; margin: 4px 2px !important; display: inline-block; font-size: 13px; }
+      .swagger-ui .markdown p { line-height: 1.8 !important; }
+      .swagger-ui .markdown code { padding: 2px 6px !important; border-radius: 4px !important; font-size: 13px; }
+      .swagger-ui .opblock-description-wrapper p { line-height: 1.8 !important; }
+      
+      /* Polish overall appearance */
+      .swagger-ui .wrapper { max-width: 1200px !important; }
+      .swagger-ui .dialog-ux .modal-ux { max-width: 700px !important; }
+    `,
   };
 
   app.use(
