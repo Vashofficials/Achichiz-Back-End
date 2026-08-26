@@ -1,0 +1,46 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: achichiz-redis-prod
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: achichiz-api:latest
+    container_name: achichiz-api-prod
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # Use local dockerized Redis. DATABASE_URL is loaded from .env for AWS RDS
+      REDIS_URL: redis://redis:6379
+    ports:
+      - '${PORT:-4000}:4000'
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    image: achichiz-api:latest
+    container_name: achichiz-worker-prod
+    restart: unless-stopped
+    command: ["dist/worker.js"]
+    env_file: .env
+    environment:
+      # Use local dockerized Redis. DATABASE_URL is loaded from .env for AWS RDS
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  redis-data:

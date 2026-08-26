@@ -1,4 +1,4 @@
-import { rateLimit, type RateLimitRequestHandler } from 'express-rate-limit';
+import rateLimit, { type RateLimitRequestHandler } from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import type { Request, RequestHandler } from 'express';
 import { cache } from '../config/redis.js';

@@ -49,7 +49,7 @@ export function createApp(): Express {
   );
 
   app.use(
-    (helmet as any)({
+    helmet({
       // Swagger UI needs inline styles/scripts; it is the only HTML this API serves.
       contentSecurityPolicy: env.isProduction
         ? {

@@ -105,9 +105,11 @@ const schema = z.object({
  *
  * An explicit `sslmode=` in the URL still wins — node-postgres applies it first.
  */
-export type DbSslConfig = { ca: string; rejectUnauthorized: true } | { rejectUnauthorized: false } | undefined;
+export type DbSslConfig = { ca: string; rejectUnauthorized: true } | { rejectUnauthorized: false } | false | undefined;
 
 export function resolveDbSsl(url: string, caCertPath: string | undefined, isProduction: boolean): DbSslConfig {
+  if (url.includes('sslmode=disable')) return false;
+
   const isLocal = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url);
 
   if (caCertPath) {

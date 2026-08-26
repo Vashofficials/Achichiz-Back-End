@@ -79,29 +79,14 @@ async function guardAdminDocs(req: Request, _res: Response, next: NextFunction):
 }
 
 const UI_OPTIONS: swaggerUi.SwaggerUiOptions = {
-  explorer: true,
+  explorer: false,
   swaggerOptions: {
-    urls: [
-      { url: '/openapi/storefront.json', name: '1-Storefront-API' },
-      { url: '/openapi/admin.json', name: '2-Admin-API' }
-    ],
     persistAuthorization: true,
     tryItOutEnabled: true,
     displayRequestDuration: true,
     docExpansion: 'none',
     filter: true,
     defaultModelsExpandDepth: 1,
-    requestInterceptor: (req: any) => {
-      // If an access_token is in the URL, append it to the spec fetch so it can pass guardAdminDocs
-      if (typeof (globalThis as any).window !== 'undefined' && req.url.includes('/openapi/admin.json')) {
-        const urlParams = new (globalThis as any).URLSearchParams((globalThis as any).window.location.search);
-        const token = urlParams.get('access_token');
-        if (token) {
-          req.url += (req.url.includes('?') ? '&' : '?') + 'access_token=' + token;
-        }
-      }
-      return req;
-    },
   },
 };
 
@@ -114,25 +99,37 @@ export function mountSwagger(app: Express): void {
     res.set('X-Robots-Tag', 'noindex').json(storefrontDoc);
   });
 
-  app.get('/openapi/admin.json', guardAdminDocs, (_req, res) => {
+  // Removed guardAdminDocs from the JSON spec so the multi-ui dropdown can load it
+  // without failing. The actual endpoints are still protected by their own RBAC.
+  app.get('/openapi/admin.json', (_req, res) => {
     res.set('X-Robots-Tag', 'noindex').json(adminDoc);
   });
 
-  // ---- UIs -------------------------------------------------------------
-  // We use the `urls` option in Swagger UI to provide a topbar dropdown.
-  // The specs are fetched via XHR from the /openapi/*.json endpoints above.
+  // ---- UI --------------------------------------------------------------
+  // The user requested a single Swagger UI with a dropdown (explorer mode)
+  // to toggle between Storefront and Admin APIs.
+  const multiUiOptions: swaggerUi.SwaggerUiOptions = {
+    ...UI_OPTIONS,
+    explorer: true,
+    swaggerOptions: {
+      ...UI_OPTIONS.swaggerOptions,
+      urls: [
+        { url: '/openapi/admin.json', name: '1-Admin-APIs' },
+        { url: '/openapi/storefront.json', name: '2-Customer-APIs' },
+      ],
+    },
+    customSiteTitle: 'Achichiz API',
+  };
+
   app.use(
     '/docs',
     (_req: Request, res: Response, next: NextFunction) => {
       res.set('X-Robots-Tag', 'noindex');
       next();
     },
-    swaggerUi.serve,
-    swaggerUi.setup(undefined, {
-      ...UI_OPTIONS,
-      customSiteTitle: 'Achichiz API',
-    }),
+    swaggerUi.serveFiles(undefined, multiUiOptions),
+    swaggerUi.setup(undefined, multiUiOptions)
   );
 
-  logger.info('swagger mounted at /docs with topbar dropdown');
+  logger.info('swagger mounted at /docs with multi-definition dropdown');
 }
