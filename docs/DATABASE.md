@@ -534,7 +534,7 @@ The TypeScript schema is not the whole picture. These live only in the SQL migra
 - `idx_products_search_trgm`USING gin ( (title || ' ' || coalesce(subtitle,'')) gin_trgm_ops)
 - `idx_products_fts`USING gin ( to_tsvector('english', title || ' ' || coalesce(description,'')))
 - `idx_products_legacy_ref`(legacy_ref) WHERE legacy_ref IS NOT NULL
-- `idx_products_fts_wide`USING gin ( to_tsvector('english', coalesce(title, '') || ' ' || coalesce(subtitle, '') || ' ' || coalesce(description, '') || ' ' || array_to_string(tags, ' ')) )
+- `idx_products_fts_wide`USING gin ( to_tsvector('english', product_search_document(title, subtitle, description, tags)) )
 - `idx_products_title_lower_pattern`(lower(title) text_pattern_ops) WHERE status = 'active' AND deleted_at IS NULL
 
 </details>

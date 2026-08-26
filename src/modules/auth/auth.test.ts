@@ -54,6 +54,7 @@ const customerRow = (overrides: Partial<CustomerRow> = {}): CustomerRow => ({
   gender: null,
   passwordHash: '$argon2id$v=19$m=19456,t=2,p=1$abc$def',
   authProviderUid: null,
+  firebaseUid: null,
   emailVerifiedAt: null,
   mobileVerifiedAt: null,
   marketingOptIn: false,

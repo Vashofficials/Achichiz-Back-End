@@ -69,6 +69,14 @@ export const customers = pgTable(
     passwordHash: text('password_hash'),
     /** Supabase auth.users.id, if that path is kept (§5.2). Partial-unique. */
     authProviderUid: uuid('auth_provider_uid'),
+    /**
+     * Firebase Auth UID — added by 0005. TEXT, not uuid: a Firebase UID is a
+     * ~28-character base62 string like `k2Jd8fLpQ4Xb9RtY7mNc3VwZ1aBs`, so it
+     * cannot share `auth_provider_uid` (UUID, sized for Supabase). An account
+     * migrated from Supabase and later linked to Firebase carries both.
+     * Partial-unique among live rows.
+     */
+    firebaseUid: text('firebase_uid'),
     /** §7 correction 3 — carries auth.users.email_confirmed_at. */
     emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
     /** §7 correction 3 — OTP login. */
@@ -100,6 +108,12 @@ export const customers = pgTable(
     uniqueIndex('uq_customers_auth_uid')
       .on(t.authProviderUid)
       .where(sql`auth_provider_uid IS NOT NULL AND deleted_at IS NULL`),
+    // 0005. Partial like its siblings: a soft-deleted customer must not burn a
+    // Firebase UID forever — the same person signing up again gets the same UID
+    // back from Google, and a full unique index would refuse them.
+    uniqueIndex('uq_customers_firebase_uid')
+      .on(t.firebaseUid)
+      .where(sql`firebase_uid IS NOT NULL AND deleted_at IS NULL`),
     index('idx_customers_segment').on(t.segment).where(sql`deleted_at IS NULL`),
     index('idx_customers_last_order').on(sql`last_order_at DESC NULLS LAST`),
     index('idx_customers_corporate')
@@ -117,8 +131,85 @@ export const customers = pgTable(
       sql`segment IN ('vip','loyal','new','at_risk','corporate_buyer')`,
     ),
     check('customer_needs_a_handle', sql`email IS NOT NULL OR mobile IS NOT NULL`),
+    // Google documents a UID only as "a string up to 128 characters"; 28 is
+    // merely what it emits today. The bound is the documented one, not the
+    // observed one.
+    check(
+      'customers_firebase_uid_check',
+      sql`firebase_uid IS NULL OR (length(firebase_uid) BETWEEN 8 AND 128)`,
+    ),
   ],
 );
+
+/* -------------------------------------------------- customer_auth_events */
+/**
+ * Append-only record of how each customer authenticated — added by 0005.
+ *
+ * `otp_challenges` cannot serve this. Its columns describe a challenge WE
+ * issued (`code_hash`, `attempts`, `expires_at`), and for a Firebase login
+ * every one of them would be NULL or a fabrication — Google holds the
+ * challenge and we never see the code. Writing a row claiming we hashed a code
+ * we never issued would corrupt the one table meant to be evidence.
+ *
+ * There is deliberately no update path and no `deleted_at`: an audit trail that
+ * can be edited is not one.
+ */
+export const AUTH_EVENT_PROVIDERS = [
+  'firebase_phone',
+  'firebase_google',
+  'password',
+  'otp_msg91',
+] as const;
+export type AuthEventProvider = (typeof AUTH_EVENT_PROVIDERS)[number];
+
+export const AUTH_EVENT_OUTCOMES = ['signed_in', 'linked', 'created', 'rejected'] as const;
+export type AuthEventOutcome = (typeof AUTH_EVENT_OUTCOMES)[number];
+
+export const customerAuthEvents = pgTable(
+  'customer_auth_events',
+  {
+    id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+    /** Null for a rejection that never resolved to an account. */
+    customerId: uuid('customer_id').references((): AnyPgColumn => customers.id, {
+      onDelete: 'set null',
+    }),
+    provider: text('provider').notNull().$type<AuthEventProvider>(),
+    /**
+     * `linked` is the row anyone actually reads this table for: an existing
+     * customer gained a new credential, which is where an account takeover
+     * would appear.
+     */
+    outcome: text('outcome').notNull().$type<AuthEventOutcome>(),
+    firebaseUid: text('firebase_uid'),
+    mobile: text('mobile'),
+    email: text('email'),
+    /** Non-null exactly when `outcome = 'rejected'` — a refusal always has a reason. */
+    reason: text('reason'),
+    ip: inet('ip'),
+    userAgent: text('user_agent'),
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('idx_auth_events_customer').on(t.customerId, t.occurredAt.desc()),
+    index('idx_auth_events_uid').on(t.firebaseUid).where(sql`firebase_uid IS NOT NULL`),
+    // Partial so it stays small beside the mass of ordinary sign-ins.
+    index('idx_auth_events_notable')
+      .on(t.occurredAt.desc())
+      .where(sql`outcome IN ('linked','rejected')`),
+    check(
+      'customer_auth_events_provider_check',
+      sql`provider IN ('firebase_phone','firebase_google','password','otp_msg91')`,
+    ),
+    check(
+      'customer_auth_events_outcome_check',
+      sql`outcome IN ('signed_in','linked','created','rejected')`,
+    ),
+    check('auth_event_reason_required', sql`(outcome = 'rejected') = (reason IS NOT NULL)`),
+  ],
+);
+
+export type CustomerAuthEvent = typeof customerAuthEvents.$inferSelect;
+export type NewCustomerAuthEvent = typeof customerAuthEvents.$inferInsert;
 
 /* --------------------------------------------------------- customer_stats */
 /** 1:1 satellite. Refreshed by job so order writes never touch `customers`. */

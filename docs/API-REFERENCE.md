@@ -109,19 +109,7 @@ The full account record, including the two fields the storefront currently keeps
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | `customers.id`. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `fullName` | string \| null | **yes** | Display name, or null if never supplied. |
-| `email` | string \| null | **yes** | Email address, or null on a mobile-only (OTP) account. |
-| `mobile` | string \| null | **yes** | Ten-digit Indian mobile, or null on an email-only account. |
-| `birthday` | string \| null | **yes** | `YYYY-MM-DD`, or null. Stored as a DATE — no timezone, because a birthday does not have one. |
-| `gender` | `female` \| `male` \| `other` \| `undisclosed` \| null | **yes** | Self-declared, and optional. `undisclosed` is a valid answer. |
-| `emailVerified` | boolean | **yes** | True once the address has been proven. |
-| `mobileVerified` | boolean | **yes** | True once an OTP for the number has been verified. |
-| `marketingOptIn` | boolean | **yes** | Marketing consent. Toggling it on writes a timestamped consent record. |
-| `whatsappOptIn` | boolean | **yes** | WhatsApp consent. Separate from email/SMS because the channel is separate. |
-| `hasPassword` | boolean | **yes** | False on an OTP-only account — offer “set a password” when false. |
-| `acceptsCod` | boolean | **yes** | Whether cash-on-delivery is offered to this customer. Set by ops, read-only here. |
-| `createdAt` | string | **yes** | ISO-8601 timestamp of account creation. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -169,19 +157,7 @@ Toggling `marketingOptIn` in either direction writes a timestamped, sourced reco
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | `customers.id`. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `fullName` | string \| null | **yes** | Display name, or null if never supplied. |
-| `email` | string \| null | **yes** | Email address, or null on a mobile-only (OTP) account. |
-| `mobile` | string \| null | **yes** | Ten-digit Indian mobile, or null on an email-only account. |
-| `birthday` | string \| null | **yes** | `YYYY-MM-DD`, or null. Stored as a DATE — no timezone, because a birthday does not have one. |
-| `gender` | `female` \| `male` \| `other` \| `undisclosed` \| null | **yes** | Self-declared, and optional. `undisclosed` is a valid answer. |
-| `emailVerified` | boolean | **yes** | True once the address has been proven. |
-| `mobileVerified` | boolean | **yes** | True once an OTP for the number has been verified. |
-| `marketingOptIn` | boolean | **yes** | Marketing consent. Toggling it on writes a timestamped consent record. |
-| `whatsappOptIn` | boolean | **yes** | WhatsApp consent. Separate from email/SMS because the channel is separate. |
-| `hasPassword` | boolean | **yes** | False on an OTP-only account — offer “set a password” when false. |
-| `acceptsCod` | boolean | **yes** | Whether cash-on-delivery is offered to this customer. Set by ops, read-only here. |
-| `createdAt` | string | **yes** | ISO-8601 timestamp of account creation. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -216,6 +192,15 @@ A product that has since been unpublished or deleted still appears, with `availa
 | `422` | Validation failed. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -253,14 +238,7 @@ Idempotent: saving something already saved returns 201 with the same item rather
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `productId` | string | **yes** | `products.id`. The wishlist is keyed by id, not by handle — a handle can be edited. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `handle` | string | **yes** | Current URL slug, for linking to the PDP. |
-| `title` | string | **yes** | Product title. |
-| `imageUrl` | string \| null | **yes** | Primary image URL, or null. |
-| `fromPricePaise` | integer \| null | **yes** | Cheapest live variant price, GST-inclusive, in integer paise. Null when nothing is purchasable. |
-| `inStock` | boolean | **yes** | True when at least one variant has stock available right now. |
-| `available` | boolean | **yes** | False once the product is unpublished or deleted. The row is kept rather than silently dropped, so the customer sees “no longer available” instead of a shorter list they cannot explain. |
-| `addedAt` | string | **yes** | ISO-8601 timestamp of when it was saved. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -331,6 +309,15 @@ Gift wrap, cards, engraving and the rest. Pass `product` to get exactly what tha
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `GET /v1/personalisation-templates`
@@ -365,6 +352,15 @@ Engraving, embroidery, print, digital and laser methods with their turnaround, c
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 
@@ -389,6 +385,15 @@ Default first, then oldest first. Not paginated — an address book is a handful
 | `401` | Missing, expired or revoked access token. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -438,20 +443,7 @@ Passing `isDefault: true` stands the previous default down in the same transacti
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Address id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `label` | string | **yes** | Address-book label. |
-| `contactName` | string | **yes** | Who receives the parcel. |
-| `mobile` | string | **yes** | Delivery contact number. |
-| `line1` | string | **yes** | House/flat, building, street. |
-| `line2` | string \| null | **yes** | Second address line, or null. |
-| `area` | string \| null | **yes** | Locality, or null. |
-| `city` | string | **yes** | City. |
-| `stateCode` | string | **yes** | Two-digit GST state code. |
-| `pincode` | string | **yes** | Six-digit PIN code. |
-| `countryCode` | string | **yes** | ISO-3166-1 alpha-2 country code. |
-| `isDefault` | boolean | **yes** | Exactly one address per customer has this set — enforced by a partial unique index, not by hope. |
-| `createdAt` | string | **yes** | ISO-8601 timestamp. |
-| `updatedAt` | string | **yes** | ISO-8601 timestamp. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -521,20 +513,7 @@ An id that is not yours returns 404, not 403 — confirming an id exists is itse
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Address id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `label` | string | **yes** | Address-book label. |
-| `contactName` | string | **yes** | Who receives the parcel. |
-| `mobile` | string | **yes** | Delivery contact number. |
-| `line1` | string | **yes** | House/flat, building, street. |
-| `line2` | string \| null | **yes** | Second address line, or null. |
-| `area` | string \| null | **yes** | Locality, or null. |
-| `city` | string | **yes** | City. |
-| `stateCode` | string | **yes** | Two-digit GST state code. |
-| `pincode` | string | **yes** | Six-digit PIN code. |
-| `countryCode` | string | **yes** | ISO-3166-1 alpha-2 country code. |
-| `isDefault` | boolean | **yes** | Exactly one address per customer has this set — enforced by a partial unique index, not by hope. |
-| `createdAt` | string | **yes** | ISO-8601 timestamp. |
-| `updatedAt` | string | **yes** | ISO-8601 timestamp. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -590,20 +569,7 @@ A true PATCH — only the fields present are changed, and `{}` is a valid no-op.
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Address id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `label` | string | **yes** | Address-book label. |
-| `contactName` | string | **yes** | Who receives the parcel. |
-| `mobile` | string | **yes** | Delivery contact number. |
-| `line1` | string | **yes** | House/flat, building, street. |
-| `line2` | string \| null | **yes** | Second address line, or null. |
-| `area` | string \| null | **yes** | Locality, or null. |
-| `city` | string | **yes** | City. |
-| `stateCode` | string | **yes** | Two-digit GST state code. |
-| `pincode` | string | **yes** | Six-digit PIN code. |
-| `countryCode` | string | **yes** | ISO-3166-1 alpha-2 country code. |
-| `isDefault` | boolean | **yes** | Exactly one address per customer has this set — enforced by a partial unique index, not by hope. |
-| `createdAt` | string | **yes** | ISO-8601 timestamp. |
-| `updatedAt` | string | **yes** | ISO-8601 timestamp. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -638,6 +604,15 @@ Returns the **whole list**, not just the address that changed. Two rows move —
 | `422` | Validation failed. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -676,7 +651,7 @@ When the address does have an account, a single-use token valid for 30 minutes i
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `status` | `"sent"` | **yes** | Always `sent`, whether or not an account exists for the address or number supplied. This endpoint is deliberately not an account-existence oracle. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -715,10 +690,7 @@ The secondary login path — mobile + OTP is primary for Indian D2C, and this ex
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `accessToken` | string | **yes** | HS256 JWT, audience `customer`. Send it as `Authorization: Bearer <token>`. **Keep it in memory only** — never `localStorage`, which is XSS-lootable. |
-| `tokenType` | `"Bearer"` | **yes** | Always `Bearer`. |
-| `expiresIn` | integer | **yes** | Seconds until `accessToken` expires. Refresh before it does via `POST /v1/auth/refresh`. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `customer` | object | **yes** | The signed-in customer. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -792,16 +764,7 @@ The one endpoint in this module that requires a Bearer token — it has no other
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | `customers.id`. This is the subject of every customer access token. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `fullName` | string \| null | **yes** | Display name, or null if never supplied. |
-| `email` | string \| null | **yes** | Email address, or null on a mobile-only (OTP) account. |
-| `mobile` | string \| null | **yes** | Ten-digit mobile, or null on an email-only account. |
-| `emailVerified` | boolean | **yes** | True once the address has been proven — today, by completing a password reset. |
-| `mobileVerified` | boolean | **yes** | True once an OTP for this number has been verified. |
-| `marketingOptIn` | boolean | **yes** | Marketing consent. False unless explicitly granted. |
-| `whatsappOptIn` | boolean | **yes** | WhatsApp messaging consent. False unless explicitly granted. |
-| `hasPassword` | boolean | **yes** | False on an OTP-only account — the storefront should offer “set a password”. |
-| `createdAt` | string | **yes** | ISO-8601 timestamp of account creation. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -841,7 +804,7 @@ Delivery goes through MSG91, which requires a TRAI DLT-registered template; unti
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `status` | `"sent"` | **yes** | Always `sent`, whether or not an account exists for the address or number supplied. This endpoint is deliberately not an account-existence oracle. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -882,10 +845,7 @@ Wrong codes increment an attempt counter and burn the challenge after five. Expi
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `accessToken` | string | **yes** | HS256 JWT, audience `customer`. Send it as `Authorization: Bearer <token>`. **Keep it in memory only** — never `localStorage`, which is XSS-lootable. |
-| `tokenType` | `"Bearer"` | **yes** | Always `Bearer`. |
-| `expiresIn` | integer | **yes** | Seconds until `accessToken` expires. Refresh before it does via `POST /v1/auth/refresh`. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `customer` | object | **yes** | The signed-in customer. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -919,10 +879,7 @@ Call it on a timer slightly inside `expiresIn`, and once on a 401.
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `accessToken` | string | **yes** | HS256 JWT, audience `customer`. Send it as `Authorization: Bearer <token>`. **Keep it in memory only** — never `localStorage`, which is XSS-lootable. |
-| `tokenType` | `"Bearer"` | **yes** | Always `Bearer`. |
-| `expiresIn` | integer | **yes** | Seconds until `accessToken` expires. Refresh before it does via `POST /v1/auth/refresh`. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `customer` | object | **yes** | The signed-in customer. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -961,7 +918,7 @@ Consumes the emailed token and sets the new password (argon2id). The token carri
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `status` | `"ok"` | **yes** | The operation completed. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1003,10 +960,7 @@ Creates the account, signs it in and folds any guest cart into it in one call. `
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `accessToken` | string | **yes** | HS256 JWT, audience `customer`. Send it as `Authorization: Bearer <token>`. **Keep it in memory only** — never `localStorage`, which is XSS-lootable. |
-| `tokenType` | `"Bearer"` | **yes** | Always `Bearer`. |
-| `expiresIn` | integer | **yes** | Seconds until `accessToken` expires. Refresh before it does via `POST /v1/auth/refresh`. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `customer` | object | **yes** | The signed-in customer. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1046,6 +1000,15 @@ Banners whose schedule window is open right now — the clock decides, not the s
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `GET /v1/cms/sections`
@@ -1077,6 +1040,15 @@ The homepage and landing-page section slots, in page order, each with its visibl
 | `422` | Validation failed. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -1114,15 +1086,7 @@ Removes every line and the coupon. The cart row and its token survive, so the sa
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string \| null | **yes** | Cart id, or null when no cart exists yet. |
-| `token` | string \| null | **yes** | Opaque cart handle. Store it and send it back as `X-Cart-Token`. Null when no cart exists yet. |
-| `stage` | `cart` \| `address` \| `payment` \| `converted` | **yes** | How far through checkout this cart got. Drives abandonment recovery. |
-| `couponCode` | string \| null | **yes** | Applied coupon code, or null. |
-| `lines` | array<object> | **yes** | Lines in add order. |
-| `totals` | object | **yes** | Server-computed money. Standard delivery, prepaid, before an address is known. |
-| `itemCount` | integer | **yes** | Total units, not the number of lines. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `hasUnavailableLines` | boolean | **yes** | True when any line exceeds available stock. Checkout will reject. |
-| `updatedAt` | string | **yes** | ISO-8601 timestamp of the last change. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1158,15 +1122,7 @@ The whole basket with server-computed totals. An unknown or missing token return
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string \| null | **yes** | Cart id, or null when no cart exists yet. |
-| `token` | string \| null | **yes** | Opaque cart handle. Store it and send it back as `X-Cart-Token`. Null when no cart exists yet. |
-| `stage` | `cart` \| `address` \| `payment` \| `converted` | **yes** | How far through checkout this cart got. Drives abandonment recovery. |
-| `couponCode` | string \| null | **yes** | Applied coupon code, or null. |
-| `lines` | array<object> | **yes** | Lines in add order. |
-| `totals` | object | **yes** | Server-computed money. Standard delivery, prepaid, before an address is known. |
-| `itemCount` | integer | **yes** | Total units, not the number of lines. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `hasUnavailableLines` | boolean | **yes** | True when any line exceeds available stock. Checkout will reject. |
-| `updatedAt` | string | **yes** | ISO-8601 timestamp of the last change. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1203,15 +1159,7 @@ Clears the coupon and reprices. Identify the cart with the `X-Cart-Token` header
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string \| null | **yes** | Cart id, or null when no cart exists yet. |
-| `token` | string \| null | **yes** | Opaque cart handle. Store it and send it back as `X-Cart-Token`. Null when no cart exists yet. |
-| `stage` | `cart` \| `address` \| `payment` \| `converted` | **yes** | How far through checkout this cart got. Drives abandonment recovery. |
-| `couponCode` | string \| null | **yes** | Applied coupon code, or null. |
-| `lines` | array<object> | **yes** | Lines in add order. |
-| `totals` | object | **yes** | Server-computed money. Standard delivery, prepaid, before an address is known. |
-| `itemCount` | integer | **yes** | Total units, not the number of lines. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `hasUnavailableLines` | boolean | **yes** | True when any line exceeds available stock. Checkout will reject. |
-| `updatedAt` | string | **yes** | ISO-8601 timestamp of the last change. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1249,15 +1197,7 @@ Validated against the live `coupons` table — status, start and end dates, glob
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string \| null | **yes** | Cart id, or null when no cart exists yet. |
-| `token` | string \| null | **yes** | Opaque cart handle. Store it and send it back as `X-Cart-Token`. Null when no cart exists yet. |
-| `stage` | `cart` \| `address` \| `payment` \| `converted` | **yes** | How far through checkout this cart got. Drives abandonment recovery. |
-| `couponCode` | string \| null | **yes** | Applied coupon code, or null. |
-| `lines` | array<object> | **yes** | Lines in add order. |
-| `totals` | object | **yes** | Server-computed money. Standard delivery, prepaid, before an address is known. |
-| `itemCount` | integer | **yes** | Total units, not the number of lines. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `hasUnavailableLines` | boolean | **yes** | True when any line exceeds available stock. Checkout will reject. |
-| `updatedAt` | string | **yes** | ISO-8601 timestamp of the last change. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1300,15 +1240,7 @@ Adds a variant, its add-ons and its personalisation. Adding an identical configu
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string \| null | **yes** | Cart id, or null when no cart exists yet. |
-| `token` | string \| null | **yes** | Opaque cart handle. Store it and send it back as `X-Cart-Token`. Null when no cart exists yet. |
-| `stage` | `cart` \| `address` \| `payment` \| `converted` | **yes** | How far through checkout this cart got. Drives abandonment recovery. |
-| `couponCode` | string \| null | **yes** | Applied coupon code, or null. |
-| `lines` | array<object> | **yes** | Lines in add order. |
-| `totals` | object | **yes** | Server-computed money. Standard delivery, prepaid, before an address is known. |
-| `itemCount` | integer | **yes** | Total units, not the number of lines. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `hasUnavailableLines` | boolean | **yes** | True when any line exceeds available stock. Checkout will reject. |
-| `updatedAt` | string | **yes** | ISO-8601 timestamp of the last change. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1351,15 +1283,7 @@ Deletes the line and its add-ons. Identify the cart with the `X-Cart-Token` head
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string \| null | **yes** | Cart id, or null when no cart exists yet. |
-| `token` | string \| null | **yes** | Opaque cart handle. Store it and send it back as `X-Cart-Token`. Null when no cart exists yet. |
-| `stage` | `cart` \| `address` \| `payment` \| `converted` | **yes** | How far through checkout this cart got. Drives abandonment recovery. |
-| `couponCode` | string \| null | **yes** | Applied coupon code, or null. |
-| `lines` | array<object> | **yes** | Lines in add order. |
-| `totals` | object | **yes** | Server-computed money. Standard delivery, prepaid, before an address is known. |
-| `itemCount` | integer | **yes** | Total units, not the number of lines. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `hasUnavailableLines` | boolean | **yes** | True when any line exceeds available stock. Checkout will reject. |
-| `updatedAt` | string | **yes** | ISO-8601 timestamp of the last change. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1404,15 +1328,7 @@ Deletes the line and its add-ons. Identify the cart with the `X-Cart-Token` head
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string \| null | **yes** | Cart id, or null when no cart exists yet. |
-| `token` | string \| null | **yes** | Opaque cart handle. Store it and send it back as `X-Cart-Token`. Null when no cart exists yet. |
-| `stage` | `cart` \| `address` \| `payment` \| `converted` | **yes** | How far through checkout this cart got. Drives abandonment recovery. |
-| `couponCode` | string \| null | **yes** | Applied coupon code, or null. |
-| `lines` | array<object> | **yes** | Lines in add order. |
-| `totals` | object | **yes** | Server-computed money. Standard delivery, prepaid, before an address is known. |
-| `itemCount` | integer | **yes** | Total units, not the number of lines. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `hasUnavailableLines` | boolean | **yes** | True when any line exceeds available stock. Checkout will reject. |
-| `updatedAt` | string | **yes** | ISO-8601 timestamp of the last change. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1450,15 +1366,7 @@ Call this once immediately after login. With `cartToken`, the guest cart’s lin
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string \| null | **yes** | Cart id, or null when no cart exists yet. |
-| `token` | string \| null | **yes** | Opaque cart handle. Store it and send it back as `X-Cart-Token`. Null when no cart exists yet. |
-| `stage` | `cart` \| `address` \| `payment` \| `converted` | **yes** | How far through checkout this cart got. Drives abandonment recovery. |
-| `couponCode` | string \| null | **yes** | Applied coupon code, or null. |
-| `lines` | array<object> | **yes** | Lines in add order. |
-| `totals` | object | **yes** | Server-computed money. Standard delivery, prepaid, before an address is known. |
-| `itemCount` | integer | **yes** | Total units, not the number of lines. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `hasUnavailableLines` | boolean | **yes** | True when any line exceeds available stock. Checkout will reject. |
-| `updatedAt` | string | **yes** | ISO-8601 timestamp of the last change. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1506,16 +1414,7 @@ The review step, and the only honest source of a total. Every figure is recomput
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `cartId` | string | **yes** | The cart that was priced. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `currency` | string | **yes** | ISO-4217 currency code. Always `INR` today. |
-| `totals` | object | **yes** | The authoritative money. Recomputed from catalogue state on every call. |
-| `serviceable` | boolean | **yes** | False when the destination PIN code is unknown or suspended. |
-| `codEligible` | boolean | **yes** | True when both the zone and the PIN code allow cash on delivery. |
-| `paymentMethodAllowed` | boolean | **yes** | False when the requested `paymentMethod` cannot be used — today that means COD on an ineligible PIN. |
-| `estimatedDeliveryDate` | string \| null | **yes** | `YYYY-MM-DD` promise for the chosen delivery type. |
-| `deliveryOptions` | array<object> | **yes** | Every delivery type with its live availability and surcharge. |
-| `placeOfSupplyStateCode` | string | **yes** | Two-digit GST state code that will be frozen onto the order. |
-| `warnings` | array<string> | **yes** | Non-fatal changes since the cart was last read — a price moved, a coupon stopped applying, a line was clamped to available stock. Show these before taking payment. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1577,15 +1476,7 @@ Prepaid orders come back `pending_payment` with a Razorpay session in `payment`;
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `orderId` | string | **yes** | Order id. Use it for `GET /v1/account/orders/{orderId}`. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `orderNo` | string | **yes** | Human-facing number, e.g. `ACH100042`. Issued by the document-number series. |
-| `status` | string | **yes** | `pending_payment` for prepaid, `confirmed` for COD. |
-| `paymentStatus` | string | **yes** | `pending` for prepaid, `cod_due` for cash on delivery. |
-| `totalPaise` | integer | **yes** | Amount payable in integer paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `currency` | string | **yes** | ISO-4217 currency code. |
-| `placedAt` | string | **yes** | ISO-8601 timestamp the order was placed. |
-| `totals` | object | **yes** | The frozen breakdown, exactly as written to `orders` and `order_lines`. |
-| `payment` | object \| null | **yes** | Razorpay session for a prepaid order. Null for COD, and null if the gateway was unreachable — in that case the order exists in `pending_payment` and the client should call `POST /v1/payments/razorpay/order` to obtain a session. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1626,6 +1517,15 @@ One table serves all six taxonomy kinds (category, recipient, occasion, festival
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `GET /v1/collections/{handle}`
@@ -1659,10 +1559,7 @@ The collection plus the two things the listing page cannot compute for itself: t
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `collection` | object | **yes** | The collection itself. |
-| `availableTypes` | array<object> | **yes** | Category facets present in this collection, with counts. Computed server-side. |
-| `priceBounds` | object | **yes** | Price slider bounds for this collection. |
-| `seo` | object \| null | **yes** | SEO overrides for this listing page. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1712,6 +1609,15 @@ Identical filtering and sorting to `listProducts`, scoped to one collection. The
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 
@@ -1747,18 +1653,7 @@ Real coverage, not an optimistic guess: an unknown PIN code and a suspended one 
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `pincode` | string | **yes** | The PIN code that was checked, echoed back. |
-| `serviceable` | boolean | **yes** | False for both unknown PIN codes and known-but-suspended ones. |
-| `city` | string \| null | **yes** | City the PIN code resolves to. |
-| `stateCode` | string \| null | **yes** | Two-digit GST state code, e.g. `27` for Maharashtra. |
-| `zoneName` | string \| null | **yes** | Delivery zone name, e.g. `Mumbai Metro`. |
-| `tier` | `metro` \| `tier_1` \| `tier_2` \| `tier_3` \| `remote` \| `international` \| null | **yes** | Zone tier. Drives the shipping slab. |
-| `standardTatDays` | integer \| null | **yes** | Standard turnaround in working days for this zone. |
-| `estimatedDeliveryDate` | string \| null | **yes** | `YYYY-MM-DD` promise date for a standard order placed now, in Asia/Kolkata. |
-| `sameDayEligible` | boolean | **yes** | True only when the zone supports same-day AND the cutoff has not passed in Asia/Kolkata. |
-| `sameDayCutoff` | string \| null | **yes** | Local cutoff time `HH:MM:SS` for same-day dispatch. |
-| `midnightEligible` | boolean | **yes** | True when the zone runs midnight deliveries. |
-| `codEligible` | boolean | **yes** | Cash on delivery allowed — zone policy AND PIN-code policy must both allow it. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1797,6 +1692,15 @@ Makers attributed on the PDP: designers, brands, celebrities and artisan cluster
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `GET /v1/designers/{handle}`
@@ -1830,13 +1734,7 @@ Backs the designer landing page. Fetch their products with `listProducts?designe
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Designer id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `handle` | string | **yes** | URL slug. |
-| `name` | string | **yes** | Display name. |
-| `kind` | `designer` \| `brand` \| `celebrity` \| `artisan_cluster` | **yes** | What sort of maker this is. |
-| `bio` | string \| null | **yes** | Long-form biography. |
-| `logo` | object \| null | **yes** | Logo asset, or null. |
-| `productCount` | integer | **yes** | Live, active products attributed to this designer. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1875,6 +1773,15 @@ Published question-and-answer pairs, grouped by category and ordered for the acc
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 
@@ -1909,6 +1816,15 @@ Live builder templates. Fetch one by handle for the wizard itself. Collections a
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `GET /v1/hamper-builder/templates/{handle}`
@@ -1942,12 +1858,7 @@ The whole wizard in one call. Per-step `minChoices`/`maxChoices` are the real co
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Builder template id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `handle` | string | **yes** | Builder template handle, e.g. `build-your-own-hamper`. |
-| `name` | string | **yes** | Template name. |
-| `basePricePaise` | integer | **yes** | Price floor before any option is chosen, integer paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `maxWeightGrams` | integer \| null | **yes** | Hard weight ceiling for the assembled hamper. |
-| `steps` | array<object> | **yes** | The wizard, in order. Per-step min/max are the real constraints. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -1986,6 +1897,15 @@ Published posts, newest first. Scheduled posts stay hidden until their publish t
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `GET /v1/blog/posts/{slug}`
@@ -2019,19 +1939,7 @@ The post with its ordered body blocks, the "keep reading" slugs and any SEO over
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Post id. Prefer `slug` for URLs. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `slug` | string | **yes** | URL slug. Routes `/journal/:slug`. |
-| `title` | string | **yes** | Headline. |
-| `excerpt` | string \| null | **yes** | Standfirst shown on the index card. |
-| `category` | string \| null | **yes** | Editorial category, e.g. `Gifting guides`. |
-| `authorName` | string \| null | **yes** | Byline — the staff author’s name, or the guest author name when there is no staff row. |
-| `heroImage` | object \| null | **yes** | Lead image, or null. |
-| `readMinutes` | integer \| null | **yes** | Estimated reading time in minutes. |
-| `viewCount` | integer | **yes** | Lifetime view count. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `publishedAt` | string \| null | **yes** | ISO-8601 publish timestamp. |
-| `body` | array<object> | **yes** | Ordered rich-text blocks, rendered in sequence. Each block is an object with a `type` discriminator and type-specific fields; unknown types must be skipped, not thrown on. |
-| `relatedSlugs` | array<string> | **yes** | Slugs of the newest other posts in the same category — the "keep reading" rail. |
-| `seo` | object \| null | **yes** | SEO overrides for this post, or null to fall back to defaults. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2076,8 +1984,7 @@ The response carries a `reference` (`LD-00042`) issued from the row-locked docum
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `status` | `"received"` | **yes** | The enquiry is persisted. It is no longer only a toast. |
-| `reference` | string | **yes** | Human-quotable lead number, e.g. `LD-00042`. Give it to the customer; support can search on it. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2123,8 +2030,7 @@ The **25-unit minimum is enforced server-side**. The storefront expresses it as 
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `status` | `"received"` | **yes** | The enquiry is persisted. It is no longer only a toast. |
-| `reference` | string | **yes** | Human-quotable lead number, e.g. `LD-00042`. Give it to the customer; support can search on it. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2165,7 +2071,7 @@ The subscriber list and the account list are the same rows, so the footer form a
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `status` | `"subscribed"` | **yes** | Always `subscribed`, including for an address that was already on the list. Re-subscribing is idempotent and is not an error. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2205,10 +2111,7 @@ A named menu (`header`, `footer`, `mobile`) with every visible item as a FLAT, d
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Menu id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `key` | string | **yes** | Menu key, e.g. `header`. |
-| `name` | string | **yes** | Human name for the menu. |
-| `items` | array<object> | **yes** | Every visible item, FLAT and depth-ordered (parents before their children, siblings in `position` order). Build the tree from `parentId` — a self-referencing response type is not expressible in a generated client, and megamenu depth is not fixed. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2246,6 +2149,15 @@ Newest first. `status` is the real sixteen-value operational status driven by fu
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `GET /v1/account/orders/{orderId}`
@@ -2280,46 +2192,7 @@ Everything the order page renders: the frozen address and buyer snapshots, the p
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Order id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `orderNo` | string | **yes** | Human-facing number, e.g. `ACH100042`. |
-| `status` | `pending_payment` \| `paid` \| `confirmed` \| `in_production` \| `personalisation_pending` \| `quality_check` \| `packed` \| `ready_to_ship` \| `shipped` \| `out_for_delivery` \| `delivered` \| `failed_delivery` \| `rto` \| `cancelled` \| `refund_initiated` \| `refunded` | **yes** | Operational status, driven by real fulfilment and gateway events — never by elapsed time. Sixteen values; `trackingStage` projects them onto the five the customer UI shows. |
-| `paymentStatus` | string | **yes** | Independent of `status`: `pending`, `paid`, `failed`, `partially_refunded`, `refunded`, `cod_due`. |
-| `trackingStage` | `placed` \| `packed` \| `shipped` \| `out_for_delivery` \| `delivered` \| null | **yes** | The five-stage projection for the UI. Null when the order left the happy path. |
-| `placedAt` | string | **yes** | ISO-8601 timestamp the order was placed. |
-| `itemCount` | integer | **yes** | Total units across all lines. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `totalPaise` | integer | **yes** | Amount charged, in integer paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `currency` | string | **yes** | ISO-4217 currency code. |
-| `deliveryType` | string | **yes** | `standard`, `scheduled`, `same_day`, `midnight` or `international`. |
-| `requestedDeliveryDate` | string \| null | **yes** | `YYYY-MM-DD` requested date, or null. |
-| `canCancel` | boolean | **yes** | True while the order is still cancellable by you. The API re-checks it. |
-| `thumbnailUrl` | string \| null | **yes** | First line’s image, for the order list. |
-| `buyerName` | string | **yes** | Buyer name, frozen at order time. |
-| `buyerEmail` | string \| null | **yes** | Buyer email, frozen at order time. |
-| `buyerMobile` | string \| null | **yes** | Buyer mobile, frozen at order time. |
-| `recipientName` | string \| null | **yes** | Gift recipient, or null. |
-| `recipientMobile` | string \| null | **yes** | Recipient mobile, or null. |
-| `giftMessage` | string \| null | **yes** | Gift card message, or null. |
-| `isAnonymousGift` | boolean | **yes** | True when the recipient is not told who sent it. |
-| `shippingAddress` | object | **yes** | The address snapshot. An order is a legal record and its address never mutates. |
-| `deliverySlot` | string \| null | **yes** | Requested slot, or null. |
-| `couponCode` | string \| null | **yes** | Coupon applied at order time, or null. |
-| `subtotalPaise` | integer | **yes** | Σ of line gross values, in paise. Already net of the coupon. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `couponDiscountPaise` | integer | **yes** | Coupon value in paise. Informational — do not subtract again. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `shippingPaise` | integer | **yes** | Shipping charged, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `codFeePaise` | integer | **yes** | COD handling fee, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `taxablePaise` | integer | **yes** | Order taxable value, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `cgstPaise` | integer | **yes** | CGST, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `sgstPaise` | integer | **yes** | SGST, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `igstPaise` | integer | **yes** | IGST, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `cessPaise` | integer | **yes** | Cess, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `roundOffPaise` | integer | **yes** | Invoice rounding, in paise. Bounded ±50. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `amountPaidPaise` | integer | **yes** | Captured so far, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `amountRefundedPaise` | integer | **yes** | Refunded so far, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `isInterstate` | boolean | **yes** | True when the supply was interstate, which makes the tax IGST. |
-| `cancelReason` | string \| null | **yes** | Why it was cancelled, or null. |
-| `cancelledAt` | string \| null | **yes** | ISO-8601 cancellation timestamp, or null. |
-| `lines` | array<object> | **yes** | Order lines in display order. |
-| `timeline` | array<object> | **yes** | Append-only event log, oldest first. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2365,46 +2238,7 @@ In one transaction it releases the stock reservation, returns the coupon redempt
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Order id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `orderNo` | string | **yes** | Human-facing number, e.g. `ACH100042`. |
-| `status` | `pending_payment` \| `paid` \| `confirmed` \| `in_production` \| `personalisation_pending` \| `quality_check` \| `packed` \| `ready_to_ship` \| `shipped` \| `out_for_delivery` \| `delivered` \| `failed_delivery` \| `rto` \| `cancelled` \| `refund_initiated` \| `refunded` | **yes** | Operational status, driven by real fulfilment and gateway events — never by elapsed time. Sixteen values; `trackingStage` projects them onto the five the customer UI shows. |
-| `paymentStatus` | string | **yes** | Independent of `status`: `pending`, `paid`, `failed`, `partially_refunded`, `refunded`, `cod_due`. |
-| `trackingStage` | `placed` \| `packed` \| `shipped` \| `out_for_delivery` \| `delivered` \| null | **yes** | The five-stage projection for the UI. Null when the order left the happy path. |
-| `placedAt` | string | **yes** | ISO-8601 timestamp the order was placed. |
-| `itemCount` | integer | **yes** | Total units across all lines. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `totalPaise` | integer | **yes** | Amount charged, in integer paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `currency` | string | **yes** | ISO-4217 currency code. |
-| `deliveryType` | string | **yes** | `standard`, `scheduled`, `same_day`, `midnight` or `international`. |
-| `requestedDeliveryDate` | string \| null | **yes** | `YYYY-MM-DD` requested date, or null. |
-| `canCancel` | boolean | **yes** | True while the order is still cancellable by you. The API re-checks it. |
-| `thumbnailUrl` | string \| null | **yes** | First line’s image, for the order list. |
-| `buyerName` | string | **yes** | Buyer name, frozen at order time. |
-| `buyerEmail` | string \| null | **yes** | Buyer email, frozen at order time. |
-| `buyerMobile` | string \| null | **yes** | Buyer mobile, frozen at order time. |
-| `recipientName` | string \| null | **yes** | Gift recipient, or null. |
-| `recipientMobile` | string \| null | **yes** | Recipient mobile, or null. |
-| `giftMessage` | string \| null | **yes** | Gift card message, or null. |
-| `isAnonymousGift` | boolean | **yes** | True when the recipient is not told who sent it. |
-| `shippingAddress` | object | **yes** | The address snapshot. An order is a legal record and its address never mutates. |
-| `deliverySlot` | string \| null | **yes** | Requested slot, or null. |
-| `couponCode` | string \| null | **yes** | Coupon applied at order time, or null. |
-| `subtotalPaise` | integer | **yes** | Σ of line gross values, in paise. Already net of the coupon. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `couponDiscountPaise` | integer | **yes** | Coupon value in paise. Informational — do not subtract again. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `shippingPaise` | integer | **yes** | Shipping charged, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `codFeePaise` | integer | **yes** | COD handling fee, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `taxablePaise` | integer | **yes** | Order taxable value, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `cgstPaise` | integer | **yes** | CGST, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `sgstPaise` | integer | **yes** | SGST, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `igstPaise` | integer | **yes** | IGST, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `cessPaise` | integer | **yes** | Cess, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `roundOffPaise` | integer | **yes** | Invoice rounding, in paise. Bounded ±50. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `amountPaidPaise` | integer | **yes** | Captured so far, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `amountRefundedPaise` | integer | **yes** | Refunded so far, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `isInterstate` | boolean | **yes** | True when the supply was interstate, which makes the tax IGST. |
-| `cancelReason` | string \| null | **yes** | Why it was cancelled, or null. |
-| `cancelledAt` | string \| null | **yes** | ISO-8601 cancellation timestamp, or null. |
-| `lines` | array<object> | **yes** | Order lines in display order. |
-| `timeline` | array<object> | **yes** | Append-only event log, oldest first. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2444,15 +2278,7 @@ Each stage carries the timestamp of the event that actually happened, or null. N
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `orderNo` | string | **yes** | The order number, echoed back. |
-| `status` | `pending_payment` \| `paid` \| `confirmed` \| `in_production` \| `personalisation_pending` \| `quality_check` \| `packed` \| `ready_to_ship` \| `shipped` \| `out_for_delivery` \| `delivered` \| `failed_delivery` \| `rto` \| `cancelled` \| `refund_initiated` \| `refunded` | **yes** | Operational status, driven by real fulfilment and gateway events — never by elapsed time. Sixteen values; `trackingStage` projects them onto the five the customer UI shows. |
-| `currentStage` | `placed` \| `packed` \| `shipped` \| `out_for_delivery` \| `delivered` \| null | **yes** | The stage the parcel is at now. Null when the order was cancelled, refunded or returned. |
-| `statusNote` | string \| null | **yes** | Set when the order left the happy path — failed delivery, RTO, cancelled, refunded. |
-| `stages` | array<object> | **yes** | The five stages in order, each with a real timestamp or null. Nothing is inferred from a clock. |
-| `placedAt` | string | **yes** | ISO-8601 timestamp the order was placed. |
-| `estimatedDeliveryDate` | string \| null | **yes** | `YYYY-MM-DD` requested/promised date, or null. |
-| `deliveredAt` | string \| null | **yes** | ISO-8601 delivery timestamp, or null. |
-| `itemCount` | integer | **yes** | Total units in the order. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2491,6 +2317,15 @@ Occasion landing pages, policy pages, about and static pages — one table, disc
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `GET /v1/pages/{slug}`
@@ -2524,16 +2359,7 @@ Any published page, whatever its kind. For an occasion page, `collectionHandle` 
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Page id. Prefer `slug` for URLs. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `slug` | string | **yes** | URL slug. |
-| `kind` | `occasion` \| `policy` \| `landing` \| `about` \| `static` | **yes** | Page discriminator. Occasion landing pages and policy pages are the same shape — `kind` is what tells them apart. |
-| `title` | string | **yes** | Page title, used in navigation. |
-| `heading` | string \| null | **yes** | Page H1 when it differs from the title. |
-| `heroImage` | object \| null | **yes** | Hero image, or null. |
-| `collectionHandle` | string \| null | **yes** | Collection this page fronts — set on `kind=occasion` pages, null otherwise. |
-| `publishedAt` | string \| null | **yes** | ISO-8601 publish timestamp. |
-| `body` | array<object> | **yes** | Ordered rich-text blocks, rendered in sequence. Each block is an object with a `type` discriminator and type-specific fields; unknown types must be skipped, not thrown on. |
-| `seo` | object \| null | **yes** | SEO overrides for this page, or null to fall back to defaults. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2570,16 +2396,7 @@ The published, linkable policy URLs: `shipping`, `returns`, `privacy`, `terms`, 
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Page id. Prefer `slug` for URLs. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `slug` | string | **yes** | URL slug. |
-| `kind` | `occasion` \| `policy` \| `landing` \| `about` \| `static` | **yes** | Page discriminator. Occasion landing pages and policy pages are the same shape — `kind` is what tells them apart. |
-| `title` | string | **yes** | Page title, used in navigation. |
-| `heading` | string \| null | **yes** | Page H1 when it differs from the title. |
-| `heroImage` | object \| null | **yes** | Hero image, or null. |
-| `collectionHandle` | string \| null | **yes** | Collection this page fronts — set on `kind=occasion` pages, null otherwise. |
-| `publishedAt` | string \| null | **yes** | ISO-8601 publish timestamp. |
-| `body` | array<object> | **yes** | Ordered rich-text blocks, rendered in sequence. Each block is an object with a `type` discriminator and type-specific fields; unknown types must be skipped, not thrown on. |
-| `seo` | object \| null | **yes** | SEO overrides for this page, or null to fall back to defaults. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2623,11 +2440,7 @@ The amount is the order’s outstanding balance read from `orders.total_paise`; 
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `gateway` | `"razorpay"` | **yes** | Gateway that owns this session. |
-| `keyId` | string | **yes** | Razorpay public key id to hand to Checkout.js. Never the secret. |
-| `razorpayOrderId` | string | **yes** | `order_XXXXXXXX` — created server-side. The client never creates one. |
-| `amountPaise` | integer | **yes** | Amount to collect, in paise. Equals `order.totalPaise`. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `currency` | string | **yes** | ISO-4217 currency code. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2673,13 +2486,7 @@ A failure here does not mean the payment failed — the webhook remains the sour
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `orderId` | string | **yes** | Order id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `orderNo` | string | **yes** | Human-facing order number, e.g. `ACH100042`. |
-| `status` | string | **yes** | Operational order status after the payment was applied. |
-| `paymentStatus` | string | **yes** | `paid` once the captured amount covers the total; `pending` on a part payment. |
-| `amountPaidPaise` | integer | **yes** | Total captured against this order so far, in integer paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `totalPaise` | integer | **yes** | Order total in integer paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `gatewayPaymentId` | string | **yes** | `pay_XXXXXXXX` — the capture this call applied. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2725,6 +2532,15 @@ The product grid behind `/collections/:handle` and every merchandising rail. `pr
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `GET /v1/products/{handle}`
@@ -2758,41 +2574,7 @@ Everything the PDP renders in one call: gallery, contents, variants with per-var
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Product id. Stable; prefer `handle` for URLs. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `handle` | string | **yes** | URL slug, e.g. `bamboo-water-bottle`. Routes `/products/:handle`. |
-| `sku` | string \| null | **yes** | SKU of the default variant. SKUs live on variants, not products. |
-| `title` | string | **yes** | Product name. |
-| `subtitle` | string \| null | **yes** | Short merchandising line under the title. |
-| `kind` | `hamper` \| `single_gift` \| `personalised` \| `gourmet` \| `add_on` \| `builder` | **yes** | Fulfilment class — does it need assembly, personalisation, is it an add-on. |
-| `designer` | object \| null | **yes** | Attributed designer/brand, or null. |
-| `type` | string \| null | **yes** | Merchandising category handle (the collection of `kind=category` this product leads with), e.g. `drinkware`. This is the storefront `type` facet; it is NOT `kind`. |
-| `typeLabel` | string \| null | **yes** | Human label for `type`, e.g. `Drinkware`. |
-| `pricePaise` | integer | **yes** | Lowest active variant price, GST-inclusive, in integer paise. 149900 = ₹1,499.00. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `compareAtPaise` | integer \| null | **yes** | Struck-through was-price in integer paise, or null when not on offer. |
-| `image` | object \| null | **yes** | Primary product image, or null when none is attached. |
-| `collectionHandles` | array<string> | **yes** | Every live collection this product belongs to, any kind. |
-| `occasionHandles` | array<string> | **yes** | Subset of `collectionHandles` of kind `occasion` or `festival`. |
-| `recipientHandles` | array<string> | **yes** | Subset of `collectionHandles` of kind `recipient`. |
-| `stock` | `in` \| `low` \| `out` | **yes** | Presentation of live availability, never stored: `out` when available quantity is 0, `low` when it is at or below the product low-stock threshold, otherwise `in`. |
-| `stockQty` | integer | **yes** | Available units summed across warehouses (on-hand minus reserved). <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `sameDay` | boolean | **yes** | True when stock sits in at least one same-day-capable warehouse. Destination still decides — confirm with `GET /v1/serviceability`. |
-| `bestSeller` | boolean | **yes** | Membership of the `best-sellers` collection, unless `badgeOverride` forces it either way. |
-| `isNew` | boolean | **yes** | Published within the last 30 days, unless `badgeOverride` forces it either way. |
-| `personalisable` | boolean | **yes** | Accepts engraving/printing. See `personalisationTemplates` on the detail. |
-| `tags` | array<string> | **yes** | Free-form merchandising tags, e.g. `fragile`, `gift-ready`. |
-| `ratingAvg` | number \| null | **yes** | Mean published review rating 1.0–5.0, or null when unreviewed. |
-| `reviewCount` | integer | **yes** | Count of published reviews. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `publishedAt` | string \| null | **yes** | ISO-8601 publish timestamp. |
-| `description` | string \| null | **yes** | Long-form description. Plain text. |
-| `isPerishable` | boolean | **yes** | Perishable goods carry shorter delivery promises. |
-| `isFragile` | boolean | **yes** | Drives packaging selection and courier choice. |
-| `images` | array<object> | **yes** | Full gallery in display order. `image` is the first of these. |
-| `contents` | array<string> | **yes** | The "what is inside" bullets, in order. |
-| `variants` | array<object> | **yes** | Every active variant. Always at least one. |
-| `addOns` | array<object> | **yes** | Add-ons offered on this product. Falls back to the global default set when none are pinned. |
-| `personalisationTemplates` | array<object> | **yes** | Personalisation methods available. Empty when `personalisable` is false. |
-| `relatedHandles` | array<string> | **yes** | Handles of products sharing the most collections with this one, best first. |
-| `seo` | object \| null | **yes** | SEO overrides for this PDP, or null to fall back to defaults. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2824,6 +2606,15 @@ The stock-bearing units. Cart lines reference a variant id, never a product id. 
 | `422` | Validation failed. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -2863,17 +2654,7 @@ Meta tags, canonical URL, robots directives and JSON-LD. Look up either an entit
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `metaTitle` | string \| null | **yes** | `<title>` override. Falls back to the resource title. |
-| `metaDescription` | string \| null | **yes** | `<meta name="description">` content. |
-| `canonicalUrl` | string \| null | **yes** | Canonical URL when this page duplicates another. |
-| `focusKeyword` | string \| null | **yes** | Primary keyword the page targets. |
-| `robotsIndex` | boolean | **yes** | False emits `noindex`. |
-| `robotsFollow` | boolean | **yes** | False emits `nofollow`. |
-| `ogImageUrl` | string \| null | **yes** | Open Graph image URL. |
-| `structuredData` | object \| null | **yes** | JSON-LD document to embed verbatim, or null. |
-| `entityType` | `product` \| `collection` \| `content_page` \| `blog_post` \| `route` | **yes** | What this record describes. |
-| `entityId` | string \| null | **yes** | Target entity id, or null for a route record. |
-| `routePath` | string \| null | **yes** | Target route, or null for an entity record. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -2914,6 +2695,15 @@ Full-text search with typo tolerance. Results are the same `productSummary` shap
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `GET /v1/search/suggest`
@@ -2944,6 +2734,15 @@ Fast prefix-biased lookup for the search-as-you-type dropdown. Title-prefix hits
 | `422` | Validation failed. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -2977,11 +2776,7 @@ Everything the no-results screen needs, in one call: a "did you mean" rewrite, t
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `didYouMean` | string \| null | **yes** | The query rewritten against catalogue vocabulary, or null when nothing was corrected. Render it as "Did you mean X?" — never search it silently. |
-| `unfilteredCount` | integer | **yes** | Matches for the query with every category and price filter dropped. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `types` | array<object> | **yes** | Categories that do contain matches for the query, busiest first. |
-| `priceRanges` | array<object> | **yes** | Price windows that do contain matches, empty ones removed. |
-| `fallback` | array<object> | **yes** | Popular gifts to show when the query matches nothing at all. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3013,9 +2808,7 @@ Returns 200 whenever the process is running. Deliberately does NOT touch the dat
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `status` | `"ok"` | **yes** |  |
-| `version` | string | **yes** |  |
-| `uptimeSeconds` | number | **yes** |  |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3076,6 +2869,15 @@ Moderated marketing quotes. B2C quotes carry `authorCity`; B2B quotes carry `com
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 
@@ -3122,8 +2924,7 @@ A delivery whose processing throws is left unprocessed and answered with 5xx, so
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `received` | `true` | **yes** | Always true. A 2xx is the only thing Razorpay reads. |
-| `duplicate` | boolean | **yes** | True when this event id had already been processed, so the delivery changed nothing. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3134,7 +2935,7 @@ A delivery whose processing throws is left unprocessed and answered with 5xx, so
 
 # Admin surface
 
-**113 operations** · Swagger UI at `/docs/admin` (gated — requires a staff token with `settings:view`)
+**162 operations** · Swagger UI at `/docs/admin` (gated — requires a staff token with `settings:view`)
 
 | Group | Operations |
 |---|---|
@@ -3142,10 +2943,16 @@ A delivery whose processing throws is left unprocessed and answered with 5xx, so
 | Admin catalogue | 28 |
 | Admin content | 21 |
 | Admin customers | 7 |
-| Admin inventory | 14 |
+| Admin goods receipts | 3 |
+| Admin inventory | 32 |
 | Admin orders | 10 |
 | Admin promotions | 14 |
+| Admin purchase returns | 5 |
+| Admin purchasing | 7 |
 | Admin resources | 1 |
+| Admin suppliers | 3 |
+| Admin transfers | 7 |
+| Admin warehousing | 6 |
 | RBAC | 5 |
 
 
@@ -3184,8 +2991,7 @@ Verifies a code against the pending secret, flips `mfaEnabled`, issues ten singl
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `recoveryCodes` | array<string> | **yes** | Ten single-use codes. Shown ONCE — only sha256 digests are stored server-side. |
-| `tokens` | object \| null | **yes** | A session, when enrolment completed a sign-in. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3217,7 +3023,7 @@ Discards every unused code and returns ten new ones, shown once. Requires a live
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `recoveryCodes` | array<string> | **yes** | Ten single-use codes. Shown ONCE — only sha256 digests are stored server-side. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3254,8 +3060,7 @@ Returns a fresh base32 secret and its `otpauth://` URI for the QR code. The secr
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `secret` | string | **yes** | Base32 shared secret. Shown once, for manual entry. |
-| `otpauthUri` | string | **yes** | `otpauth://totp/...` — render this as the QR code. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3298,9 +3103,7 @@ Backs `/two-factor`. Send exactly one of `code` (six digits from the app) or `re
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `status` | `authenticated` \| `mfa_required` \| `enrolment_required` | **yes** | `authenticated` → tokens are present. `mfa_required` → route to /two-factor. `enrolment_required` → the role can change data and has no second factor; route to /two-factor in enrolment mode. No session exists until 2FA is satisfied. |
-| `challengeToken` | string \| null | **yes** | Five-minute token that identifies the half-finished sign-in. Null once authenticated. |
-| `tokens` | object \| null | **yes** | Present only when `status` is `authenticated`. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3346,9 +3149,7 @@ An unknown email, a wrong password and an account with no password set are one i
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `status` | `authenticated` \| `mfa_required` \| `enrolment_required` | **yes** | `authenticated` → tokens are present. `mfa_required` → route to /two-factor. `enrolment_required` → the role can change data and has no second factor; route to /two-factor in enrolment mode. No session exists until 2FA is satisfied. |
-| `challengeToken` | string \| null | **yes** | Five-minute token that identifies the half-finished sign-in. Null once authenticated. |
-| `tokens` | object \| null | **yes** | Present only when `status` is `authenticated`. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3405,7 +3206,7 @@ Always 200 with the same body, whether or not the address belongs to an account 
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `ok` | `true` | **yes** | Always true. The response is deliberately uninformative. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3443,7 +3244,7 @@ Backs `/reset-password`, which today does not read a token from the URL at all �
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `ok` | `true` | **yes** | Always true. The response is deliberately uninformative. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3473,9 +3274,7 @@ Reads the httpOnly `ach_art` cookie — nothing in the body. Rotates the stored 
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `accessToken` | string | **yes** | Bearer token for `Authorization`. Ten minutes — the console refreshes silently. |
-| `expiresInSeconds` | integer | **yes** | Access-token lifetime in seconds. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `sessionId` | string | **yes** | The session this token belongs to. Revoking it kills the lineage. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3512,7 +3311,7 @@ Opens a five-minute window on the CURRENT session. `POST /v1/admin/orders/{order
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `expiresInSeconds` | integer | **yes** | How long the window lasts, in seconds. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3543,20 +3342,7 @@ Everything the console shell needs on boot: identity, role, the flat `module:act
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Staff user id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `email` | string | **yes** | Work email. |
-| `fullName` | string | **yes** | Display name. |
-| `avatarInitials` | string \| null | **yes** | Generated in the database from the full name. |
-| `role` | object | **yes** |  |
-| `permissions` | array<string> | **yes** | `module:action` grants, e.g. `orders:refund`. The console mirrors these for optimistic UI only. |
-| `modules` | array<`dashboard` \| `orders` \| `catalogue` \| `inventory` \| `customers` \| `corporate` \| `delivery` \| `promotions` \| `content` \| `reports` \| `settings` \| `finance`> | **yes** | Modules with at least one grant — drives which nav groups render. |
-| `actions` | array<`view` \| `create` \| `edit` \| `delete` \| `export` \| `approve` \| `refund` \| `cancel` \| `manage-settings`> | **yes** | The nine action keys, for reference. |
-| `warehouseIds` | array<string> | **yes** | Warehouse scope. An EMPTY array means every warehouse, matching the schema. |
-| `mfaEnabled` | boolean | **yes** | True when an authenticator is enrolled. |
-| `mfaRequired` | boolean | **yes** | True when this role is write-capable and therefore must carry 2FA. |
-| `stepUpActive` | boolean | **yes** | True while a recent re-auth still satisfies refund step-up. |
-| `sessionId` | string | **yes** | The current session id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `lastActiveAt` | string \| null | **yes** | ISO-8601 timestamp of the last authenticated request. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3582,6 +3368,15 @@ Backs the sessions table on `/profile`. Only your own sessions — signing anoth
 | `403` | Authenticated, but the staff role lacks `dashboard:view`. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -3656,6 +3451,15 @@ Server-paginated, server-filtered, server-sorted. Every knob is an allowlist: `?
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/collections`
@@ -3701,6 +3505,14 @@ Strict: an unrecognised key is a 422. A silently dropped field is how a price up
 | `422` | Validation failed, or a database constraint refused the row. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
 
 ---
 
@@ -3772,6 +3584,14 @@ Every column by default; narrow it with `?fields=`. An archived or soft-deleted 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `PATCH /v1/admin/collections/{id}`
@@ -3823,6 +3643,14 @@ PATCH rather than PUT, deliberately: the console’s form only ever submits the 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/collections/bulk`
@@ -3861,11 +3689,7 @@ The route declares `edit`, but each action ALSO declares its own `requires`, che
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `action` | string | **yes** | The action that ran. |
-| `requested` | integer | **yes** | Ids sent. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `matched` | integer | **yes** | Ids that exist and are not already archived. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `updated` | integer | **yes** | Rows actually changed, from the single UPDATE statement. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `skipped` | array<string> | **yes** | Ids that matched nothing. Not an error — rows move. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3898,22 +3722,7 @@ The resource descriptor: columns, the explicit `fields` spec, searchable and sor
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `slug` | string | **yes** | URL segment and registry key. |
-| `title` | string | **yes** | Screen title. |
-| `description` | string | **yes** | What the resource is. |
-| `group` | string | **yes** | Nav group. |
-| `module` | `dashboard` \| `orders` \| `catalogue` \| `inventory` \| `customers` \| `corporate` \| `delivery` \| `promotions` \| `content` \| `reports` \| `settings` \| `finance` | **yes** | The RBAC module gating every route for this resource. |
-| `permissions` | object | **yes** | operation → the action required, e.g. `{ "delete": "delete" }`. |
-| `columns` | array<string> | **yes** | Every selectable field. The `?fields=` allowlist. |
-| `listColumns` | array<string> | **yes** | Default table projection. |
-| `fields` | array<object> | **yes** | The editable spec. This is what the create/edit form renders. |
-| `searchable` | array<string> | **yes** | Fields `?q=` ORs across. |
-| `sortable` | array<string> | **yes** | Fields `?sort=` accepts. |
-| `defaultSort` | object | **yes** | Applied when `sort` is absent. |
-| `defaultPerPage` | integer | **yes** | Suggested page size. Hard-capped at 100. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `filters` | array<object> | **yes** | Every filterable key, with its permitted operators. |
-| `bulkActions` | array<object> | **yes** | Declared bulk actions. The server re-checks `requires` — hiding the button is not the control. |
-| `deleteBehaviour` | `soft` \| `archived` \| `hard` | **yes** | `soft` stamps `deleted_at`, `archived` flips a status column, `hard` really removes the row. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -3956,6 +3765,15 @@ Server-paginated, server-filtered, server-sorted. Every knob is an allowlist: `?
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/designers`
@@ -3995,6 +3813,14 @@ Strict: an unrecognised key is a 422. A silently dropped field is how a price up
 | `422` | Validation failed, or a database constraint refused the row. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
 
 ---
 
@@ -4066,6 +3892,14 @@ Every column by default; narrow it with `?fields=`. An archived or soft-deleted 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `PATCH /v1/admin/designers/{id}`
@@ -4111,6 +3945,14 @@ PATCH rather than PUT, deliberately: the console’s form only ever submits the 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/designers/bulk`
@@ -4149,11 +3991,7 @@ The route declares `edit`, but each action ALSO declares its own `requires`, che
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `action` | string | **yes** | The action that ran. |
-| `requested` | integer | **yes** | Ids sent. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `matched` | integer | **yes** | Ids that exist and are not already archived. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `updated` | integer | **yes** | Rows actually changed, from the single UPDATE statement. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `skipped` | array<string> | **yes** | Ids that matched nothing. Not an error — rows move. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -4186,22 +4024,7 @@ The resource descriptor: columns, the explicit `fields` spec, searchable and sor
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `slug` | string | **yes** | URL segment and registry key. |
-| `title` | string | **yes** | Screen title. |
-| `description` | string | **yes** | What the resource is. |
-| `group` | string | **yes** | Nav group. |
-| `module` | `dashboard` \| `orders` \| `catalogue` \| `inventory` \| `customers` \| `corporate` \| `delivery` \| `promotions` \| `content` \| `reports` \| `settings` \| `finance` | **yes** | The RBAC module gating every route for this resource. |
-| `permissions` | object | **yes** | operation → the action required, e.g. `{ "delete": "delete" }`. |
-| `columns` | array<string> | **yes** | Every selectable field. The `?fields=` allowlist. |
-| `listColumns` | array<string> | **yes** | Default table projection. |
-| `fields` | array<object> | **yes** | The editable spec. This is what the create/edit form renders. |
-| `searchable` | array<string> | **yes** | Fields `?q=` ORs across. |
-| `sortable` | array<string> | **yes** | Fields `?sort=` accepts. |
-| `defaultSort` | object | **yes** | Applied when `sort` is absent. |
-| `defaultPerPage` | integer | **yes** | Suggested page size. Hard-capped at 100. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `filters` | array<object> | **yes** | Every filterable key, with its permitted operators. |
-| `bulkActions` | array<object> | **yes** | Declared bulk actions. The server re-checks `requires` — hiding the button is not the control. |
-| `deleteBehaviour` | `soft` \| `archived` \| `hard` | **yes** | `soft` stamps `deleted_at`, `archived` flips a status column, `hard` really removes the row. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -4243,6 +4066,15 @@ Server-paginated, server-filtered, server-sorted. Every knob is an allowlist: `?
 | `422` | Validation failed. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -4290,6 +4122,14 @@ Strict: an unrecognised key is a 422. A silently dropped field is how a price up
 | `422` | Validation failed, or a database constraint refused the row. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
 
 ---
 
@@ -4361,6 +4201,14 @@ Every column by default; narrow it with `?fields=`. An archived or soft-deleted 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `PATCH /v1/admin/product-variants/{id}`
@@ -4413,6 +4261,14 @@ PATCH rather than PUT, deliberately: the console’s form only ever submits the 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/product-variants/bulk`
@@ -4451,11 +4307,7 @@ The route declares `edit`, but each action ALSO declares its own `requires`, che
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `action` | string | **yes** | The action that ran. |
-| `requested` | integer | **yes** | Ids sent. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `matched` | integer | **yes** | Ids that exist and are not already archived. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `updated` | integer | **yes** | Rows actually changed, from the single UPDATE statement. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `skipped` | array<string> | **yes** | Ids that matched nothing. Not an error — rows move. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -4488,22 +4340,7 @@ The resource descriptor: columns, the explicit `fields` spec, searchable and sor
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `slug` | string | **yes** | URL segment and registry key. |
-| `title` | string | **yes** | Screen title. |
-| `description` | string | **yes** | What the resource is. |
-| `group` | string | **yes** | Nav group. |
-| `module` | `dashboard` \| `orders` \| `catalogue` \| `inventory` \| `customers` \| `corporate` \| `delivery` \| `promotions` \| `content` \| `reports` \| `settings` \| `finance` | **yes** | The RBAC module gating every route for this resource. |
-| `permissions` | object | **yes** | operation → the action required, e.g. `{ "delete": "delete" }`. |
-| `columns` | array<string> | **yes** | Every selectable field. The `?fields=` allowlist. |
-| `listColumns` | array<string> | **yes** | Default table projection. |
-| `fields` | array<object> | **yes** | The editable spec. This is what the create/edit form renders. |
-| `searchable` | array<string> | **yes** | Fields `?q=` ORs across. |
-| `sortable` | array<string> | **yes** | Fields `?sort=` accepts. |
-| `defaultSort` | object | **yes** | Applied when `sort` is absent. |
-| `defaultPerPage` | integer | **yes** | Suggested page size. Hard-capped at 100. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `filters` | array<object> | **yes** | Every filterable key, with its permitted operators. |
-| `bulkActions` | array<object> | **yes** | Declared bulk actions. The server re-checks `requires` — hiding the button is not the control. |
-| `deleteBehaviour` | `soft` \| `archived` \| `hard` | **yes** | `soft` stamps `deleted_at`, `archived` flips a status column, `hard` really removes the row. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -4545,6 +4382,15 @@ Server-paginated, server-filtered, server-sorted. Every knob is an allowlist: `?
 | `422` | Validation failed. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -4594,6 +4440,14 @@ Strict: an unrecognised key is a 422. A silently dropped field is how a price up
 | `422` | Validation failed, or a database constraint refused the row. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
 
 ---
 
@@ -4665,6 +4519,14 @@ Every column by default; narrow it with `?fields=`. An archived or soft-deleted 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `PATCH /v1/admin/products/{id}`
@@ -4719,6 +4581,14 @@ PATCH rather than PUT, deliberately: the console’s form only ever submits the 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/products/bulk`
@@ -4757,11 +4627,7 @@ The route declares `edit`, but each action ALSO declares its own `requires`, che
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `action` | string | **yes** | The action that ran. |
-| `requested` | integer | **yes** | Ids sent. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `matched` | integer | **yes** | Ids that exist and are not already archived. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `updated` | integer | **yes** | Rows actually changed, from the single UPDATE statement. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `skipped` | array<string> | **yes** | Ids that matched nothing. Not an error — rows move. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -4794,22 +4660,7 @@ The resource descriptor: columns, the explicit `fields` spec, searchable and sor
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `slug` | string | **yes** | URL segment and registry key. |
-| `title` | string | **yes** | Screen title. |
-| `description` | string | **yes** | What the resource is. |
-| `group` | string | **yes** | Nav group. |
-| `module` | `dashboard` \| `orders` \| `catalogue` \| `inventory` \| `customers` \| `corporate` \| `delivery` \| `promotions` \| `content` \| `reports` \| `settings` \| `finance` | **yes** | The RBAC module gating every route for this resource. |
-| `permissions` | object | **yes** | operation → the action required, e.g. `{ "delete": "delete" }`. |
-| `columns` | array<string> | **yes** | Every selectable field. The `?fields=` allowlist. |
-| `listColumns` | array<string> | **yes** | Default table projection. |
-| `fields` | array<object> | **yes** | The editable spec. This is what the create/edit form renders. |
-| `searchable` | array<string> | **yes** | Fields `?q=` ORs across. |
-| `sortable` | array<string> | **yes** | Fields `?sort=` accepts. |
-| `defaultSort` | object | **yes** | Applied when `sort` is absent. |
-| `defaultPerPage` | integer | **yes** | Suggested page size. Hard-capped at 100. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `filters` | array<object> | **yes** | Every filterable key, with its permitted operators. |
-| `bulkActions` | array<object> | **yes** | Declared bulk actions. The server re-checks `requires` — hiding the button is not the control. |
-| `deleteBehaviour` | `soft` \| `archived` \| `hard` | **yes** | `soft` stamps `deleted_at`, `archived` flips a status column, `hard` really removes the row. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -4855,6 +4706,15 @@ Server-paginated, server-filtered, server-sorted. Every knob is an allowlist: `?
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/banners`
@@ -4899,6 +4759,14 @@ Strict: an unrecognised key is a 422. A silently dropped field is how a price up
 | `422` | Validation failed, or a database constraint refused the row. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
 
 ---
 
@@ -4970,6 +4838,14 @@ Every column by default; narrow it with `?fields=`. An archived or soft-deleted 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `PATCH /v1/admin/banners/{id}`
@@ -5020,6 +4896,14 @@ PATCH rather than PUT, deliberately: the console’s form only ever submits the 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/banners/bulk`
@@ -5058,11 +4942,7 @@ The route declares `edit`, but each action ALSO declares its own `requires`, che
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `action` | string | **yes** | The action that ran. |
-| `requested` | integer | **yes** | Ids sent. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `matched` | integer | **yes** | Ids that exist and are not already archived. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `updated` | integer | **yes** | Rows actually changed, from the single UPDATE statement. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `skipped` | array<string> | **yes** | Ids that matched nothing. Not an error — rows move. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -5095,22 +4975,7 @@ The resource descriptor: columns, the explicit `fields` spec, searchable and sor
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `slug` | string | **yes** | URL segment and registry key. |
-| `title` | string | **yes** | Screen title. |
-| `description` | string | **yes** | What the resource is. |
-| `group` | string | **yes** | Nav group. |
-| `module` | `dashboard` \| `orders` \| `catalogue` \| `inventory` \| `customers` \| `corporate` \| `delivery` \| `promotions` \| `content` \| `reports` \| `settings` \| `finance` | **yes** | The RBAC module gating every route for this resource. |
-| `permissions` | object | **yes** | operation → the action required, e.g. `{ "delete": "delete" }`. |
-| `columns` | array<string> | **yes** | Every selectable field. The `?fields=` allowlist. |
-| `listColumns` | array<string> | **yes** | Default table projection. |
-| `fields` | array<object> | **yes** | The editable spec. This is what the create/edit form renders. |
-| `searchable` | array<string> | **yes** | Fields `?q=` ORs across. |
-| `sortable` | array<string> | **yes** | Fields `?sort=` accepts. |
-| `defaultSort` | object | **yes** | Applied when `sort` is absent. |
-| `defaultPerPage` | integer | **yes** | Suggested page size. Hard-capped at 100. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `filters` | array<object> | **yes** | Every filterable key, with its permitted operators. |
-| `bulkActions` | array<object> | **yes** | Declared bulk actions. The server re-checks `requires` — hiding the button is not the control. |
-| `deleteBehaviour` | `soft` \| `archived` \| `hard` | **yes** | `soft` stamps `deleted_at`, `archived` flips a status column, `hard` really removes the row. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -5153,6 +5018,15 @@ Server-paginated, server-filtered, server-sorted. Every knob is an allowlist: `?
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/faqs`
@@ -5189,6 +5063,14 @@ Strict: an unrecognised key is a 422. A silently dropped field is how a price up
 | `422` | Validation failed, or a database constraint refused the row. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
 
 ---
 
@@ -5260,6 +5142,14 @@ Every column by default; narrow it with `?fields=`. An archived or soft-deleted 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `PATCH /v1/admin/faqs/{id}`
@@ -5302,6 +5192,14 @@ PATCH rather than PUT, deliberately: the console’s form only ever submits the 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/faqs/bulk`
@@ -5340,11 +5238,7 @@ The route declares `edit`, but each action ALSO declares its own `requires`, che
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `action` | string | **yes** | The action that ran. |
-| `requested` | integer | **yes** | Ids sent. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `matched` | integer | **yes** | Ids that exist and are not already archived. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `updated` | integer | **yes** | Rows actually changed, from the single UPDATE statement. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `skipped` | array<string> | **yes** | Ids that matched nothing. Not an error — rows move. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -5377,22 +5271,7 @@ The resource descriptor: columns, the explicit `fields` spec, searchable and sor
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `slug` | string | **yes** | URL segment and registry key. |
-| `title` | string | **yes** | Screen title. |
-| `description` | string | **yes** | What the resource is. |
-| `group` | string | **yes** | Nav group. |
-| `module` | `dashboard` \| `orders` \| `catalogue` \| `inventory` \| `customers` \| `corporate` \| `delivery` \| `promotions` \| `content` \| `reports` \| `settings` \| `finance` | **yes** | The RBAC module gating every route for this resource. |
-| `permissions` | object | **yes** | operation → the action required, e.g. `{ "delete": "delete" }`. |
-| `columns` | array<string> | **yes** | Every selectable field. The `?fields=` allowlist. |
-| `listColumns` | array<string> | **yes** | Default table projection. |
-| `fields` | array<object> | **yes** | The editable spec. This is what the create/edit form renders. |
-| `searchable` | array<string> | **yes** | Fields `?q=` ORs across. |
-| `sortable` | array<string> | **yes** | Fields `?sort=` accepts. |
-| `defaultSort` | object | **yes** | Applied when `sort` is absent. |
-| `defaultPerPage` | integer | **yes** | Suggested page size. Hard-capped at 100. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `filters` | array<object> | **yes** | Every filterable key, with its permitted operators. |
-| `bulkActions` | array<object> | **yes** | Declared bulk actions. The server re-checks `requires` — hiding the button is not the control. |
-| `deleteBehaviour` | `soft` \| `archived` \| `hard` | **yes** | `soft` stamps `deleted_at`, `archived` flips a status column, `hard` really removes the row. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -5435,6 +5314,15 @@ Server-paginated, server-filtered, server-sorted. Every knob is an allowlist: `?
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/testimonials`
@@ -5476,6 +5364,14 @@ Strict: an unrecognised key is a 422. A silently dropped field is how a price up
 | `422` | Validation failed, or a database constraint refused the row. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
 
 ---
 
@@ -5547,6 +5443,14 @@ Every column by default; narrow it with `?fields=`. An archived or soft-deleted 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `PATCH /v1/admin/testimonials/{id}`
@@ -5594,6 +5498,14 @@ PATCH rather than PUT, deliberately: the console’s form only ever submits the 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/testimonials/bulk`
@@ -5632,11 +5544,7 @@ The route declares `edit`, but each action ALSO declares its own `requires`, che
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `action` | string | **yes** | The action that ran. |
-| `requested` | integer | **yes** | Ids sent. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `matched` | integer | **yes** | Ids that exist and are not already archived. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `updated` | integer | **yes** | Rows actually changed, from the single UPDATE statement. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `skipped` | array<string> | **yes** | Ids that matched nothing. Not an error — rows move. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -5669,22 +5577,7 @@ The resource descriptor: columns, the explicit `fields` spec, searchable and sor
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `slug` | string | **yes** | URL segment and registry key. |
-| `title` | string | **yes** | Screen title. |
-| `description` | string | **yes** | What the resource is. |
-| `group` | string | **yes** | Nav group. |
-| `module` | `dashboard` \| `orders` \| `catalogue` \| `inventory` \| `customers` \| `corporate` \| `delivery` \| `promotions` \| `content` \| `reports` \| `settings` \| `finance` | **yes** | The RBAC module gating every route for this resource. |
-| `permissions` | object | **yes** | operation → the action required, e.g. `{ "delete": "delete" }`. |
-| `columns` | array<string> | **yes** | Every selectable field. The `?fields=` allowlist. |
-| `listColumns` | array<string> | **yes** | Default table projection. |
-| `fields` | array<object> | **yes** | The editable spec. This is what the create/edit form renders. |
-| `searchable` | array<string> | **yes** | Fields `?q=` ORs across. |
-| `sortable` | array<string> | **yes** | Fields `?sort=` accepts. |
-| `defaultSort` | object | **yes** | Applied when `sort` is absent. |
-| `defaultPerPage` | integer | **yes** | Suggested page size. Hard-capped at 100. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `filters` | array<object> | **yes** | Every filterable key, with its permitted operators. |
-| `bulkActions` | array<object> | **yes** | Declared bulk actions. The server re-checks `requires` — hiding the button is not the control. |
-| `deleteBehaviour` | `soft` \| `archived` \| `hard` | **yes** | `soft` stamps `deleted_at`, `archived` flips a status column, `hard` really removes the row. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -5730,6 +5623,15 @@ Server-paginated, server-filtered, server-sorted. Every knob is an allowlist: `?
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/customers`
@@ -5774,6 +5676,14 @@ Strict: an unrecognised key is a 422. A silently dropped field is how a price up
 | `422` | Validation failed, or a database constraint refused the row. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
 
 ---
 
@@ -5845,6 +5755,14 @@ Every column by default; narrow it with `?fields=`. An archived or soft-deleted 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `PATCH /v1/admin/customers/{id}`
@@ -5895,6 +5813,14 @@ PATCH rather than PUT, deliberately: the console’s form only ever submits the 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/customers/bulk`
@@ -5933,11 +5859,7 @@ The route declares `edit`, but each action ALSO declares its own `requires`, che
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `action` | string | **yes** | The action that ran. |
-| `requested` | integer | **yes** | Ids sent. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `matched` | integer | **yes** | Ids that exist and are not already archived. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `updated` | integer | **yes** | Rows actually changed, from the single UPDATE statement. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `skipped` | array<string> | **yes** | Ids that matched nothing. Not an error — rows move. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -5970,22 +5892,151 @@ The resource descriptor: columns, the explicit `fields` spec, searchable and sor
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `slug` | string | **yes** | URL segment and registry key. |
-| `title` | string | **yes** | Screen title. |
-| `description` | string | **yes** | What the resource is. |
-| `group` | string | **yes** | Nav group. |
-| `module` | `dashboard` \| `orders` \| `catalogue` \| `inventory` \| `customers` \| `corporate` \| `delivery` \| `promotions` \| `content` \| `reports` \| `settings` \| `finance` | **yes** | The RBAC module gating every route for this resource. |
-| `permissions` | object | **yes** | operation → the action required, e.g. `{ "delete": "delete" }`. |
-| `columns` | array<string> | **yes** | Every selectable field. The `?fields=` allowlist. |
-| `listColumns` | array<string> | **yes** | Default table projection. |
-| `fields` | array<object> | **yes** | The editable spec. This is what the create/edit form renders. |
-| `searchable` | array<string> | **yes** | Fields `?q=` ORs across. |
-| `sortable` | array<string> | **yes** | Fields `?sort=` accepts. |
-| `defaultSort` | object | **yes** | Applied when `sort` is absent. |
-| `defaultPerPage` | integer | **yes** | Suggested page size. Hard-capped at 100. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `filters` | array<object> | **yes** | Every filterable key, with its permitted operators. |
-| `bulkActions` | array<object> | **yes** | Declared bulk actions. The server re-checks `requires` — hiding the button is not the control. |
-| `deleteBehaviour` | `soft` \| `archived` \| `hard` | **yes** | `soft` stamps `deleted_at`, `archived` flips a status column, `hard` really removes the row. |
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+
+## Admin goods receipts
+
+#### `GET /v1/admin/purchasing/goods-receipts`
+
+> List goods receipts
+
+Filter by purchase order, warehouse, QC status and received-date range. `?q=` matches the GRN number and the supplier’s invoice number.
+
+`acceptedQty` is what entered stock; `rejectedQty` is what did not. The two are always reported separately and never summed into a single "received" figure.
+
+| | |
+|---|---|
+| operationId | `adminListGoodsReceipts` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `-receivedOn` (default), `receivedOn`, `grnNo`, `createdAt`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Free-text search. <br><sub>minLen 1, maxLen 120</sub> |
+| `purchaseOrderId` | string | no | Restrict to one purchase order. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `warehouseId` | string | no | Restrict to one warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `qcStatus` | `passed` \| `partial` \| `failed` | no | `passed`, `partial` or `failed`. |
+| `receivedFrom` | string | no | `YYYY-MM-DD`. Inclusive lower bound on `receivedOn`. <br><sub>pattern `^\d{4}-\d{2}-\d{2}$`</sub> |
+| `receivedTo` | string | no | `YYYY-MM-DD`. Inclusive upper bound on `receivedOn`. <br><sub>pattern `^\d{4}-\d{2}-\d{2}$`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of goods receipts. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/purchasing/goods-receipts`
+
+> Receive goods against a purchase order
+
+The stock-in step, and ONE transaction end to end. Per line: increment on-hand by `acceptedQty`, write an `inbound` movement carrying the balance that increment returned, add to the PO line’s `receivedQty`, and lower `incomingQty` by everything that turned up. If any line fails, none of it happened.
+
+**Rejected units never enter stock.** They are recorded on the receipt line with a reason and go no further — damaged goods inside `on_hand_qty` are sellable goods, and no downstream report undoes that. They also do not count towards `receivedQty`, so a PO with rejections stays open for what it is still owed. Send them back with a purchase return.
+
+**Partial receipts are normal.** The PO becomes `partially_received` and stays there until ordered equals accepted across ALL lines, at which point it becomes `received` and `closedAt` is stamped. Accepting more than a line still has outstanding is 422 `over_receipt`.
+
+The warehouse is taken from the PO, not from the request: receiving into a different warehouse than the one that ordered would leave `incomingQty` raised forever at the warehouse still waiting.
+
+Requires an `Idempotency-Key`: a retried receipt must not add the stock twice.
+
+| | |
+|---|---|
+| operationId | `adminCreateGoodsReceipt` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `purchaseOrderId` | string | **yes** | The PO being received against. Must be sent or partially received. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `receivedOn` | string | no | `YYYY-MM-DD`. When the goods physically arrived. Defaults to today. <br><sub>pattern `^\d{4}-\d{2}-\d{2}$`</sub> |
+| `qcStatus` | `passed` \| `partial` \| `failed` | no | Inspection outcome for the receipt as a whole. Per-line rejections are on the lines. <br><sub>default `"passed"`</sub> |
+| `inspectorId` | string \| null | no | Staff member who inspected the goods. |
+| `supplierInvoiceNo` | string \| null | no | The supplier’s invoice number, for reconciliation. |
+| `notes` | string \| null | no | Free text. |
+| `lines` | array<object> | **yes** | At least one line. Partial receipts are normal — the PO stays `partially_received`. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `201` | The posted receipt, with the PO’s resulting status. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:create`. |
+| `404` | No such purchase order. |
+| `422` | The PO has not been sent (`po_not_receivable`), an unknown line, or `over_receipt`. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/purchasing/goods-receipts/{grnId}`
+
+> Get one goods receipt
+
+The receipt with its lines, including per-line rejections with their reasons, batch numbers and expiry dates. `poStatusAfter` is what the purchase order’s stored status became once this receipt was posted.
+
+| | |
+|---|---|
+| operationId | `adminGetGoodsReceipt` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `grnId` | string | **yes** | Goods receipt id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The goods receipt. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `404` | No such goods receipt. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -5993,6 +6044,890 @@ The resource descriptor: columns, the explicit `fields` spec, searchable and sor
 
 
 ## Admin inventory
+
+#### `GET /v1/admin/inventory`
+
+> List stock levels
+
+One row per (item, warehouse) — stock is per stockable per warehouse and there is no global figure, which is the single largest difference from the three conflicting stock fields this replaces.
+
+`inventory_levels` is polymorphic: a row is a finished `variant`, a loose `hamper_item`, or a `packaging` material. Filter with `?kind=`.
+
+`availableQty` is a GENERATED column (`on_hand_qty - reserved_qty`), so it cannot drift from the two numbers beside it. `?state=` filters on it: `out` is nothing sellable, `low` is at or below the reorder point, `in` is above. `?belowReorderPoint=true` is deliberately NOT the same filter — it uses the inventory position including incoming stock, which is the buying question rather than the selling one.
+
+| | |
+|---|---|
+| operationId | `adminListInventory` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `sku` (default), `-availableQty`, `availableQty`, `onHandQty`, `reservedQty`, `-lastMovementAt`, `warehouse`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Matches SKU or item name, case-insensitively. <br><sub>minLen 1, maxLen 120</sub> |
+| `warehouseId` | string | no | Restrict to one warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `locationId` | string | no | Restrict to one bin/shelf/rack/zone (`warehouse_locations.id`). <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `kind` | `variant` \| `hamper_item` \| `packaging` | no | `inventory_levels` is polymorphic — a row is a finished `variant`, a loose `hamper_item`, or a `packaging` material. |
+| `state` | `in` \| `low` \| `out` | no | `out` = nothing sellable · `low` = at or below the reorder point · `in` = above it. |
+| `belowReorderPoint` | `0` \| `1` \| `true` \| `false` | no | `true` returns only levels at or below their reorder point — the buying queue. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of stock levels. |
+| `400` | An unrecognised filter value. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/inventory/{sku}`
+
+> Everything about one SKU
+
+The whole workspace in one call: the warehouse-by-warehouse breakdown, the last twenty ledger entries across every warehouse, every hold currently consuming stock, and the open purchase-order lines still owed.
+
+The SKU is resolved against `product_variants.sku` first, then `hamper_items.sku`, then `packaging_materials.sku` — the three things this business stocks. Each has a partial unique index excluding soft-deleted rows, so a discontinued item never shadows a live one.
+
+`incoming` lists only OPEN purchase-order lines (`draft`, `sent`, `partially_received`) with `outstandingQty` computed from absolute quantities, not the percentage the old console stored. A received or cancelled order is not incoming stock.
+
+Declared last of the GET routes so that `/movements`, `/alerts/*`, `/reorder`, `/reservations`, `/audit`, `/notifications`, `/export` and `/dashboard` are matched as the literals they are.
+
+| | |
+|---|---|
+| operationId | `adminGetInventoryBySku` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `sku` | string | **yes** | Stock-keeping unit. Resolved against `product_variants.sku` first, then `hamper_items.sku`, then `packaging_materials.sku`. <br><sub>minLen 1, maxLen 64</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The item, its levels, its recent history and what is inbound. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `404` | No active item carries that SKU. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/inventory/{sku}/availability`
+
+> Can we promise this?
+
+The narrow question, answered per warehouse and across the network. Pass `?quantity=` to get a straight yes or no.
+
+`canFulfil` is true when ONE warehouse can cover the quantity. `canFulfilAcrossWarehouses` is true when the network total covers it. They are reported separately and deliberately not conflated: the second needs a split shipment to be true, which is a fulfilment decision with a real cost attached, not an availability fact.
+
+`state` is the `in`/`low`/`out` value the STOREFRONT should surface (§16). Never publish the raw number: it invites scraping the whole catalogue’s stock position, and it is wrong the instant someone else’s cart holds two of them.
+
+| | |
+|---|---|
+| operationId | `adminGetSkuAvailability` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `sku` | string | **yes** | Stock-keeping unit. Resolved against `product_variants.sku` first, then `hamper_items.sku`, then `packaging_materials.sku`. <br><sub>minLen 1, maxLen 64</sub> |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `warehouseId` | string | no | Restrict to one warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `quantity` | integer | no | Ask a yes/no question: can this many units be promised right now? Sets `canFulfil` per warehouse and overall. <br><sub>max 1000000</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | Availability, per warehouse and in total. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `404` | No active item carries that SKU. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/inventory/adjustments`
+
+> Adjust stock
+
+One transaction: lock the level, validate, update `inventory_levels`, append the movement with the balance the update actually returned, commit. There is no path where the level moves and the ledger does not.
+
+A decrement that would take SELLABLE stock below zero is refused with the stable code `insufficient_stock` — note *sellable*, not on-hand: units already reserved for a paid order are physically present but spoken for, and letting an adjustment eat them turns someone else’s confirmed order into a stockout at picking time. The refusal is enforced by a conditional `UPDATE … WHERE on_hand − reserved + delta >= 0` whose affected-row count is checked, which is race-free at READ COMMITTED; the `inventory_no_oversell` CHECK behind it is a backstop, never flow control.
+
+`movementType` is restricted to the seven types a human may post by hand. Transfer and production types are excluded because each is half of a pair that must move together, and `stock_count` is excluded because §40 says a count posts its variance only through approval.
+
+To undo an adjustment, post the opposite one. The ledger is append-only and this endpoint will never edit a movement.
+
+Requires an `Idempotency-Key`. A retry with the same key and body replays the stored response; the same key with a different body is a 409, because silently returning the first response would hide a client bug that is about to double-adjust something.
+
+| | |
+|---|---|
+| operationId | `adminAdjustInventory` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `sku` | string | **yes** | The item to adjust. <br><sub>minLen 1, maxLen 64</sub> |
+| `warehouseId` | string | **yes** | Which warehouse’s stock moved. Stock is per item × warehouse; there is no global figure to adjust. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `quantityDelta` | integer | **yes** | Signed change. Positive adds, negative removes. Never zero — the ledger CHECK rejects a movement of nothing. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
+| `movementType` | `adjustment` \| `inbound` \| `outbound` \| `damage` \| `return_in` \| `loss` \| `found` | no | Why the stock moved, in the ledger’s vocabulary. Transfer, production and stock-count types are not adjustable by hand — each writes two coordinated rows or requires an approval. <br><sub>default `"adjustment"`</sub> |
+| `reason` | string | **yes** | Required. Goes on the movement as `note` and into the activity log. An adjustment with no stated reason is indistinguishable from an error. <br><sub>minLen 3, maxLen 400</sub> |
+| `referenceType` | `purchase_order` \| `goods_receipt` \| `order` \| `stock_transfer` \| `return` \| `adjustment` \| `import` \| `production_order` \| `stock_count` \| `purchase_return` | no | The kind of document this adjustment answers to, if any. |
+| `referenceId` | string | no | That document’s id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `referenceLabel` | string | no | Human-readable document number for the ledger screen — `PO-2026-02291`, `ACH104422`. <br><sub>maxLen 64</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The level after the change, and the movement it wrote. |
+| `400` | Missing or malformed `Idempotency-Key`. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:edit`. |
+| `404` | No such SKU, or no such warehouse. |
+| `409` | That `Idempotency-Key` was used with a different body, or a first attempt is still in flight. |
+| `422` | `insufficient_stock`, or the item is not stocked at that warehouse (`no_inventory_level`). |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/inventory/alerts/low-stock`
+
+> Low-stock alerts
+
+Levels with sellable stock above zero but at or below their reorder point — the ones that will run out, ordered most urgent first. Backed by the partial index `idx_inventory_low`, so this stays cheap as the catalogue grows.
+
+An item at zero is NOT here; it is already out, and mixing the two makes the list unusable as a work queue. See `/alerts/out-of-stock`.
+
+| | |
+|---|---|
+| operationId | `adminListLowStock` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `availableQty` (default, most urgent first), `sku`, `-shortfallQty`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Matches SKU or item name. <br><sub>minLen 1, maxLen 120</sub> |
+| `warehouseId` | string | no | Restrict to one warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `kind` | `variant` \| `hamper_item` \| `packaging` | no | Restrict to variants, hamper items or packaging. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of low-stock levels. |
+| `400` | An unrecognised filter value. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/inventory/alerts/out-of-stock`
+
+> Out-of-stock alerts
+
+Levels with nothing sellable — `availableQty <= 0`. A row can appear here while `onHandQty` is positive: every unit is reserved. That is the honest reading, because those units are already promised and cannot be sold again.
+
+| | |
+|---|---|
+| operationId | `adminListOutOfStock` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `availableQty` (default, most urgent first), `sku`, `-shortfallQty`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Matches SKU or item name. <br><sub>minLen 1, maxLen 120</sub> |
+| `warehouseId` | string | no | Restrict to one warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `kind` | `variant` \| `hamper_item` \| `packaging` | no | Restrict to variants, hamper items or packaging. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of out-of-stock levels. |
+| `400` | An unrecognised filter value. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/inventory/audit`
+
+> Who changed stock, and what the numbers were
+
+The STATE-level trail from `activity_logs`, restricted to inventory entities. Each entry carries `beforeData` and `afterData` as queryable JSONB — the actual quantities — rather than a rendered string like "₹12,400 → ₹11,900" that cannot be diffed, queried or replayed.
+
+This is complementary to the automatic request-level audit `defineRoute` applies to every non-GET admin route, not a duplicate of it. A request log records who called what from where; it cannot tell you what the number was. This one can, and cannot tell you the IP.
+
+Distinct from `/movements` too: the ledger is the record of PHYSICAL movement and includes system movements with no human behind them. This is the record of human action, and includes reservations, which never touch the ledger.
+
+| | |
+|---|---|
+| operationId | `adminListInventoryAudit` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `-occurredAt` (default) or `occurredAt`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Matches the entity label or the action. <br><sub>minLen 1, maxLen 120</sub> |
+| `action` | string | no | e.g. `inventory.adjusted`, `inventory.reserved`, `inventory.released`. <br><sub>maxLen 120</sub> |
+| `entityId` | string | no | Everything recorded against one inventory level. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `actorStaffId` | string | no | Everything one staff member did to stock. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `from` | string | no | ISO date or timestamp, inclusive. |
+| `to` | string | no | ISO date or timestamp, inclusive. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of audit entries, newest first. |
+| `400` | An unparseable date bound. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/inventory/bulk-adjust`
+
+> Adjust many SKUs at once
+
+All-or-nothing in ONE transaction — unlike the order desk’s bulk action, which reports per-order outcomes. Stock is different: a stocktake correction that half-applied leaves a warehouse in a state nobody chose and nobody can describe. Every line succeeds or nothing is written.
+
+**Each SKU still gets its own movement row.** The batch is a unit of atomicity, not a unit of bookkeeping; one movement covering fifty SKUs would be unusable for reconciling any of them.
+
+Levels are locked in a single statement in ascending `inventory_level_id` order, and the work is sorted the same way. Without that, batch A holding level 1 and wanting level 2 deadlocks against batch B holding 2 and wanting 1 — PostgreSQL would detect it and abort one, but a `deadlock_timeout` stall is not an acceptable way to find out (§62).
+
+Every (`sku`, `warehouseId`) pair must be distinct. Two deltas against one level in one batch is ambiguous about which movement’s `balanceAfter` comes first, so it is refused rather than guessed at.
+
+Validation is front-loaded: unknown SKUs and items not stocked at the named warehouse come back as field-level issues BEFORE any lock is taken.
+
+| | |
+|---|---|
+| operationId | `adminBulkAdjustInventory` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `reason` | string | **yes** | Applies to every line. A single stated reason is what makes a fifty-line correction reviewable later. <br><sub>minLen 3, maxLen 400</sub> |
+| `movementType` | `adjustment` \| `inbound` \| `outbound` \| `damage` \| `return_in` \| `loss` \| `found` | no | Default type for lines that do not name their own. <br><sub>default `"adjustment"`</sub> |
+| `referenceType` | `purchase_order` \| `goods_receipt` \| `order` \| `stock_transfer` \| `return` \| `adjustment` \| `import` \| `production_order` \| `stock_count` \| `purchase_return` | no | Applies to every line. |
+| `referenceId` | string | no | Applies to every line. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `referenceLabel` | string | no | Applies to every line. <br><sub>maxLen 64</sub> |
+| `adjustments` | array<object> | **yes** | At most 200 lines. Every (`sku`, `warehouseId`) pair must be distinct — two deltas against one level in one batch is ambiguous, so it is refused rather than guessed at. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | One result per line, in the deterministic lock order. |
+| `400` | Missing or malformed `Idempotency-Key`. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:edit`. |
+| `404` | A warehouse in the batch does not exist. |
+| `409` | That `Idempotency-Key` was used with a different body. |
+| `422` | `unknown_sku`, `duplicate_target`, `no_inventory_level`, or `insufficient_stock` on any line — nothing was written. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/inventory/dashboard`
+
+> Inventory dashboard
+
+The header strip for the inventory console, computed in the database rather than by summing whatever page happens to be loaded — the console currently derives "stock value" from the twenty-five rows in memory, which makes it mean "stock value of these twenty-five".
+
+`stockValuePaise` is on-hand at unit cost in integer paise. Items with no recorded cost contribute ZERO rather than an estimate: a valuation that quietly invents numbers is worse than one with a visible hole in it.
+
+`lowStockCount` and `outOfStockCount` are counted against the GENERATED `available_qty` column, so they can never disagree with the list screens. `reorderCount` is different and larger in scope: it uses the inventory POSITION (`on hand − reserved + incoming`), because an item with a purchase order already in flight does not need a second one.
+
+| | |
+|---|---|
+| operationId | `adminInventoryDashboard` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `warehouseId` | string | no | Restrict to one warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | Network totals plus a per-warehouse breakdown. |
+| `400` | Unparseable filter. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/inventory/export`
+
+> Export stock levels
+
+A flat file of the current position, for the spreadsheet the warehouse actually works from. `csv` by default, delivered as an attachment with CRLF line endings and every field quoted — an unquoted bin location containing a comma silently shifts every column after it, which is the classic way an export becomes wrong without looking wrong.
+
+Money stays in integer paise, unconverted. A CSV that says `149900` is unambiguous; one that says `1499.00` has already made a rounding decision on the reader’s behalf.
+
+Capped at 50,000 rows and gated on `inventory:export`, which is a separate grant from `inventory:view` — reading one screen and walking out with the whole stock position are different acts. The `export` rate limiter allows 20 per hour per user.
+
+| | |
+|---|---|
+| operationId | `adminExportInventory` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `format` | `csv` \| `json` | no | `csv` (default, a downloadable attachment) or `json`. <br><sub>default `"csv"`</sub> |
+| `warehouseId` | string | no | Restrict to one warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `kind` | `variant` \| `hamper_item` \| `packaging` | no | Restrict to variants, hamper items or packaging. |
+| `state` | `in` \| `low` \| `out` | no | Export only `out`, `low` or `in` rows. |
+| `limit` | integer | no | Row cap. Maximum 50,000 — an unbounded export of a growing table is an outage waiting for a slow month. <br><sub>max 50000, default `10000`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A CSV attachment, or the same rows as JSON when `?format=json`. |
+| `400` | An unrecognised filter value. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:export`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+---
+
+#### `GET /v1/admin/inventory/movements`
+
+> The stock ledger
+
+Append-only. Every change to on-hand stock is exactly one row here, and nothing ever updates or deletes one — a correction is a NEW movement with the opposite sign (§10). That is what makes `balanceAfter` trustworthy: the running on-hand balance immediately after each movement, from which any historical position can be reconstructed without replaying the whole table.
+
+Reservations do NOT appear here. A hold moves `reservedQty` and nothing physical has moved, so a ledger row for it would double-count against `balanceAfter` the moment the goods actually shipped.
+
+`?movementType=` and `?referenceType=` take comma-separated lists; an unrecognised value is a 400 rather than a silently empty page. `?referenceId=` returns everything one document did — one order, one goods receipt, one transfer. Movement ids are BIGINT and travel as decimal STRINGS; a JSON number would lose precision past 2^53.
+
+| | |
+|---|---|
+| operationId | `adminListStockMovements` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `-occurredAt` (default), `occurredAt`, `quantityDelta`, `-id`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Matches SKU, item name or `referenceLabel`. <br><sub>minLen 1, maxLen 120</sub> |
+| `sku` | string | no | One SKU. The whole history for one item. <br><sub>maxLen 64</sub> |
+| `warehouseId` | string | no | Restrict to one warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `movementType` | string | no | One type or a comma-separated list: `?movementType=damage,loss`. An unknown value is a 400, not an empty page. <br><sub>maxLen 200</sub> |
+| `referenceType` | string | no | One type or a comma-separated list. <br><sub>maxLen 200</sub> |
+| `referenceId` | string | no | Everything a single document did — one order, one GRN, one transfer. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `actorId` | string | no | Movements recorded by one staff member. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `from` | string | no | ISO date or timestamp. Inclusive lower bound on `occurredAt`. |
+| `to` | string | no | ISO date or timestamp. Inclusive upper bound on `occurredAt`. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of ledger entries, newest first. |
+| `400` | An unrecognised movement type, reference type, or an unparseable date. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/inventory/movements/{movementId}`
+
+> Get one ledger entry
+
+The single movement, with the item, warehouse and document it belongs to resolved. There is no PATCH and no DELETE beside it, and there never will be — see the ledger note on the list endpoint.
+
+| | |
+|---|---|
+| operationId | `adminGetStockMovement` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `movementId` | string | **yes** | Movement id. `stock_movements.id` is a BIGINT identity, so it travels as a decimal string — a JSON number would silently lose precision past 2^53. <br><sub>pattern `^\d{1,19}$`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The movement. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `404` | No such movement. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/inventory/notifications`
+
+> Inventory notifications
+
+The inventory slice of the staff notification feed — stockouts, low-stock warnings, expiring holds, overdue purchase orders.
+
+Returns both notifications addressed to you personally and broadcasts (`staff_user_id IS NULL`). Filtering to "mine only" would hide every broadcast stockout alert, which is most of them.
+
+Read-only here. Marking one read belongs to the notification module, which owns the whole feed.
+
+| | |
+|---|---|
+| operationId | `adminListInventoryNotifications` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `-createdAt` (default) or `createdAt`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Free-text search. <br><sub>minLen 1, maxLen 120</sub> |
+| `unreadOnly` | `0` \| `1` \| `true` \| `false` | no | `true` returns only notifications with no `readAt`. |
+| `priority` | `high` \| `normal` \| `low` | no | Restrict to one priority. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of notifications, newest first. |
+| `400` | An unrecognised filter value. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/inventory/reorder`
+
+> What to buy
+
+The buying queue. A level qualifies when its inventory POSITION — `on hand − reserved + incoming` — is at or below its reorder point. Incoming counts, otherwise every item with a purchase order already in flight is re-ordered, which is how a warehouse ends up with four months of ribbon. Reserved does not count as cover, because those units are leaving the building.
+
+The formula lives in ONE documented function (`reorderSuggestion` in `admin-inventory.stock.ts`), shared with the purchase-draft endpoint, so the alert screen and the order that follows it can never disagree:
+
+```
+target    = reorderPoint + reorderQty
+shortfall = max(0, target - position)
+suggested = ceil(max(shortfall, 1) / moq) * moq
+```
+
+Suggestions are rounded UP to the supplier’s MOQ, never down — a purchase order the supplier will reject is not a saving. The supplier shown is the one flagged preferred (`supplier_products` has a partial unique index guaranteeing at most one per variant), falling back to the cheapest with `isPreferredSupplier: false` so the buyer can see the difference.
+
+| | |
+|---|---|
+| operationId | `adminListReorderSuggestions` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `-shortfallQty` (default), `sku`, `leadTimeDays`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Matches SKU or item name. <br><sub>minLen 1, maxLen 120</sub> |
+| `warehouseId` | string | no | Restrict to one warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `supplierId` | string | no | Only items whose preferred supplier is this one — one buyer’s worklist. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of reorder suggestions, biggest shortfall first. |
+| `400` | An unrecognised filter value. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/inventory/reorder/purchase-draft`
+
+> Draft a purchase order from the reorder suggestions
+
+Creates ONE purchase order with status `draft` for one supplier and one warehouse. **It never sends anything to a supplier** — that is `POST /purchase-orders/:poId/send`, behind its own permission. A draft is a document a buyer reviews and edits.
+
+With no `lines`, the draft is generated from the reorder engine: everything this supplier supplies that is at or below its reorder point in this warehouse, at the suggested quantity, optionally narrowed with `skus`. With `lines`, the buyer’s quantities are used instead — but still rounded UP to the supplier’s MOQ.
+
+Nothing to order is a 422 (`nothing_to_order`), not an empty purchase order: an empty document in the PO list is a false signal that someone ordered something.
+
+`taxPaise` is always 0 on a draft. GST is resolved when the goods are received and invoiced, and a guessed figure here would be a statutory number nobody computed. The number comes from `document_number_series` under a row lock; no active series for the year is a 422 rather than an improvised number that collides with the real series later.
+
+| | |
+|---|---|
+| operationId | `adminCreatePurchaseDraft` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `supplierId` | string | **yes** | Who to buy from. Required — a draft with no supplier has no cost, no MOQ and no lead time, which is most of what a purchase order is. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `warehouseId` | string | **yes** | Which warehouse the goods are being bought for. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `expectedOn` | string | no | `YYYY-MM-DD`. Defaults to today plus the supplier’s longest lead time across the drafted lines. <br><sub>date, pattern `^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\`</sub> |
+| `notes` | string | no | Internal note on the draft. <br><sub>maxLen 2000</sub> |
+| `skus` | array<string> | no | Restrict the generated draft to these SKUs. Omit to draft every item this supplier supplies that is at or below its reorder point in this warehouse. |
+| `lines` | array<object> | no | Explicit lines, overriding the reorder engine entirely. Quantities are still rounded UP to the supplier’s MOQ — a purchase order the supplier will reject is not a saving. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `201` | The draft purchase order and its lines. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:create`. |
+| `404` | No such supplier, or no such warehouse. |
+| `422` | `nothing_to_order`, `unknown_sku`, `supplier_archived`, or `no_document_series`. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/inventory/reservations`
+
+> List stock holds
+
+Every hold against stock, whatever placed it: a `cart` (which expires), an `order` (which never does), a `quotation`, or a `manual_hold` placed here.
+
+`?status=active` — the default — means unreleased AND unexpired, which is the set actually consuming `reservedQty` right now. `released` and `expired` are separate because they are different questions: one was let go deliberately, the other simply lapsed.
+
+This is the screen to open when `onHandQty` is healthy and `availableQty` is not.
+
+| | |
+|---|---|
+| operationId | `adminListInventoryReservations` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `-createdAt` (default), `createdAt`, `expiresAt`, `quantity`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Free-text search. <br><sub>minLen 1, maxLen 120</sub> |
+| `sku` | string | no | Holds against one SKU. <br><sub>maxLen 64</sub> |
+| `warehouseId` | string | no | Restrict to one warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `reason` | `cart` \| `order` \| `manual_hold` \| `quotation` | no | `cart` (expires) · `order` (never expires) · `manual_hold` · `quotation`. |
+| `status` | `active` \| `released` \| `expired` \| `all` | no | `active` (default) is unreleased and unexpired — the holds that are actually consuming stock right now. <br><sub>default `"active"`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of holds. |
+| `400` | An unrecognised filter value. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/inventory/reservations`
+
+> Hold stock by hand
+
+Puts units beyond the reach of the storefront — for a corporate quote being negotiated, a photoshoot, a replacement being held for a support case.
+
+**A hold moves `reservedQty` and nothing else.** `onHandQty` is untouched, because the units have not moved, and NO `stock_movements` row is written: the ledger records physical movement, and a hold in it would double-count against `balanceAfter` the moment the goods actually shipped (§14). The effect is recorded in the activity log instead, where the before/after pair shows `onHandQty` unchanged.
+
+The hold is refused with `insufficient_stock` when it will not fit in current sellable stock, using the same conditional-UPDATE guard as an adjustment.
+
+The reason is always `manual_hold`. The `reservation_has_owner` CHECK requires a cart or an order for every other reason, and this endpoint has neither — cart and order holds are placed by checkout, inside the transaction that creates them.
+
+Omit `expiresAt` for an open-ended hold. Note that the expiry sweeper only touches holds that carry one, so an open-ended hold stays until a person releases it — which is the point, and also the risk.
+
+| | |
+|---|---|
+| operationId | `adminCreateInventoryReservation` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `sku` | string | **yes** | The item to hold. <br><sub>minLen 1, maxLen 64</sub> |
+| `warehouseId` | string | **yes** | Which warehouse the units are held in. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `quantity` | integer | **yes** | How many units to hold. Must fit inside current sellable stock. <br><sub>max 1000000</sub> |
+| `expiresAt` | string | no | When the hold lapses. Omit for an open-ended hold; the sweeper only releases holds that carry an expiry, so an open-ended one stays until someone releases it. <br><sub>date-time, pattern `^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\`</sub> |
+| `note` | string | no | Why this stock is being held. Recorded in the activity log. <br><sub>maxLen 400</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `201` | The hold. |
+| `400` | Missing or malformed `Idempotency-Key`. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:edit`. |
+| `404` | No such SKU, or no such warehouse. |
+| `409` | That `Idempotency-Key` was used with a different body. |
+| `422` | `insufficient_stock`, `no_inventory_level`, or `expiry_in_past`. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/inventory/reservations/{id}/release`
+
+> Release a stock hold
+
+Stamps `releasedAt` and returns the units to sellable stock in one transaction, under the level’s row lock so the decrement cannot interleave with a checkout reserving the same level.
+
+Releasing an already-released hold is a 422, not a silent success. Decrementing `reservedQty` twice for one hold is exactly how phantom inventory appears — stock the system believes is sellable and the shelf does not have.
+
+Works on any hold, including one placed by a cart or an order. Releasing an order-backed hold does not cancel the order; if that is what you meant, cancel the order and let it release its own stock.
+
+| | |
+|---|---|
+| operationId | `adminReleaseInventoryReservation` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `id` | string | **yes** | Reservation id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `reason` | string | no | Why the hold is being lifted. Recorded in the activity log. <br><sub>maxLen 400</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The hold, after release. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:edit`. |
+| `404` | No such reservation. |
+| `422` | `reservation_already_released`. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
 
 #### `GET /v1/admin/suppliers`
 
@@ -6030,6 +6965,15 @@ Server-paginated, server-filtered, server-sorted. Every knob is an allowlist: `?
 | `422` | Validation failed. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -6077,6 +7021,14 @@ Strict: an unrecognised key is a 422. A silently dropped field is how a price up
 | `422` | Validation failed, or a database constraint refused the row. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
 
 ---
 
@@ -6148,6 +7100,14 @@ Every column by default; narrow it with `?fields=`. An archived or soft-deleted 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `PATCH /v1/admin/suppliers/{id}`
@@ -6200,6 +7160,14 @@ PATCH rather than PUT, deliberately: the console’s form only ever submits the 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/suppliers/bulk`
@@ -6238,11 +7206,7 @@ The route declares `edit`, but each action ALSO declares its own `requires`, che
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `action` | string | **yes** | The action that ran. |
-| `requested` | integer | **yes** | Ids sent. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `matched` | integer | **yes** | Ids that exist and are not already archived. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `updated` | integer | **yes** | Rows actually changed, from the single UPDATE statement. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `skipped` | array<string> | **yes** | Ids that matched nothing. Not an error — rows move. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -6275,22 +7239,7 @@ The resource descriptor: columns, the explicit `fields` spec, searchable and sor
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `slug` | string | **yes** | URL segment and registry key. |
-| `title` | string | **yes** | Screen title. |
-| `description` | string | **yes** | What the resource is. |
-| `group` | string | **yes** | Nav group. |
-| `module` | `dashboard` \| `orders` \| `catalogue` \| `inventory` \| `customers` \| `corporate` \| `delivery` \| `promotions` \| `content` \| `reports` \| `settings` \| `finance` | **yes** | The RBAC module gating every route for this resource. |
-| `permissions` | object | **yes** | operation → the action required, e.g. `{ "delete": "delete" }`. |
-| `columns` | array<string> | **yes** | Every selectable field. The `?fields=` allowlist. |
-| `listColumns` | array<string> | **yes** | Default table projection. |
-| `fields` | array<object> | **yes** | The editable spec. This is what the create/edit form renders. |
-| `searchable` | array<string> | **yes** | Fields `?q=` ORs across. |
-| `sortable` | array<string> | **yes** | Fields `?sort=` accepts. |
-| `defaultSort` | object | **yes** | Applied when `sort` is absent. |
-| `defaultPerPage` | integer | **yes** | Suggested page size. Hard-capped at 100. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `filters` | array<object> | **yes** | Every filterable key, with its permitted operators. |
-| `bulkActions` | array<object> | **yes** | Declared bulk actions. The server re-checks `requires` — hiding the button is not the control. |
-| `deleteBehaviour` | `soft` \| `archived` \| `hard` | **yes** | `soft` stamps `deleted_at`, `archived` flips a status column, `hard` really removes the row. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -6332,6 +7281,15 @@ Server-paginated, server-filtered, server-sorted. Every knob is an allowlist: `?
 | `422` | Validation failed. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -6376,6 +7334,14 @@ Strict: an unrecognised key is a 422. A silently dropped field is how a price up
 | `422` | Validation failed, or a database constraint refused the row. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
 
 ---
 
@@ -6447,6 +7413,14 @@ Every column by default; narrow it with `?fields=`. An archived or soft-deleted 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `PATCH /v1/admin/warehouses/{id}`
@@ -6496,6 +7470,14 @@ PATCH rather than PUT, deliberately: the console’s form only ever submits the 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/warehouses/bulk`
@@ -6534,11 +7516,7 @@ The route declares `edit`, but each action ALSO declares its own `requires`, che
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `action` | string | **yes** | The action that ran. |
-| `requested` | integer | **yes** | Ids sent. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `matched` | integer | **yes** | Ids that exist and are not already archived. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `updated` | integer | **yes** | Rows actually changed, from the single UPDATE statement. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `skipped` | array<string> | **yes** | Ids that matched nothing. Not an error — rows move. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -6571,22 +7549,7 @@ The resource descriptor: columns, the explicit `fields` spec, searchable and sor
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `slug` | string | **yes** | URL segment and registry key. |
-| `title` | string | **yes** | Screen title. |
-| `description` | string | **yes** | What the resource is. |
-| `group` | string | **yes** | Nav group. |
-| `module` | `dashboard` \| `orders` \| `catalogue` \| `inventory` \| `customers` \| `corporate` \| `delivery` \| `promotions` \| `content` \| `reports` \| `settings` \| `finance` | **yes** | The RBAC module gating every route for this resource. |
-| `permissions` | object | **yes** | operation → the action required, e.g. `{ "delete": "delete" }`. |
-| `columns` | array<string> | **yes** | Every selectable field. The `?fields=` allowlist. |
-| `listColumns` | array<string> | **yes** | Default table projection. |
-| `fields` | array<object> | **yes** | The editable spec. This is what the create/edit form renders. |
-| `searchable` | array<string> | **yes** | Fields `?q=` ORs across. |
-| `sortable` | array<string> | **yes** | Fields `?sort=` accepts. |
-| `defaultSort` | object | **yes** | Applied when `sort` is absent. |
-| `defaultPerPage` | integer | **yes** | Suggested page size. Hard-capped at 100. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `filters` | array<object> | **yes** | Every filterable key, with its permitted operators. |
-| `bulkActions` | array<object> | **yes** | Declared bulk actions. The server re-checks `requires` — hiding the button is not the control. |
-| `deleteBehaviour` | `soft` \| `archived` \| `hard` | **yes** | `soft` stamps `deleted_at`, `archived` flips a status column, `hard` really removes the row. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -6643,6 +7606,15 @@ The KPI block in `meta` is computed over the SAME filter set as the rows, not ov
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `GET /v1/admin/orders/{orderId}`
@@ -6680,55 +7652,7 @@ The whole workspace in one call: the frozen buyer, recipient, address, billing a
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Order id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `orderNo` | string | **yes** | `ACH100042`. |
-| `status` | `pending_payment` \| `paid` \| `confirmed` \| `in_production` \| `personalisation_pending` \| `quality_check` \| `packed` \| `ready_to_ship` \| `shipped` \| `out_for_delivery` \| `delivered` \| `failed_delivery` \| `rto` \| `cancelled` \| `refund_initiated` \| `refunded` | **yes** | The sixteen-value operational status. Driven by real events, never by elapsed time. |
-| `paymentStatus` | `pending` \| `paid` \| `failed` \| `partially_refunded` \| `refunded` \| `cod_due` | **yes** | Tracked independently of `status`. |
-| `fulfilmentStatus` | string | **yes** | `unfulfilled`, `partially_fulfilled`, `fulfilled`, `returned`. |
-| `channel` | `website` \| `mobile_app` \| `whatsapp` \| `corporate_portal` \| `phone` \| `admin` | **yes** | Where it came from. |
-| `priority` | `standard` \| `high` \| `vip` | **yes** | `standard`, `high`, `vip`. |
-| `deliveryType` | `standard` \| `scheduled` \| `same_day` \| `midnight` \| `international` | **yes** | A routing property, not a lifecycle stage. |
-| `buyerName` | string | **yes** | Buyer, frozen at order time. |
-| `buyerMobile` | string \| null | **yes** | Buyer mobile. |
-| `recipientName` | string \| null | **yes** | Gift recipient, when different. |
-| `shipCity` | string | **yes** | Destination city. |
-| `shipPincode` | string | **yes** | Destination PIN code. |
-| `totalPaise` | integer | **yes** | Order total in integer paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `amountPaidPaise` | integer | **yes** | Captured so far, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `amountRefundedPaise` | integer | **yes** | Refunded so far, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `itemCount` | integer | **yes** | Total units. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `lineCount` | integer | **yes** | Distinct lines. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `awb` | string \| null | **yes** | Most recent air waybill, or null. |
-| `courierName` | string \| null | **yes** | Most recent courier, or null. |
-| `warehouseId` | string \| null | **yes** | Fulfilment warehouse. |
-| `corporateAccountId` | string \| null | **yes** | Corporate account, when this is a B2B order. |
-| `tags` | array<string> | **yes** | `gift-message`, `personalised`, `fragile`, `high-value`, `corporate`. |
-| `placedAt` | string | **yes** | ISO-8601. |
-| `requestedDeliveryDate` | string \| null | **yes** | `YYYY-MM-DD`, or null. |
-| `deliverySlot` | string \| null | **yes** | Requested slot, or null. |
-| `currency` | string | **yes** | ISO-4217. |
-| `buyerEmail` | string \| null | **yes** | Buyer email. |
-| `recipientMobile` | string \| null | **yes** | Recipient mobile. |
-| `isAnonymousGift` | boolean | **yes** | True when the recipient is not told who sent it. |
-| `giftMessage` | string \| null | **yes** | Gift card message. |
-| `shippingAddress` | object | **yes** | Frozen snapshot. An order is a legal record; its address does not mutate. |
-| `billing` | object | **yes** | Billing snapshot. |
-| `tax` | object | **yes** | Tax determination, frozen — the state codes are themselves snapshots. |
-| `money` | object | **yes** | Every figure in integer paise. |
-| `couponCode` | string \| null | **yes** | Coupon applied at order time. |
-| `internalNotes` | string \| null | **yes** | Accumulated internal notes. Never shown to the customer. |
-| `cancelReason` | string \| null | **yes** | Why it was cancelled. |
-| `cancelledAt` | string \| null | **yes** | ISO-8601, or null. |
-| `confirmedAt` | string \| null | **yes** | ISO-8601, or null. |
-| `shippedAt` | string \| null | **yes** | ISO-8601, or null. |
-| `deliveredAt` | string \| null | **yes** | ISO-8601, or null. |
-| `lines` | array<object> | **yes** | Order lines in display order. |
-| `timeline` | array<object> | **yes** | Append-only, server-generated, oldest first. |
-| `payments` | array<object> | **yes** | Every attempt, not only the successful one. |
-| `refunds` | array<object> | **yes** | Refund ledger for this order. |
-| `shipments` | array<object> | **yes** | A multi-warehouse gift order legitimately has several. |
-| `invoices` | array<object> | **yes** | At most one issued invoice per order. |
-| `availableTransitions` | array<object> | **yes** | Every legal edge from the current status, each flagged with whether YOUR role may take it. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -6778,55 +7702,7 @@ Only pre-shipment orders qualify. Once a courier has the parcel, cancelling is a
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Order id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `orderNo` | string | **yes** | `ACH100042`. |
-| `status` | `pending_payment` \| `paid` \| `confirmed` \| `in_production` \| `personalisation_pending` \| `quality_check` \| `packed` \| `ready_to_ship` \| `shipped` \| `out_for_delivery` \| `delivered` \| `failed_delivery` \| `rto` \| `cancelled` \| `refund_initiated` \| `refunded` | **yes** | The sixteen-value operational status. Driven by real events, never by elapsed time. |
-| `paymentStatus` | `pending` \| `paid` \| `failed` \| `partially_refunded` \| `refunded` \| `cod_due` | **yes** | Tracked independently of `status`. |
-| `fulfilmentStatus` | string | **yes** | `unfulfilled`, `partially_fulfilled`, `fulfilled`, `returned`. |
-| `channel` | `website` \| `mobile_app` \| `whatsapp` \| `corporate_portal` \| `phone` \| `admin` | **yes** | Where it came from. |
-| `priority` | `standard` \| `high` \| `vip` | **yes** | `standard`, `high`, `vip`. |
-| `deliveryType` | `standard` \| `scheduled` \| `same_day` \| `midnight` \| `international` | **yes** | A routing property, not a lifecycle stage. |
-| `buyerName` | string | **yes** | Buyer, frozen at order time. |
-| `buyerMobile` | string \| null | **yes** | Buyer mobile. |
-| `recipientName` | string \| null | **yes** | Gift recipient, when different. |
-| `shipCity` | string | **yes** | Destination city. |
-| `shipPincode` | string | **yes** | Destination PIN code. |
-| `totalPaise` | integer | **yes** | Order total in integer paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `amountPaidPaise` | integer | **yes** | Captured so far, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `amountRefundedPaise` | integer | **yes** | Refunded so far, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `itemCount` | integer | **yes** | Total units. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `lineCount` | integer | **yes** | Distinct lines. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `awb` | string \| null | **yes** | Most recent air waybill, or null. |
-| `courierName` | string \| null | **yes** | Most recent courier, or null. |
-| `warehouseId` | string \| null | **yes** | Fulfilment warehouse. |
-| `corporateAccountId` | string \| null | **yes** | Corporate account, when this is a B2B order. |
-| `tags` | array<string> | **yes** | `gift-message`, `personalised`, `fragile`, `high-value`, `corporate`. |
-| `placedAt` | string | **yes** | ISO-8601. |
-| `requestedDeliveryDate` | string \| null | **yes** | `YYYY-MM-DD`, or null. |
-| `deliverySlot` | string \| null | **yes** | Requested slot, or null. |
-| `currency` | string | **yes** | ISO-4217. |
-| `buyerEmail` | string \| null | **yes** | Buyer email. |
-| `recipientMobile` | string \| null | **yes** | Recipient mobile. |
-| `isAnonymousGift` | boolean | **yes** | True when the recipient is not told who sent it. |
-| `giftMessage` | string \| null | **yes** | Gift card message. |
-| `shippingAddress` | object | **yes** | Frozen snapshot. An order is a legal record; its address does not mutate. |
-| `billing` | object | **yes** | Billing snapshot. |
-| `tax` | object | **yes** | Tax determination, frozen — the state codes are themselves snapshots. |
-| `money` | object | **yes** | Every figure in integer paise. |
-| `couponCode` | string \| null | **yes** | Coupon applied at order time. |
-| `internalNotes` | string \| null | **yes** | Accumulated internal notes. Never shown to the customer. |
-| `cancelReason` | string \| null | **yes** | Why it was cancelled. |
-| `cancelledAt` | string \| null | **yes** | ISO-8601, or null. |
-| `confirmedAt` | string \| null | **yes** | ISO-8601, or null. |
-| `shippedAt` | string \| null | **yes** | ISO-8601, or null. |
-| `deliveredAt` | string \| null | **yes** | ISO-8601, or null. |
-| `lines` | array<object> | **yes** | Order lines in display order. |
-| `timeline` | array<object> | **yes** | Append-only, server-generated, oldest first. |
-| `payments` | array<object> | **yes** | Every attempt, not only the successful one. |
-| `refunds` | array<object> | **yes** | Refund ledger for this order. |
-| `shipments` | array<object> | **yes** | A multi-warehouse gift order legitimately has several. |
-| `invoices` | array<object> | **yes** | At most one issued invoice per order. |
-| `availableTransitions` | array<object> | **yes** | Every legal edge from the current status, each flagged with whether YOUR role may take it. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -6871,8 +7747,7 @@ Attaches the courier to the order’s open (`label_created`) shipment, creating 
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `shipmentId` | string | **yes** | Shipment id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `shipmentNo` | string | **yes** | Internal shipment number. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -6915,9 +7790,7 @@ Idempotent: an order that already has an issued invoice returns that invoice wit
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Invoice id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `invoiceNo` | string | **yes** | Statutory number, at most 16 characters (Rule 46(b)). |
-| `alreadyIssued` | boolean | **yes** | True when this order already had an issued invoice. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -6962,7 +7835,7 @@ Appends to `orders.internal_notes` AND writes a timeline event. The column is th
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `note` | string | **yes** | The note text. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -7012,11 +7885,7 @@ The work is delegated to the payments service, which caps the amount at captured
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `refundId` | string | **yes** | Refund row id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `refundNo` | string | **yes** | Human-facing refund number. |
-| `status` | string | **yes** | `initiated`, `processing` or `failed`. Only a gateway webhook makes it `completed`. |
-| `gatewayRefundId` | string \| null | **yes** | The gateway’s id, when it accepted the request. |
-| `amountPaise` | integer | **yes** | Amount refunded, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -7070,55 +7939,7 @@ Moving to `shipped` creates or reuses the open shipment; pass `courierId` and `a
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Order id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `orderNo` | string | **yes** | `ACH100042`. |
-| `status` | `pending_payment` \| `paid` \| `confirmed` \| `in_production` \| `personalisation_pending` \| `quality_check` \| `packed` \| `ready_to_ship` \| `shipped` \| `out_for_delivery` \| `delivered` \| `failed_delivery` \| `rto` \| `cancelled` \| `refund_initiated` \| `refunded` | **yes** | The sixteen-value operational status. Driven by real events, never by elapsed time. |
-| `paymentStatus` | `pending` \| `paid` \| `failed` \| `partially_refunded` \| `refunded` \| `cod_due` | **yes** | Tracked independently of `status`. |
-| `fulfilmentStatus` | string | **yes** | `unfulfilled`, `partially_fulfilled`, `fulfilled`, `returned`. |
-| `channel` | `website` \| `mobile_app` \| `whatsapp` \| `corporate_portal` \| `phone` \| `admin` | **yes** | Where it came from. |
-| `priority` | `standard` \| `high` \| `vip` | **yes** | `standard`, `high`, `vip`. |
-| `deliveryType` | `standard` \| `scheduled` \| `same_day` \| `midnight` \| `international` | **yes** | A routing property, not a lifecycle stage. |
-| `buyerName` | string | **yes** | Buyer, frozen at order time. |
-| `buyerMobile` | string \| null | **yes** | Buyer mobile. |
-| `recipientName` | string \| null | **yes** | Gift recipient, when different. |
-| `shipCity` | string | **yes** | Destination city. |
-| `shipPincode` | string | **yes** | Destination PIN code. |
-| `totalPaise` | integer | **yes** | Order total in integer paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `amountPaidPaise` | integer | **yes** | Captured so far, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `amountRefundedPaise` | integer | **yes** | Refunded so far, in paise. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `itemCount` | integer | **yes** | Total units. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `lineCount` | integer | **yes** | Distinct lines. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `awb` | string \| null | **yes** | Most recent air waybill, or null. |
-| `courierName` | string \| null | **yes** | Most recent courier, or null. |
-| `warehouseId` | string \| null | **yes** | Fulfilment warehouse. |
-| `corporateAccountId` | string \| null | **yes** | Corporate account, when this is a B2B order. |
-| `tags` | array<string> | **yes** | `gift-message`, `personalised`, `fragile`, `high-value`, `corporate`. |
-| `placedAt` | string | **yes** | ISO-8601. |
-| `requestedDeliveryDate` | string \| null | **yes** | `YYYY-MM-DD`, or null. |
-| `deliverySlot` | string \| null | **yes** | Requested slot, or null. |
-| `currency` | string | **yes** | ISO-4217. |
-| `buyerEmail` | string \| null | **yes** | Buyer email. |
-| `recipientMobile` | string \| null | **yes** | Recipient mobile. |
-| `isAnonymousGift` | boolean | **yes** | True when the recipient is not told who sent it. |
-| `giftMessage` | string \| null | **yes** | Gift card message. |
-| `shippingAddress` | object | **yes** | Frozen snapshot. An order is a legal record; its address does not mutate. |
-| `billing` | object | **yes** | Billing snapshot. |
-| `tax` | object | **yes** | Tax determination, frozen — the state codes are themselves snapshots. |
-| `money` | object | **yes** | Every figure in integer paise. |
-| `couponCode` | string \| null | **yes** | Coupon applied at order time. |
-| `internalNotes` | string \| null | **yes** | Accumulated internal notes. Never shown to the customer. |
-| `cancelReason` | string \| null | **yes** | Why it was cancelled. |
-| `cancelledAt` | string \| null | **yes** | ISO-8601, or null. |
-| `confirmedAt` | string \| null | **yes** | ISO-8601, or null. |
-| `shippedAt` | string \| null | **yes** | ISO-8601, or null. |
-| `deliveredAt` | string \| null | **yes** | ISO-8601, or null. |
-| `lines` | array<object> | **yes** | Order lines in display order. |
-| `timeline` | array<object> | **yes** | Append-only, server-generated, oldest first. |
-| `payments` | array<object> | **yes** | Every attempt, not only the successful one. |
-| `refunds` | array<object> | **yes** | Refund ledger for this order. |
-| `shipments` | array<object> | **yes** | A multi-warehouse gift order legitimately has several. |
-| `invoices` | array<object> | **yes** | At most one issued invoice per order. |
-| `availableTransitions` | array<object> | **yes** | Every legal edge from the current status, each flagged with whether YOUR role may take it. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -7162,10 +7983,7 @@ Results are per order, not all-or-nothing: fifty orders selected on a busy desk 
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `action` | string | **yes** | The action that ran. |
-| `requested` | integer | **yes** | Order ids sent. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `succeeded` | array<string> | **yes** | Orders that changed. |
-| `failed` | array<object> | **yes** | Per-order, not all-or-nothing. Fifty orders selected on a busy desk will include a few that moved since the page loaded, and failing the batch for those would be useless. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -7193,6 +8011,14 @@ Fetch this once and render the "Advance status" menu from it instead of hardcodi
 | `403` | Authenticated, but the staff role lacks `orders:view`. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -7235,6 +8061,15 @@ Server-paginated, server-filtered, server-sorted. Every knob is an allowlist: `?
 | `422` | Validation failed. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -7282,6 +8117,14 @@ Strict: an unrecognised key is a 422. A silently dropped field is how a price up
 | `422` | Validation failed, or a database constraint refused the row. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
 
 ---
 
@@ -7353,6 +8196,14 @@ Every column by default; narrow it with `?fields=`. An archived or soft-deleted 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `PATCH /v1/admin/coupons/{id}`
@@ -7405,6 +8256,14 @@ PATCH rather than PUT, deliberately: the console’s form only ever submits the 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/coupons/bulk`
@@ -7443,11 +8302,7 @@ The route declares `edit`, but each action ALSO declares its own `requires`, che
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `action` | string | **yes** | The action that ran. |
-| `requested` | integer | **yes** | Ids sent. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `matched` | integer | **yes** | Ids that exist and are not already archived. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `updated` | integer | **yes** | Rows actually changed, from the single UPDATE statement. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `skipped` | array<string> | **yes** | Ids that matched nothing. Not an error — rows move. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -7480,22 +8335,7 @@ The resource descriptor: columns, the explicit `fields` spec, searchable and sor
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `slug` | string | **yes** | URL segment and registry key. |
-| `title` | string | **yes** | Screen title. |
-| `description` | string | **yes** | What the resource is. |
-| `group` | string | **yes** | Nav group. |
-| `module` | `dashboard` \| `orders` \| `catalogue` \| `inventory` \| `customers` \| `corporate` \| `delivery` \| `promotions` \| `content` \| `reports` \| `settings` \| `finance` | **yes** | The RBAC module gating every route for this resource. |
-| `permissions` | object | **yes** | operation → the action required, e.g. `{ "delete": "delete" }`. |
-| `columns` | array<string> | **yes** | Every selectable field. The `?fields=` allowlist. |
-| `listColumns` | array<string> | **yes** | Default table projection. |
-| `fields` | array<object> | **yes** | The editable spec. This is what the create/edit form renders. |
-| `searchable` | array<string> | **yes** | Fields `?q=` ORs across. |
-| `sortable` | array<string> | **yes** | Fields `?sort=` accepts. |
-| `defaultSort` | object | **yes** | Applied when `sort` is absent. |
-| `defaultPerPage` | integer | **yes** | Suggested page size. Hard-capped at 100. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `filters` | array<object> | **yes** | Every filterable key, with its permitted operators. |
-| `bulkActions` | array<object> | **yes** | Declared bulk actions. The server re-checks `requires` — hiding the button is not the control. |
-| `deleteBehaviour` | `soft` \| `archived` \| `hard` | **yes** | `soft` stamps `deleted_at`, `archived` flips a status column, `hard` really removes the row. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -7538,6 +8378,15 @@ Server-paginated, server-filtered, server-sorted. Every knob is an allowlist: `?
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/gift-cards`
@@ -7575,6 +8424,14 @@ Strict: an unrecognised key is a 422. A silently dropped field is how a price up
 | `422` | Validation failed, or a database constraint refused the row. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
 
 ---
 
@@ -7646,6 +8503,14 @@ Every column by default; narrow it with `?fields=`. An archived or soft-deleted 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `PATCH /v1/admin/gift-cards/{id}`
@@ -7689,6 +8554,14 @@ PATCH rather than PUT, deliberately: the console’s form only ever submits the 
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
 
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** | One row, projected to the requested `fields`. The primary key is always present. |
+
+</details>
+
 ---
 
 #### `POST /v1/admin/gift-cards/bulk`
@@ -7727,11 +8600,7 @@ The route declares `edit`, but each action ALSO declares its own `requires`, che
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `action` | string | **yes** | The action that ran. |
-| `requested` | integer | **yes** | Ids sent. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `matched` | integer | **yes** | Ids that exist and are not already archived. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `updated` | integer | **yes** | Rows actually changed, from the single UPDATE statement. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `skipped` | array<string> | **yes** | Ids that matched nothing. Not an error — rows move. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -7764,22 +8633,564 @@ The resource descriptor: columns, the explicit `fields` spec, searchable and sor
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `slug` | string | **yes** | URL segment and registry key. |
-| `title` | string | **yes** | Screen title. |
-| `description` | string | **yes** | What the resource is. |
-| `group` | string | **yes** | Nav group. |
-| `module` | `dashboard` \| `orders` \| `catalogue` \| `inventory` \| `customers` \| `corporate` \| `delivery` \| `promotions` \| `content` \| `reports` \| `settings` \| `finance` | **yes** | The RBAC module gating every route for this resource. |
-| `permissions` | object | **yes** | operation → the action required, e.g. `{ "delete": "delete" }`. |
-| `columns` | array<string> | **yes** | Every selectable field. The `?fields=` allowlist. |
-| `listColumns` | array<string> | **yes** | Default table projection. |
-| `fields` | array<object> | **yes** | The editable spec. This is what the create/edit form renders. |
-| `searchable` | array<string> | **yes** | Fields `?q=` ORs across. |
-| `sortable` | array<string> | **yes** | Fields `?sort=` accepts. |
-| `defaultSort` | object | **yes** | Applied when `sort` is absent. |
-| `defaultPerPage` | integer | **yes** | Suggested page size. Hard-capped at 100. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `filters` | array<object> | **yes** | Every filterable key, with its permitted operators. |
-| `bulkActions` | array<object> | **yes** | Declared bulk actions. The server re-checks `requires` — hiding the button is not the control. |
-| `deleteBehaviour` | `soft` \| `archived` \| `hard` | **yes** | `soft` stamps `deleted_at`, `archived` flips a status column, `hard` really removes the row. |
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+
+## Admin purchase returns
+
+#### `GET /v1/admin/purchasing/purchase-returns`
+
+> List purchase returns
+
+Stock going back to a supplier. Filter by status (comma-separated), supplier, warehouse and reason. `?q=` matches the return number.
+
+Unlike purchase orders, all six lifecycle statuses exist in the database for returns — `draft`, `pending_approval`, `approved`, `dispatched`, `completed`, `cancelled` — so no derivation is needed and `status` means exactly what it says.
+
+| | |
+|---|---|
+| operationId | `adminListPurchaseReturns` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `-createdAt` (default), `createdAt`, `returnNo`, `status`, `totalPaise`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Free-text search. <br><sub>minLen 1, maxLen 120</sub> |
+| `status` | string | no | One status or a comma-separated list. <br><sub>maxLen 200</sub> |
+| `supplierId` | string | no | Restrict to one supplier. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `warehouseId` | string | no | Restrict to one warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `reason` | `damaged` \| `wrong_item` \| `quality` \| `excess` \| `expired` \| `other` | no | Restrict to one reason. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of purchase returns. |
+| `400` | An unrecognised status value. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/purchasing/purchase-returns`
+
+> Raise a purchase return
+
+Creates the return in `draft`. **No stock moves** — a return is a request until it is approved and dispatched.
+
+Lines name an `inventoryLevelId`, not a SKU. That is what `purchase_return_lines` stores and it is the right shape: a return takes stock out of one specific warehouse, and naming a SKU would leave the question of which one open. Get the ids from `GET /v1/admin/warehouses/{warehouseId}/inventory`. Every line’s level must be in this return’s warehouse — anything else is 422 `level_warehouse_mismatch`.
+
+Totals are computed from the lines: `subtotalPaise` is the sum of `quantity × unitCostPaise`, and `totalPaise` adds the `taxPaise` you are reversing. Integer paise.
+
+The number comes from the `purchase_return` series added by migration 0003 — `PRET-2026-00001`.
+
+| | |
+|---|---|
+| operationId | `adminCreatePurchaseReturn` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `supplierId` | string | **yes** | Who the goods are going back to. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `warehouseId` | string | **yes** | Where they are leaving from. Every line’s level must be in this warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `goodsReceiptId` | string \| null | no | The receipt being returned against, when it is known. |
+| `reason` | `damaged` \| `wrong_item` \| `quality` \| `excess` \| `expired` \| `other` | **yes** | Why the goods are going back. Fixed vocabulary, enforced by a CHECK. |
+| `note` | string \| null | no | Free text. |
+| `taxPaise` | integer | no | Integer paise. GST to reverse, if any. Zero when the goods were never taxed to us. <br><sub>min 0, max 9007199254740991, default `0`</sub> |
+| `lines` | array<object> | **yes** | At least one line. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `201` | The created return. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:create`. |
+| `404` | No such supplier or warehouse. |
+| `422` | A line naming a level that is not in this warehouse. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/purchasing/purchase-returns/{returnId}`
+
+> Get one purchase return
+
+The return with its lines and `availableActions`. `totalPaise` is the credit expected from the supplier once they receive the goods.
+
+| | |
+|---|---|
+| operationId | `adminGetPurchaseReturn` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `returnId` | string | **yes** | Purchase return id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The purchase return. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `404` | No such purchase return. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/purchasing/purchase-returns/{returnId}/approve`
+
+> Approve a purchase return
+
+Gated on `inventory:approve`. Legal from `draft` and `pending_approval`; stamps `approvedBy` and `approvedAt`. No stock moves — approval authorises the dispatch, it does not perform it.
+
+A return with no lines is refused here rather than at dispatch, because an approved empty document authorises sending nothing back.
+
+| | |
+|---|---|
+| operationId | `adminApprovePurchaseReturn` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `returnId` | string | **yes** | Purchase return id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The approved return. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:approve`. |
+| `404` | No such purchase return. |
+| `422` | Illegal transition, or the return has no lines. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/purchasing/purchase-returns/{returnId}/dispatch`
+
+> Dispatch an approved return to the supplier
+
+`approved` → `dispatched`, and the only edge on a return that touches stock. In ONE transaction, for every line: decrement on-hand through the conditional `UPDATE … WHERE on_hand_qty - reserved_qty >= n`, and write an `outbound` movement with `referenceType: "purchase_return"` carrying the balance that update returned.
+
+Reserved units belong to open carts and orders and cannot be sent back to a supplier, so a level with 10 on hand and 8 reserved can return 2. Short is 422 `insufficient_stock`, naming the SKU, and the whole dispatch rolls back — a return that shipped three of its four lines is a parcel the supplier will dispute and a ledger nobody can reconcile.
+
+Levels are locked in ascending id order, so concurrent returns and transfers queue rather than deadlock.
+
+A dispatched return cannot be cancelled: the stock has left. Requires an `Idempotency-Key`.
+
+| | |
+|---|---|
+| operationId | `adminDispatchPurchaseReturn` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `returnId` | string | **yes** | Purchase return id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The dispatched return. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:edit`. |
+| `404` | No such purchase return. |
+| `422` | Not approved, already dispatched, or `insufficient_stock`. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+
+## Admin purchasing
+
+#### `GET /v1/admin/purchasing/purchase-orders`
+
+> List purchase orders
+
+Filter by stored `status` (comma-separated), supplier, receiving warehouse and expected-date range. `?q=` matches the PO number.
+
+Every row carries **both** `status` and `lifecycle`. `status` is one of the five values the database allows; `lifecycle` is what it means, derived from `status` plus `sentAt`. The one that matters: `status: "sent"` with `sentAt: null` is `lifecycle: "approved"` — approved, but not yet in front of the supplier, and the state in which `incomingQty` has deliberately not been raised. Filter on `sent` and read `lifecycle` to tell the two apart.
+
+| | |
+|---|---|
+| operationId | `adminListPurchaseOrders` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `-createdAt` (default), `createdAt`, `poNo`, `status`, `expectedOn`, `totalPaise`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Free-text search. <br><sub>minLen 1, maxLen 120</sub> |
+| `status` | string | no | One stored status or a comma-separated list. <br><sub>maxLen 200</sub> |
+| `supplierId` | string | no | Restrict to one supplier. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `warehouseId` | string | no | Restrict to one receiving warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `expectedFrom` | string | no | `YYYY-MM-DD`. Inclusive lower bound on `expectedOn`. <br><sub>pattern `^\d{4}-\d{2}-\d{2}$`</sub> |
+| `expectedTo` | string | no | `YYYY-MM-DD`. Inclusive upper bound on `expectedOn`. <br><sub>pattern `^\d{4}-\d{2}-\d{2}$`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of purchase orders. |
+| `400` | An unrecognised status value. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/purchasing/purchase-orders`
+
+> Raise a purchase order
+
+Creates the PO in `draft` with its lines. Nothing is ordered and nothing is expected until it has been approved AND sent.
+
+Every total is recomputed server-side: `lineTotalPaise` is `orderedQty × unitCostPaise` excluding GST, `taxPaise` applies each line’s own basis-point rate to its own subtotal (so a PO mixing 5% and 18% items does not have to pick one), and `totalPaise` is their sum. All integer paise. A client-supplied total is not accepted, let alone trusted.
+
+The number comes from the `purchase_order` document series under a row lock — `PO-2026-02291`.
+
+| | |
+|---|---|
+| operationId | `adminCreatePurchaseOrder` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `supplierId` | string | **yes** | Who we are buying from. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `warehouseId` | string | **yes** | Where the goods will be received. The GRN must name the same warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `expectedOn` | string \| null | no |  |
+| `notes` | string \| null | no | Internal notes. Not sent to the supplier by this API. |
+| `lines` | array<object> | **yes** | At least one line. A PO for nothing is not a document. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `201` | The created purchase order. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:create`. |
+| `404` | No such supplier or warehouse. |
+| `422` | A line naming a stockable that does not exist. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/purchasing/purchase-orders/{poId}`
+
+> Get one purchase order
+
+The document with its lines, every goods receipt posted against it, and `availableActions`.
+
+Per line, `outstandingQty` is `orderedQty - receivedQty`, and `receivedQty` counts **accepted** units only. Rejected goods appear on the receipts, never here — they are going back to the supplier, so the PO is still owed that stock.
+
+Edges marked `documentDriven` (`partially_received`, `received`) have no endpoint: a PO reaches them because a GRN was posted, not because someone clicked. Render them disabled.
+
+| | |
+|---|---|
+| operationId | `adminGetPurchaseOrder` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `poId` | string | **yes** | Purchase order id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The purchase order. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `404` | No such purchase order. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `PATCH /v1/admin/purchasing/purchase-orders/{poId}`
+
+> Edit a draft purchase order
+
+Draft only. Once a PO is approved the lines are the agreement, and once it is sent the supplier has a copy — editing either would leave two different documents with one number. Anything else is 422 `illegal_po_transition`.
+
+Supplying `lines` REPLACES all of them and recomputes every total. Replacement rather than a partial patch because a line carries `receivedQty`, and a patch that reordered or dropped lines would have to invent an answer for what happens to it. In draft it is always zero, so replacement is safe.
+
+| | |
+|---|---|
+| operationId | `adminUpdatePurchaseOrder` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `poId` | string | **yes** | Purchase order id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `expectedOn` | string \| null | no |  |
+| `notes` | string \| null | no | Internal notes, or null to clear. |
+| `lines` | array<object> | no | Replaces ALL lines when given. Totals are recomputed. Draft only. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The updated purchase order. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:edit`. |
+| `404` | No such purchase order. |
+| `422` | Not a draft, or a line naming a stockable that does not exist. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/purchasing/purchase-orders/{poId}/approve`
+
+> Approve a purchase order
+
+Gated on `inventory:approve`, which a Warehouse Manager does not hold — raising a PO and committing the company’s money to it are different jobs.
+
+**Stored as `status: "sent"` with `sentAt` still null**, which reads back as `lifecycle: "approved"`. The `purchase_orders` CHECK allows exactly five statuses and there is no `approved` among them; writing one would fail against the live database rather than model anything. The two columns together carry the distinction the CHECK cannot.
+
+`incomingQty` is deliberately NOT raised here. An approved PO nobody has posted to the supplier is not stock on its way, and counting it would make the reorder engine skip a SKU that was never actually ordered.
+
+| | |
+|---|---|
+| operationId | `adminApprovePurchaseOrder` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `poId` | string | **yes** | Purchase order id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The approved purchase order. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:approve`. |
+| `404` | No such purchase order. |
+| `422` | Illegal transition, or the PO has no lines. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/purchasing/purchase-orders/{poId}/cancel`
+
+> Cancel a purchase order
+
+Legal from draft, approved, sent and partially received. A `received` PO is terminal — goods that arrived cannot be un-received by a status flip; raise a purchase return instead.
+
+Whatever has NOT been received stops being `incomingQty`, because it is no longer coming. Already received stock stays exactly where it is: it is in the warehouse.
+
+The reason is stamped into the PO notes and captured by the automatic audit log.
+
+| | |
+|---|---|
+| operationId | `adminCancelPurchaseOrder` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `poId` | string | **yes** | Purchase order id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `reason` | string | **yes** | Why. Appended to the PO notes and the audit log. <br><sub>minLen 3, maxLen 400</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The cancelled purchase order. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:edit`. |
+| `404` | No such purchase order. |
+| `422` | Already received or already cancelled. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/purchasing/purchase-orders/{poId}/send`
+
+> Mark a purchase order sent to the supplier
+
+Legal only from `lifecycle: "approved"`. Sending an unapproved draft is 422 `po_not_approved`.
+
+Stamps `sentAt` and raises `incomingQty` at the receiving warehouse by each line’s outstanding quantity. This is the moment the order becomes real to the outside world, so it is the moment the warehouse starts expecting stock. `incomingQty` never touches `availableQty`, which is GENERATED from `on_hand - reserved` — ordered stock is expected, not sellable.
+
+Also stamps `lastPurchaseAt` and `lastPurchaseCostPaise` on the matching supplier-catalogue entries, so the next reorder suggestion prices from what we actually paid.
+
+Requires an `Idempotency-Key`: a retried send must not raise `incomingQty` twice.
+
+| | |
+|---|---|
+| operationId | `adminSendPurchaseOrder` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `poId` | string | **yes** | Purchase order id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The sent purchase order. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:edit`. |
+| `404` | No such purchase order. |
+| `422` | Not approved yet, or already sent. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -7808,6 +9219,815 @@ Every generic resource this API serves, filtered to the ones your role can view.
 | `403` | Authenticated, but the staff role lacks `dashboard:view`. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+
+## Admin suppliers
+
+#### `GET /v1/admin/suppliers/{supplierId}/products`
+
+> List what a supplier sells us
+
+The join that makes reordering possible: the supplier’s own SKU, what they charge, their minimum order quantity and their lead time, per stockable.
+
+A catalogue entry targets exactly one of a product variant, a loose hamper item or a packaging material — the same polymorphism `inventory_levels` uses. `?q=` matches our SKU, the title and the supplier’s own code. Archived entries are excluded unless `includeArchived=true`.
+
+| | |
+|---|---|
+| operationId | `adminListSupplierProducts` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `supplierId` | string | **yes** | Supplier id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `sku` (default), `unitCostPaise`, `leadTimeDays`, `moq`, `createdAt`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Free-text search. <br><sub>minLen 1, maxLen 120</sub> |
+| `preferredOnly` | `true` \| `false` | no | `true` returns only the entries marked preferred for their target. |
+| `includeArchived` | `true` \| `false` | no | Include soft-deleted entries. <br><sub>default `"false"`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of catalogue entries. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `404` | No such supplier. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/suppliers/{supplierId}/products`
+
+> Add an item to a supplier’s catalogue
+
+Exactly one of `variantId`, `hamperItemId` or `packagingId`, which the database CHECKs. A second live entry for the same supplier and the same item is 422 `supplier_product_exists` — the reorder engine would have no way to choose between two prices for one thing.
+
+`isPreferred` is capped at ONE per variant by a partial unique index. Setting it here demotes whoever held it, in the same transaction and BEFORE the insert: a partial unique index cannot be deferred, so doing it the other way round collides with a row that is about to change.
+
+| | |
+|---|---|
+| operationId | `adminCreateSupplierProduct` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `supplierId` | string | **yes** | Supplier id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `variantId` | string | no | Product variant this supplier sells. Exactly one target. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `hamperItemId` | string | no | Loose hamper item this supplier sells. Exactly one target. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `packagingId` | string | no | Packaging material this supplier sells. Exactly one target. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `supplierSku` | string \| null | no | What the SUPPLIER calls it. This is what goes on the PO they receive. |
+| `unitCostPaise` | integer | no | Integer paise. What they charge per unit, excluding GST. <br><sub>min 0, max 9007199254740991, default `0`</sub> |
+| `moq` | integer | no | Minimum order quantity. The reorder engine rounds suggestions up to this. <br><sub>min 1, max 1000000, default `1`</sub> |
+| `leadTimeDays` | integer | no | Days from order to delivery. Feeds reorder point = daily consumption × lead time + safety. <br><sub>min 0, max 3650, default `0`</sub> |
+| `isPreferred` | boolean | no | At most ONE preferred supplier per variant, enforced by a partial unique index. Setting this clears the flag on whoever held it, in the same transaction. <br><sub>default `false`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `201` | The created catalogue entry. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:create`. |
+| `404` | No such supplier. |
+| `422` | A duplicate entry, or a target that does not exist. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `PATCH /v1/admin/suppliers/{supplierId}/products/{supplierProductId}`
+
+> Update a supplier catalogue entry
+
+Cost, MOQ, lead time, the supplier’s SKU, and the preferred flag. Promoting one entry demotes the incumbent for that variant.
+
+The TARGET is immutable — changing which item an entry prices is not an edit, it is a different entry, and silently repointing it would rewrite the price history of both.
+
+`archived: true` soft-deletes and clears the preferred flag, freeing the slot in the unique index for a replacement supplier. `archived: false` restores it.
+
+| | |
+|---|---|
+| operationId | `adminUpdateSupplierProduct` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `supplierId` | string | **yes** | Supplier id. The catalogue entry must belong to it. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `supplierProductId` | string | **yes** | Supplier catalogue entry id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `supplierSku` | string \| null | no | Supplier’s own SKU, or null to clear. |
+| `unitCostPaise` | integer | no | Integer paise. New unit cost. <br><sub>min 0, max 9007199254740991</sub> |
+| `moq` | integer | no | Minimum order quantity. <br><sub>min 1, max 1000000</sub> |
+| `leadTimeDays` | integer | no | Lead time in days. <br><sub>min 0, max 3650</sub> |
+| `isPreferred` | boolean | no | Promote or demote. Promotion demotes the incumbent. |
+| `archived` | boolean | no | True soft-deletes the entry, freeing its slot in the unique index. False restores it. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The updated entry. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:edit`. |
+| `404` | No such entry for this supplier. |
+| `422` | Restoring it would collide with a live entry for the same item. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+
+## Admin transfers
+
+#### `GET /v1/admin/transfers`
+
+> List stock transfers
+
+Filter by `status` (comma-separated), by either end (`warehouseId`) or one specific end (`fromWarehouseId` / `toWarehouseId`), and by ETA range. `?q=` matches the transfer number.
+
+The five statuses are the database’s: `requested`, `approved`, `in_transit`, `received`, `cancelled`. The lifecycle people say out loud — draft → approved → dispatched → in transit → received → completed — maps onto them without inventing values: draft is `requested`, dispatched and in-transit are both `in_transit` (dispatch is the event that puts stock in transit), and received and completed are both `received`. Passing `draft` is a 400 that says so.
+
+`inTransitQty` is non-zero only while `in_transit` — that is the quantity currently belonging to neither warehouse.
+
+| | |
+|---|---|
+| operationId | `adminListStockTransfers` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `-createdAt` (default), `createdAt`, `transferNo`, `status`, `etaOn`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Free-text search. <br><sub>minLen 1, maxLen 120</sub> |
+| `status` | string | no | One status or a comma-separated list. <br><sub>maxLen 200</sub> |
+| `fromWarehouseId` | string | no | Source warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `toWarehouseId` | string | no | Destination warehouse. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `warehouseId` | string | no | Either end — source OR destination. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `etaFrom` | string | no | `YYYY-MM-DD`. Inclusive lower bound on ETA. <br><sub>pattern `^\d{4}-\d{2}-\d{2}$`</sub> |
+| `etaTo` | string | no | `YYYY-MM-DD`. Inclusive upper bound on ETA. <br><sub>pattern `^\d{4}-\d{2}-\d{2}$`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of transfers. |
+| `400` | An unrecognised status value. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/transfers`
+
+> Raise a stock transfer
+
+Creates the transfer in `requested` with its lines. **No stock moves.** A transfer is a request until it is approved and dispatched; decrementing here would strand stock the moment somebody raised a transfer and forgot about it.
+
+The number comes from the `stock_transfer` document series under a row lock — `TRF-2026-00061`, never `Math.random()`. Source and destination must differ, and every line names exactly one of `variantId` or `hamperItemId`, both of which the database CHECKs.
+
+Availability is NOT checked here, deliberately: stock levels at approval time are what matter, and a check now would only produce a promise the dispatch cannot keep.
+
+| | |
+|---|---|
+| operationId | `adminCreateStockTransfer` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `fromWarehouseId` | string | **yes** | Source warehouse. Stock leaves here at dispatch. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `toWarehouseId` | string | **yes** | Destination warehouse. Must differ from the source. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `etaOn` | string \| null | no | `YYYY-MM-DD` the goods are expected to land. Informational. |
+| `lines` | array<object> | **yes** | At least one line. A transfer of nothing is not a document. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `201` | The created transfer. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:create`. |
+| `404` | No such source or destination warehouse. |
+| `422` | Same warehouse at both ends, or a line naming a stockable that does not exist. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/transfers/{transferId}`
+
+> Get one stock transfer
+
+The document with its lines, both warehouse names, and `availableActions` — the legal edges from the current status with the side effects each carries. Render the buttons from that list and a disabled button and a 422 can never disagree.
+
+| | |
+|---|---|
+| operationId | `adminGetStockTransfer` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `transferId` | string | **yes** | Stock transfer id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The transfer. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `404` | No such transfer. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/transfers/{transferId}/approve`
+
+> Approve a stock transfer
+
+`requested` → `approved`, gated on `inventory:approve` — which, across the eleven roles, a Warehouse Manager does not hold. Raising a transfer and authorising it are different jobs.
+
+No stock moves. A transfer with no lines is refused here rather than at dispatch, because an approved empty document is a thing nobody can act on.
+
+| | |
+|---|---|
+| operationId | `adminApproveStockTransfer` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `transferId` | string | **yes** | Stock transfer id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The approved transfer. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:approve`. |
+| `404` | No such transfer. |
+| `422` | Illegal transition (`illegal_transfer_transition`), or the transfer has no lines. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/transfers/{transferId}/cancel`
+
+> Cancel a stock transfer
+
+Legal from `requested` and `approved` only — nothing has moved yet, so there is nothing to unwind.
+
+A transfer that is already `in_transit` is refused with 422 `transfer_in_transit_not_cancellable`. The stock has left the source warehouse; "cancelling" it would leave those units on no document and in no warehouse, which is precisely the invisible inventory the movement ledger exists to prevent. Receive it at the destination and raise a transfer back.
+
+| | |
+|---|---|
+| operationId | `adminCancelStockTransfer` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `transferId` | string | **yes** | Stock transfer id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `reason` | string | **yes** | Why. Recorded for the audit trail. <br><sub>minLen 3, maxLen 400</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The cancelled transfer. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:edit`. |
+| `404` | No such transfer. |
+| `422` | Already in transit, already received, or already cancelled. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/transfers/{transferId}/dispatch`
+
+> Dispatch an approved transfer
+
+`approved` → `in_transit`, and the first of the two edges that touch stock. In ONE transaction, for every line: decrement on-hand at the source through a conditional `UPDATE … WHERE on_hand_qty - reserved_qty >= n`, write a `transfer_out` movement carrying the balance that update returned, and raise `incoming_qty` at the destination.
+
+If any line is short the whole dispatch rolls back — no line half-ships. Reserved units belong to open carts and orders and are not available to transfer, so a warehouse with 10 on hand and 8 reserved can send 2. Short is 422 `insufficient_stock`, naming the SKU.
+
+Source levels are locked in ascending id order, so two transfers sharing SKUs queue rather than deadlock.
+
+From here until receipt the stock is in **neither** warehouse’s `availableQty`. That is not a gap in the accounting — it is where the goods actually are.
+
+Requires an `Idempotency-Key`: a retried dispatch must not decrement twice.
+
+| | |
+|---|---|
+| operationId | `adminDispatchStockTransfer` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `transferId` | string | **yes** | Stock transfer id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `note` | string | no | Recorded on each `transfer_out` movement. <br><sub>maxLen 500</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The dispatched transfer. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:edit`. |
+| `404` | No such transfer. |
+| `422` | Illegal transition, no lines, or `insufficient_stock` at the source. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/transfers/{transferId}/receive`
+
+> Receive a transfer at the destination
+
+`in_transit` → `received`, the second stock-moving edge. In ONE transaction, for every line: increment on-hand at the destination, write a `transfer_in` movement with the resulting balance, and clear the `incoming_qty` this transfer raised.
+
+Omit `lines` to receive everything in full, which is the common case. A line may arrive SHORT — the difference is goods lost in transit: they already left the source ledger and are simply never credited to the destination, so both warehouses stay reconciled and the loss is visible as `shortQty`. A line cannot arrive OVER; that is 422 `over_receipt`, which the `transfer_line_no_over_receipt` CHECK would otherwise raise as a constraint error.
+
+Requires an `Idempotency-Key`: a retried receipt must not credit the destination twice.
+
+| | |
+|---|---|
+| operationId | `adminReceiveStockTransfer` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `transferId` | string | **yes** | Stock transfer id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `lines` | array<object> | no | Per-line arrivals. Omit entirely to receive every line in full, which is the common case. Any shortfall is goods lost in transit: they already left the source ledger and are simply never credited to the destination. |
+| `note` | string | no | Recorded on each `transfer_in` movement. <br><sub>maxLen 500</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The received transfer, with per-line `receivedQty` and `shortQty`. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:edit`. |
+| `404` | No such transfer. |
+| `422` | Illegal transition, an unknown line id, or `over_receipt`. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+
+## Admin warehousing
+
+#### `GET /v1/admin/warehouses/{warehouseId}/inventory`
+
+> Stock held in one warehouse
+
+Every `inventory_levels` row for this warehouse, across all three stockable kinds — variants, loose hamper items and packaging materials — with the SKU and title resolved for each.
+
+`availableQty` is a GENERATED column (`on_hand - reserved`), so it cannot drift from the two numbers it is derived from. `incomingQty` is what is expected to arrive here: sent purchase orders plus transfers dispatched to this warehouse. Stock currently in transit appears in `incomingQty` at the destination and in neither warehouse’s `availableQty`, which is correct — it is on a lorry.
+
+`?lowStock=true` returns only levels at or below their reorder point. `?locationId=` narrows to one bin. `inventoryLevelId` is the id transfer and purchase-return lines lock on.
+
+| | |
+|---|---|
+| operationId | `adminListWarehouseInventory` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `warehouseId` | string | **yes** | Warehouse id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `sku` (default), `onHandQty`, `availableQty`, `reservedQty`, `incomingQty`, `lastMovementAt`. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Free-text search. <br><sub>minLen 1, maxLen 120</sub> |
+| `locationId` | string | no | Only levels stored at this bin location. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `lowStock` | `true` \| `false` | no | `true` returns only levels where available ≤ reorder point. |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of inventory levels. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `404` | No such warehouse. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/warehouses/{warehouseId}/locations`
+
+> List bin locations in a warehouse
+
+The zone → rack → shelf → bin tree, flattened and sorted by `path` so the default ordering is also the tree order. Filter by `kind`, by `parentId` for one level of children, or by `pickable` to get only the locations a pick list may route to.
+
+`?q=` matches path, code and name. Archived locations are excluded unless `includeArchived=true` — they are soft-deleted (§96) because the movement ledger still names them.
+
+`depth` and `childCount` come back on every row so the console can render the tree without a second call per node.
+
+| | |
+|---|---|
+| operationId | `adminListWarehouseLocations` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `warehouseId` | string | **yes** | Warehouse id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no | 1-indexed page number. <br><sub>max 9007199254740991, default `1`</sub> |
+| `perPage` | integer | no | Items per page. Maximum 100. <br><sub>max 100, default `25`</sub> |
+| `sort` | string | no | `path` (default), `code`, `kind`, `sortOrder`, `createdAt`. Prefix `-` for descending. <br><sub>maxLen 120</sub> |
+| `q` | string | no | Free-text search. <br><sub>minLen 1, maxLen 120</sub> |
+| `kind` | `zone` \| `rack` \| `shelf` \| `bin` | no | Restrict to one level of the hierarchy. |
+| `parentId` | string | no | Direct children of this location only. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `pickable` | `true` \| `false` | no | `true` for pickable locations only — the ones a pick list may route to. |
+| `includeArchived` | `true` \| `false` | no | Include soft-deleted locations. Off by default. <br><sub>default `"false"`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | A page of locations. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `404` | No such warehouse. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/warehouses/{warehouseId}/locations`
+
+> Create a bin location
+
+`path` is **not** accepted in the body. The service builds it from the parent chain — `A` + `R3` + `S2` + `B7` becomes `A/R3/S2/B7` — because a client-settable materialised path is a denormalisation that has stopped being derived from anything, and the first wrong value sends a picker to the wrong aisle.
+
+A child must sit strictly deeper than its parent. It may skip levels — a zone straight to a bin is a legitimate small studio — but a shelf inside a bin is 422 `invalid_location_depth`. A parent in another warehouse is 422; paths are unique per warehouse, so that would quietly start a second tree.
+
+| | |
+|---|---|
+| operationId | `adminCreateWarehouseLocation` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `warehouseId` | string | **yes** | Warehouse id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `parentId` | string \| null | no | Parent location, or null/omitted for a top-level one. Must be in the same warehouse. |
+| `kind` | `zone` \| `rack` \| `shelf` \| `bin` | **yes** | `zone` → `rack` → `shelf` → `bin`. A child may skip levels but never sit at or above its parent. |
+| `code` | string | **yes** | Segment code, unique within its parent — `B7`. Becomes the last segment of `path`. <br><sub>pattern `^[A-Z0-9][A-Z0-9._-]{0,23}$`</sub> |
+| `name` | string \| null | no | Human label, e.g. `Fragile goods, upper shelf`. |
+| `isPickable` | boolean | no | False for staging, quarantine or overflow areas a pick list must not route to. <br><sub>default `true`</sub> |
+| `sortOrder` | integer | no | Display order among siblings. <br><sub>min 0, max 100000, default `0`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `201` | The created location. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:create`. |
+| `404` | No such warehouse, or no such parent location. |
+| `422` | Duplicate path, illegal depth, an archived parent, or a parent in another warehouse. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `GET /v1/admin/warehouses/{warehouseId}/locations/{locationId}`
+
+> Get one bin location
+
+Includes `childCount` and `stockedLevelCount` — the two numbers that decide whether it can be archived, so the console can disable the button rather than discover the 422.
+
+| | |
+|---|---|
+| operationId | `adminGetWarehouseLocation` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `warehouseId` | string | **yes** | Warehouse id. The location must belong to it. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `locationId` | string | **yes** | Location id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The location. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:view`. |
+| `404` | No such location in this warehouse. |
+| `422` | Validation failed. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `PATCH /v1/admin/warehouses/{warehouseId}/locations/{locationId}`
+
+> Rename or move a bin location
+
+Changing `parentId` or `code` rewrites `path` for this location **and every descendant** in the same transaction. A grandchild left holding the old prefix would be a bin that exists in the database and nowhere in the warehouse.
+
+A `parentId` that sits inside this location’s own subtree is 422 `location_cycle`. The database CHECK only catches the trivial self-parent case; a three-node ring is caught here, before a recursive walk has anything to fail to terminate on.
+
+`kind` is deliberately not editable — turning a rack into a bin while it still has shelves under it is not a rename, it is a restructure, and re-parenting the subtree is the honest way to say so.
+
+| | |
+|---|---|
+| operationId | `adminUpdateWarehouseLocation` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `warehouseId` | string | **yes** | Warehouse id. The location must belong to it. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `locationId` | string | **yes** | Location id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Request body** — `application/json`
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `parentId` | string \| null | no | Move the location under a different parent, or null to make it top-level. The whole subtree’s `path` is rewritten in the same transaction. A parent that is a descendant is rejected. |
+| `code` | string | no | Rename the segment. Rewrites `path` for this location and every descendant. <br><sub>pattern `^[A-Z0-9][A-Z0-9._-]{0,23}$`</sub> |
+| `name` | string \| null | no | Human label, or null to clear. |
+| `isPickable` | boolean | no | Whether pick lists may route here. |
+| `sortOrder` | integer | no | Display order among siblings. <br><sub>min 0, max 100000</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The updated location. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:edit`. |
+| `404` | No such location, or no such new parent. |
+| `422` | A cycle, a duplicate path, an illegal depth, or the location is archived. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
+
+---
+
+#### `POST /v1/admin/warehouses/{warehouseId}/locations/{locationId}/archive`
+
+> Archive a bin location
+
+Soft delete (§96) — the movement ledger still names this location, so the row stays and the partial unique index frees the path for reuse.
+
+Refused while it has live children (they would point at a dead parent) or while inventory levels are still stored there (they would claim a bin that no longer exists). Move the stock first. Archiving an already-archived location is a no-op rather than an error, so a double-click is not a failure.
+
+| | |
+|---|---|
+| operationId | `adminArchiveWarehouseLocation` |
+| Auth | `adminBearerAuth` (staff) |
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `warehouseId` | string | **yes** | Warehouse id. The location must belong to it. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+| `locationId` | string | **yes** | Location id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
+
+**Responses**
+
+| Status | Meaning |
+|---|---|
+| `200` | The archived location, with `archivedAt` set. |
+| `401` | Missing, malformed or expired token. |
+| `403` | Authenticated, but the staff role lacks `inventory:delete`. |
+| `404` | No such location in this warehouse. |
+| `422` | It still has live children or stock stored in it. |
+| `429` | Rate limit exceeded. |
+| `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -7839,8 +10059,7 @@ The twelve modules and nine actions, with labels. `mutating: false` marks `view`
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `modules` | array<object> | **yes** | The twelve modules, in matrix order. |
-| `actions` | array<object> | **yes** | The nine actions, in matrix order. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -7871,9 +10090,7 @@ roleKey → module → actions, read from `role_permissions` — the copy that i
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `roles` | array<string> | **yes** | Role keys, in the order the matrix declares them. |
-| `matrix` | object | **yes** | roleKey → module → actions, read from `role_permissions` — the DATABASE copy, not the compiled-in matrix. If an operator has revoked a grant by hand this shows the revoked state, which is the point of having the copy. |
-| `drift` | array<object> | **yes** | Where the database and the source matrix disagree. Empty is the healthy state. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -7899,6 +10116,15 @@ The eleven system roles with live staff counts and grant counts. Backs the role 
 | `403` | Authenticated, but the staff role lacks `settings:view`. |
 | `429` | Rate limit exceeded. |
 | `500` | Unexpected server error. |
+
+<details><summary>Success payload — the <code>data</code> field of the envelope</summary>
+
+| Field | Type | Always present | Description |
+|---|---|---|---|
+| `data` | array<object> | **yes** |  |
+| `meta` | object | **yes** |  |
+
+</details>
 
 ---
 
@@ -7935,16 +10161,7 @@ The role, its grants in both shapes (a flat `module:action` list and the module-
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `id` | string | **yes** | Role id. <br><sub>uuid, pattern `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-`</sub> |
-| `key` | string | **yes** | Stable machine key, e.g. `operations_manager`. Matches `^[a-z0-9_]+$`. |
-| `name` | string | **yes** | Display name, e.g. `Operations Manager`. |
-| `description` | string \| null | **yes** | What the role is for. |
-| `isSystem` | boolean | **yes** | True for the eleven roles the matrix owns. They cannot be deleted. |
-| `staffCount` | integer | **yes** | Live staff members holding this role. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `grantCount` | integer | **yes** | Number of `module:action` grants. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `permissions` | array<string> | **yes** | Flat `module:action` grants — the exact strings the staff JWT carries. |
-| `grants` | object | **yes** | The same grants pivoted by module, which is the shape the matrix screen renders. |
-| `members` | array<object> | **yes** | Staff members currently holding this role. |
+| `data` | object | **yes** |  |
 
 </details>
 
@@ -7977,9 +10194,7 @@ It therefore also **undoes any manual revocation**. Check `GET /v1/admin/permiss
 
 | Field | Type | Always present | Description |
 |---|---|---|---|
-| `rolesUpserted` | integer | **yes** | Roles inserted or refreshed. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `permissionsGranted` | integer | **yes** | Grants added. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
-| `permissionsRevoked` | integer | **yes** | Grants removed because the matrix no longer has them. <br><sub>min -9007199254740991, max 9007199254740991</sub> |
+| `data` | object | **yes** |  |
 
 </details>
 

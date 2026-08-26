@@ -490,7 +490,9 @@ export async function listCmsSectionItems(sectionIds: string[]): Promise<CmsSect
     .from(cmsSectionItems)
     .where(
       and(
-        sql`${cmsSectionItems.sectionId} = ANY(${sectionIds})`,
+        // `sql.param` + cast: a bare `${sectionIds}` expands to the row
+        // constructor `ANY(($1, $2))`, which Postgres cannot compare to a uuid.
+        sql`${cmsSectionItems.sectionId} = ANY(${sql.param(sectionIds)}::uuid[])`,
         sql`${cmsSectionItems.isVisible}`,
         // Keep tiles that target nothing in particular; drop ones whose target died.
         or(

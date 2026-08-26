@@ -51,6 +51,21 @@ const schema = z.object({
   MSG91_SENDER_ID: z.string().default(''),
   MSG91_OTP_TEMPLATE_ID: z.string().default(''),
 
+  /**
+   * Firebase Admin credentials. BOTH OPTIONAL, deliberately.
+   *
+   * Token verification resolves them lazily (`config/firebase.ts`) in the order
+   * JSON → path → `serviceAccountKey.json` in the working directory, and fails
+   * only when a token is actually presented. Requiring either here would stop
+   * `openapi:generate`, CI and the test suite — none of which verify a token —
+   * from booting at all.
+   *
+   * `FIREBASE_SERVICE_ACCOUNT_JSON` holds the key file's contents verbatim and is
+   * preferred for the Lightsail deploy: nothing to ship to the box.
+   */
+  FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
+  FIREBASE_SERVICE_ACCOUNT_PATH: z.string().optional(),
+
   AWS_REGION: z.string().default('ap-south-1'),
   AWS_ACCESS_KEY_ID: z.string().default(''),
   AWS_SECRET_ACCESS_KEY: z.string().default(''),

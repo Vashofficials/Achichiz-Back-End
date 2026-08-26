@@ -2,10 +2,13 @@ import { Router } from 'express';
 import { defineRoute } from '../../lib/openapi/define-route.js';
 import { accepted, created, noContent, ok } from '../../lib/http.js';
 import * as auth from './auth.service.js';
+import * as firebaseAuth from './firebase-auth.service.js';
 import {
   acceptedResponse,
   authSession,
   customerSummary,
+  firebaseSession,
+  firebaseSignInBody,
   forgotPasswordBody,
   loginBody,
   okStatusResponse,
@@ -169,6 +172,76 @@ defineRoute(authRouter, {
     );
     setRefreshCookie(res, issued.refreshToken);
     return ok(issued.session);
+  },
+});
+
+defineRoute(authRouter, {
+  method: 'post',
+  path: '/v1/auth/firebase',
+  surface: 'storefront',
+  operationId: 'signInWithFirebase',
+  summary: 'Exchange a Firebase ID token for a session',
+  description:
+    '**The primary login path.** Firebase sends the SMS and verifies the six-digit code in the browser; ' +
+    'this endpoint verifies the ID token that results and exchanges it for an Achichiz session.\n\n' +
+    'The server never sees the OTP. Its expiry, attempt counter and rate limits are Google\'s, which is ' +
+    'the reason for moving off MSG91 — the whole class of bugs around hashing and throttling our own ' +
+    'codes goes with them.\n\n' +
+    '**Client flow**\n\n' +
+    '```js\n' +
+    'const conf = await signInWithPhoneNumber(auth, "+91" + mobile, recaptcha);\n' +
+    'const cred = await conf.confirm(code);\n' +
+    'const idToken = await cred.user.getIdToken();\n' +
+    'await fetch("/v1/auth/firebase", {\n' +
+    '  method: "POST", credentials: "include",\n' +
+    '  headers: { "Content-Type": "application/json" },\n' +
+    '  body: JSON.stringify({ idToken }),\n' +
+    '});\n' +
+    '```\n\n' +
+    '**How the account is resolved**, in order: a known `firebase_uid` signs in; otherwise a matching ' +
+    'mobile links Firebase to that existing account; otherwise a matching **verified** email links; ' +
+    'otherwise a new account is created. An **unverified** email never matches — Firebase will mint a ' +
+    'token carrying a self-asserted address, and linking on one would let anyone who types a known ' +
+    'email inherit that customer\'s orders and addresses. It falls through to creating a new account ' +
+    'instead, because a duplicate is an annoyance and a takeover is not.\n\n' +
+    'Every outcome — including refusals — is recorded in `customer_auth_events`.\n\n' +
+    'The returned `accessToken` is what every other endpoint accepts. A Firebase token is accepted ' +
+    'here and nowhere else. ' +
+    `${COOKIE_NOTE}`,
+  tags: ['Auth'],
+  auth: 'public',
+  rateLimit: 'auth',
+  request: { body: firebaseSignInBody },
+  responses: {
+    200: { description: 'Signed in.', schema: firebaseSession },
+    401: {
+      description:
+        'The Firebase token is expired, revoked or malformed — one message for all three, the detail ' +
+        'is in the stable `code`. Also returned for a suspended account.',
+    },
+    422: {
+      description:
+        'The token is valid but unusable: no phone or email (`firebase_no_identifier`), a non-Indian ' +
+        'number (`firebase_unusable_phone`), or the number already belongs to a different sign-in ' +
+        '(`firebase_uid_conflict`).',
+    },
+  },
+  handler: async ({ body, req, res }) => {
+    const result = await firebaseAuth.resolveFirebaseSignIn(
+      body.idToken,
+      firebaseAuth.fingerprintOf(req),
+    );
+    const issued = await auth.issueSessionForCustomer(
+      result.customer,
+      auth.cartTokenOf(req, body.cartToken),
+      auth.requestFingerprint(req),
+    );
+    setRefreshCookie(res, issued.refreshToken);
+    return ok({
+      ...issued.session,
+      isNewAccount: result.isNewAccount,
+      linkedExistingAccount: result.outcome === 'linked',
+    });
   },
 });
 

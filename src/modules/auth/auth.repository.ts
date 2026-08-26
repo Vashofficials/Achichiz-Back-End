@@ -16,9 +16,11 @@
 import { and, desc, eq, gte, isNull, sql } from 'drizzle-orm';
 import { db, type Executor } from '../../config/db.js';
 import {
+  customerAuthEvents,
   customerSessions,
   customers,
   otpChallenges,
+  type NewCustomerAuthEvent,
   type OtpChannel,
   type OtpPurpose,
 } from '../../db/schema/index.js';
@@ -55,6 +57,40 @@ export async function findCustomerByMobile(
     .where(and(eq(customers.mobile, mobile), live))
     .limit(1);
   return rows[0] ?? null;
+}
+
+/**
+ * Look up by Firebase UID — the first branch of the Firebase resolution order.
+ *
+ * `uq_customers_firebase_uid` is partial on `deleted_at IS NULL`, and so is this
+ * query: a soft-deleted customer must not shadow a returning one who gets the
+ * same UID back from Google.
+ */
+export async function findCustomerByFirebaseUid(
+  firebaseUid: string,
+  exec: Executor = db,
+): Promise<CustomerRow | null> {
+  const rows = await exec
+    .select()
+    .from(customers)
+    .where(and(eq(customers.firebaseUid, firebaseUid), live))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/**
+ * Append one row to the authentication trail. Never updates — see the table's
+ * comment in `db/schema/customers.ts`.
+ *
+ * Deliberately takes its own executor default rather than requiring a
+ * transaction: a rejection has no transaction to join, and losing the audit row
+ * for a refusal is exactly the wrong failure mode.
+ */
+export async function insertAuthEvent(
+  values: NewCustomerAuthEvent,
+  exec: Executor = db,
+): Promise<void> {
+  await exec.insert(customerAuthEvents).values(values);
 }
 
 export async function findCustomerById(

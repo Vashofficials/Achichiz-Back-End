@@ -108,7 +108,7 @@ function whereFor(filters: SearchFilters, priceWindow?: { min: number; max: numb
       SELECT 1 FROM product_collections pc
       JOIN collections c ON c.id = pc.collection_id
       WHERE pc.product_id = ${products.id} AND c.kind = 'category'
-        AND c.handle = ANY(${filters.types})
+        AND c.handle = ANY(${sql.param(filters.types)}::text[])
         AND c.status = 'live' AND c.deleted_at IS NULL
     )`);
   }

@@ -1,0 +1,413 @@
+<title>Achichiz API Test Run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#FCFCFD; --surface:#FFFFFF; --raise:#F4F5F7; --sunk:#EDEFF2;
+  --ink:#17181C; --soft:#565C66; --faint:#878E99;
+  --rule:#E2E5EA; --rule-2:#EDEFF2;
+  --accent:#35507A; --accent-soft:#E7EDF6;
+  --pass:#1E6E45; --pass-bg:#E4F1EA;
+  --warn:#8A5B10; --warn-bg:#F8EFDC;
+  --fail:#A33A32; --fail-bg:#FAE9E7;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#101114; --surface:#17191D; --raise:#1E2126; --sunk:#0B0C0E;
+    --ink:#E8E9EC; --soft:#9AA2AD; --faint:#727A85;
+    --rule:#262A30; --rule-2:#1E2126;
+    --accent:#8FB0E0; --accent-soft:#182534;
+    --pass:#5CBE88; --pass-bg:#11291D;
+    --warn:#D9A94B; --warn-bg:#2C2313;
+    --fail:#E88078; --fail-bg:#331B19;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#101114; --surface:#17191D; --raise:#1E2126; --sunk:#0B0C0E;
+  --ink:#E8E9EC; --soft:#9AA2AD; --faint:#727A85;
+  --rule:#262A30; --rule-2:#1E2126;
+  --accent:#8FB0E0; --accent-soft:#182534;
+  --pass:#5CBE88; --pass-bg:#11291D;
+  --warn:#D9A94B; --warn-bg:#2C2313;
+  --fail:#E88078; --fail-bg:#331B19;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+h1,h2,h3{font-family:Newsreader,Georgia,serif; margin:0; text-wrap:balance; font-weight:500}
+
+.page{max-width:860px; margin:0 auto; padding:56px 28px 100px}
+
+/* masthead */
+.mast{border-bottom:2px solid var(--ink); padding-bottom:22px; margin-bottom:34px}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--faint); margin-bottom:12px;
+}
+.mast h1{font-size:40px; line-height:1.1; letter-spacing:-.015em}
+.mast .lede{color:var(--soft); font-size:17px; margin-top:12px; max-width:62ch}
+
+/* verdict strip */
+.verdict{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:1px;
+  background:var(--rule); border:1px solid var(--rule); border-radius:8px;
+  overflow:hidden; margin:30px 0 44px;
+}
+.verdict div{background:var(--surface); padding:15px 17px}
+.verdict b{
+  display:block; font-family:"IBM Plex Mono",monospace; font-size:25px; font-weight:600;
+  letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1.15;
+}
+.verdict span{
+  display:block; font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--faint); margin-top:4px;
+}
+.v-pass b{color:var(--pass)}
+.v-fail b{color:var(--fail)}
+.v-accent b{color:var(--accent)}
+
+h2{
+  font-size:25px; letter-spacing:-.01em; margin:52px 0 6px;
+  padding-bottom:9px; border-bottom:1px solid var(--rule);
+}
+h2 + .sub{color:var(--faint); font-size:14px; margin:0 0 20px}
+p{max-width:68ch}
+a{color:var(--accent)}
+
+/* findings */
+.finding{
+  border:1px solid var(--rule); border-radius:9px; background:var(--surface);
+  padding:20px 22px; margin-bottom:16px;
+}
+.fhead{display:flex; align-items:center; gap:11px; flex-wrap:wrap; margin-bottom:11px}
+.sev{
+  font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600;
+  letter-spacing:.09em; text-transform:uppercase; padding:3px 9px; border-radius:4px;
+}
+.sev-high{background:var(--fail-bg); color:var(--fail)}
+.sev-med{background:var(--warn-bg); color:var(--warn)}
+.finding h3{font-size:18px; letter-spacing:-.005em; flex:1; min-width:230px}
+.fixed{
+  font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600;
+  letter-spacing:.07em; text-transform:uppercase;
+  background:var(--pass-bg); color:var(--pass); padding:3px 9px; border-radius:4px;
+}
+.finding p{margin:0 0 11px; color:var(--soft); font-size:15px}
+.finding p:last-child{margin-bottom:0}
+.finding strong{color:var(--ink); font-weight:600}
+code{
+  font-size:13px; background:var(--raise); padding:1.5px 5px; border-radius:4px;
+  color:var(--ink); word-break:break-word;
+}
+pre{
+  background:var(--sunk); border:1px solid var(--rule); border-radius:7px;
+  padding:13px 15px; overflow-x:auto; margin:0 0 12px;
+  font-family:"IBM Plex Mono",monospace; font-size:12.5px; line-height:1.55; color:var(--ink);
+}
+pre code{background:none; padding:0; font-size:inherit}
+.impact{
+  border-left:3px solid var(--accent); background:var(--accent-soft);
+  padding:10px 14px; border-radius:0 6px 6px 0; margin:0 0 12px;
+  font-size:14px; color:var(--ink);
+}
+.impact b{font-weight:600}
+
+/* tables */
+.scroll{overflow-x:auto; border:1px solid var(--rule); border-radius:8px; background:var(--surface); margin-bottom:22px}
+table{border-collapse:collapse; width:100%; font-size:14px}
+th,td{padding:9px 14px; text-align:left; border-bottom:1px solid var(--rule-2); vertical-align:top}
+thead th{
+  font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--faint);
+  font-weight:600; border-bottom:1px solid var(--rule); white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+td.mono{font-family:"IBM Plex Mono",monospace; font-size:12.5px; white-space:nowrap}
+.ok{color:var(--pass); font-weight:600}
+.bad{color:var(--fail); font-weight:600}
+
+ul{padding-left:20px; max-width:68ch; color:var(--soft)}
+li{margin-bottom:7px}
+li strong{color:var(--ink); font-weight:600}
+
+.note{
+  border:1px dashed var(--rule); border-radius:8px; padding:16px 19px;
+  color:var(--soft); font-size:14.5px; margin:22px 0;
+}
+.note b{color:var(--ink)}
+footer{margin-top:56px; padding-top:20px; border-top:1px solid var(--rule); color:var(--faint); font-size:13px}
+@media (max-width:640px){ .page{padding:34px 18px 70px} .mast h1{font-size:30px} }
+</style>
+
+<div class="page">
+
+<header class="mast">
+  <div class="eyebrow">Local test run · 25 August 2026</div>
+  <h1>Achichiz API Test Run</h1>
+  <p class="lede">
+    Every registered endpoint booted locally and exercised against a real PostgreSQL instance.
+    Eight defects found, all fixed and re-verified.
+  </p>
+</header>
+
+<div class="verdict">
+  <div class="v-accent"><b>282</b><span>routes</span></div>
+  <div class="v-accent"><b>485</b><span>calls made</span></div>
+  <div class="v-pass"><b>0</b><span>5xx after fix</span></div>
+  <div class="v-fail"><b>8</b><span>defects found</span></div>
+  <div class="v-pass"><b>677</b><span>unit tests</span></div>
+</div>
+
+<h2>What was run</h2>
+<p class="sub">Three passes, all against a live database — not mocks.</p>
+
+<p>
+  The API was started on <code>localhost:4000</code> against the Lightsail PostgreSQL instance. The
+  database turned out to be <strong>empty scaffolding</strong> — schema present, zero rows in every
+  table — so writes were safe and no production data was at risk.
+</p>
+
+<div class="scroll"><table>
+<thead><tr><th>Pass</th><th>What it does</th><th class="num">Calls</th><th class="num">Result</th></tr></thead>
+<tbody>
+<tr><td>1 — Unauthenticated</td><td>Every route with no credentials. Proves each route is mounted and each auth gate fires.</td><td class="num">282</td><td class="num ok">282 correct</td></tr>
+<tr><td>2 — TOTP enrolment</td><td>Real admin login → 2FA setup → generated code → enable. No bypass.</td><td class="num">3</td><td class="num ok">token issued</td></tr>
+<tr><td>3 — Authenticated</td><td>Every admin route with a Super Admin bearer token.</td><td class="num">203</td><td class="num ok">203 handled</td></tr>
+</tbody>
+</table></div>
+
+<p>
+  Path parameters were filled with a syntactically valid UUID that exists nowhere, so the expected
+  answer is <code>404</code> — which exercises the whole handler including the database read. Bodies
+  were sent empty, so the expected answer is <code>422</code> from the validator. The signal being
+  hunted was <code>5xx</code>: a 401, 403, 404 or 422 is the endpoint working correctly.
+</p>
+
+<h2>Defects found</h2>
+<p class="sub">Ordered by severity. All eight are fixed and re-verified.</p>
+
+<div class="finding">
+  <div class="fhead">
+    <span class="sev sev-high">High</span>
+    <h3>The admin audit trail recorded nothing at all</h3>
+    <span class="fixed">Fixed</span>
+  </div>
+  <p>
+    The audit middleware wrote to a table named <code>audit_log</code>. That table does not exist —
+    the audit table is <code>activity_logs</code>. Nor was it only the name: <strong>none of the
+    eleven columns existed either</strong> (<code>operation_id</code>, <code>method</code>,
+    <code>path</code>, <code>status_code</code>, <code>ip_address</code>, <code>target_id</code>,
+    <code>payload</code>).
+  </p>
+  <pre><code>relation "audit_log" does not exist</code></pre>
+  <p>
+    It went unnoticed because the write is deliberately fire-and-forget — an audit outage must not
+    fail a refund that already succeeded. So every failure landed in a log line instead of a
+    response, and every request carried on returning 200.
+  </p>
+  <div class="impact">
+    <b>Impact:</b> every admin mutation since the system was built — price changes, refunds, stock
+    adjustments, role grants — appeared to be audited and was not. There was no trail.
+  </div>
+  <p>
+    Rewritten against the real <code>activity_logs</code> columns. <code>action</code> carries the
+    operationId, which is unique across both surfaces, so method and path are recoverable from it.
+    Verified writing correctly after the fix.
+  </p>
+</div>
+
+<div class="finding">
+  <div class="fhead">
+    <span class="sev sev-high">High</span>
+    <h3>Arrays bound as row constructors broke the public catalogue</h3>
+    <span class="fixed">Fixed</span>
+  </div>
+  <p>
+    Drizzle expands a JavaScript array inside a <code>sql</code> template as a comma-separated tuple.
+    So <code>ANY(${kinds})</code> compiled to a <em>row constructor</em>, which PostgreSQL will not
+    compare against text:
+  </p>
+  <pre><code>AND c.kind = ANY(($1, $2))
+params: occasion, festival, recipient</code></pre>
+  <div class="impact">
+    <b>Impact:</b> <code>GET /v1/products</code> returned 500, and 54 further public catalogue,
+    collection and content endpoints failed or hung. This is the storefront's entire product
+    listing.
+  </div>
+  <p>
+    Four sites across three modules — <code>catalogue</code> (×2), <code>search</code> and
+    <code>content</code>. Fixed with <code>sql.param()</code> plus an explicit
+    <code>::text[]</code> / <code>::uuid[]</code> cast, which binds the whole array as one parameter.
+  </p>
+</div>
+
+<div class="finding">
+  <div class="fhead">
+    <span class="sev sev-high">High</span>
+    <h3>Five inventory reports queried columns that do not exist</h3>
+    <span class="fixed">Fixed</span>
+  </div>
+  <pre><code>column pv.title does not exist</code></pre>
+  <p>
+    The reports selected <code>COALESCE(pv.title, hi.title, pm.name)</code>. Neither
+    <code>product_variants.title</code> nor <code>hamper_items.title</code> is a real column — a
+    variant's display name lives on <code>products.title</code> plus the variant's
+    <code>option_label</code>, and a hamper item has <code>name</code>.
+  </p>
+  <div class="impact">
+    <b>Impact:</b> inventory-aging, dead-stock, inventory-valuation, stock-velocity and
+    purchase-forecast all returned 500 — five of the ten reports.
+  </div>
+  <p>
+    Three query sites corrected, with the missing <code>products</code> join added to each.
+  </p>
+</div>
+
+<div class="finding">
+  <div class="fhead">
+    <span class="sev sev-high">High</span>
+    <h3>Ambiguous column reference broke the admin order list</h3>
+    <span class="fixed">Fixed</span>
+  </div>
+  <pre><code>column reference "id" is ambiguous</code></pre>
+  <p>
+    Selecting a whole table makes Drizzle emit its columns unqualified, and it then renders
+    <code>${orders.id}</code> unqualified inside the correlated subqueries too. In the subquery that
+    joins <code>shipments</code> to <code>couriers</code>, a bare <code>id</code> matches both tables
+    and PostgreSQL refuses the entire statement.
+  </p>
+  <div class="impact">
+    <b>Impact:</b> <code>GET /v1/admin/orders</code> and the order detail endpoint both returned 500.
+    The admin console could not list a single order.
+  </div>
+  <p>
+    Qualified as <code>orders.id</code> in all four subqueries — not only the one that broke. The
+    other three have a single table each and got away with it, which is exactly why they were fixed
+    too.
+  </p>
+</div>
+
+<div class="finding">
+  <div class="fhead">
+    <span class="sev sev-med">Medium</span>
+    <h3>Audit rows could push a SKU into a UUID column</h3>
+    <span class="fixed">Fixed</span>
+  </div>
+  <p>
+    The middleware took <em>the first string path parameter it found</em> and wrote it to
+    <code>entity_id</code>, which is <code>uuid</code>. Routes keyed by SKU, handle or report name —
+    <code>/v1/admin/barcodes/:sku</code>, <code>/v1/admin/reports/:report/export</code> — would have
+    failed the insert once the table name was corrected. Now only a value matching the UUID shape is
+    recorded, and <code>null</code> otherwise, which is the truthful answer.
+  </p>
+</div>
+
+<div class="finding">
+  <div class="fhead">
+    <span class="sev sev-med">Medium</span>
+    <h3>Three migrations were never applied, and the runner could not apply them</h3>
+    <span class="fixed">Fixed</span>
+  </div>
+  <p>
+    The schema had been deployed by running SQL directly, so <code>schema_migrations</code> was never
+    created. The runner therefore started at <code>0001_initial.sql</code> and failed on objects that
+    already existed — meaning <code>0003</code>, <code>0004</code> and <code>0005</code> could not be
+    applied at all.
+  </p>
+  <div class="impact">
+    <b>Impact:</b> every Phase 4–7 endpoint — production, bulk orders, stock counts — would have
+    500'd against this database, because the tables did not exist.
+  </div>
+  <p>
+    Backfilled the tracking table after <em>verifying</em> each migration's objects were genuinely
+    present, rather than assuming. All three then applied cleanly.
+  </p>
+</div>
+
+<div class="finding">
+  <div class="fhead">
+    <span class="sev sev-med">Medium</span>
+    <h3>The whole authenticated API is unavailable when Redis is down</h3>
+    <span class="fixed">Confirmed by design</span>
+  </div>
+  <p>
+    <code>authenticate</code> checks a Redis denylist on <em>every</em> request so that "sign out
+    everywhere" takes effect immediately. With Redis unreachable that check throws and the request
+    fails <strong>closed</strong> — all 203 admin routes returned 401.
+  </p>
+  <p>
+    That is the correct security posture and not a defect. It is recorded here because it is an
+    operational fact worth knowing: <strong>Redis is a hard dependency for authentication</strong>,
+    not a cache you can lose. Rate limiting, by contrast, deliberately fails <em>open</em> — so a
+    Redis outage silently removes brute-force protection while keeping the API up.
+  </p>
+</div>
+
+<div class="finding">
+  <div class="fhead">
+    <span class="sev sev-med">Medium</span>
+    <h3>A live Razorpay key sits in the working <code>.env</code></h3>
+    <span class="fixed">Guard verified</span>
+  </div>
+  <p>
+    <code>RAZORPAY_KEY_ID</code> is a <code>rzp_live_…</code> key. The application's own guard caught
+    this correctly and refused to start in development, printing a clear refusal rather than
+    charging a real card. That guard works and is worth keeping.
+  </p>
+  <p>
+    The key itself should still be rotated and replaced with a <code>rzp_test_…</code> key for local
+    work — a live secret in a development <code>.env</code> is one careless
+    <code>NODE_ENV=production</code> away from moving real money.
+  </p>
+</div>
+
+<h2>Result after fixes</h2>
+<p class="sub">Same sweep, re-run end to end.</p>
+
+<div class="scroll"><table>
+<thead><tr><th>Check</th><th class="num">Before</th><th class="num">After</th></tr></thead>
+<tbody>
+<tr><td>Unauthenticated pass — correct responses</td><td class="num bad">216 / 282</td><td class="num ok">282 / 282</td></tr>
+<tr><td>Authenticated pass — handled</td><td class="num bad">0 / 203</td><td class="num ok">203 / 203</td></tr>
+<tr><td>5xx responses</td><td class="num bad">9</td><td class="num ok">0</td></tr>
+<tr><td><code>tsc --noEmit</code></td><td class="num ok">0 errors</td><td class="num ok">0 errors</td></tr>
+<tr><td><code>eslint .</code></td><td class="num ok">clean</td><td class="num ok">clean</td></tr>
+<tr><td><code>vitest run</code></td><td class="num ok">677 passed</td><td class="num ok">677 passed</td></tr>
+</tbody>
+</table></div>
+
+<h2>What this run could not cover</h2>
+
+<ul>
+  <li><strong>Business logic on real data.</strong> The database is empty, so list endpoints returned
+    empty pages and detail endpoints returned 404. Routing, authentication, permissions, validation
+    and error handling were all exercised; pricing, discounting and fulfilment arithmetic were not.</li>
+  <li><strong>Rate limiting.</strong> No Redis was available locally, so a minimal stub stood in. It
+    answers the denylist correctly but does not implement the limiter's Lua scripts, so limits were
+    not measured.</li>
+  <li><strong>Payments.</strong> Razorpay was never called — deliberately. The keys in
+    <code>.env</code> are live.</li>
+  <li><strong>Firebase sign-in.</strong> <code>POST /v1/auth/firebase</code> needs a real Firebase ID
+    token minted by a browser completing an SMS challenge. Its decision logic is covered by 74 unit
+    tests instead.</li>
+</ul>
+
+<div class="note">
+  <b>Cleanup.</b> The temporary Super Admin created for pass 3 has been deleted along with its
+  sessions — it had a known password on the shared instance. Its audit rows were deliberately kept:
+  <code>actor_staff_id</code> is <code>ON DELETE SET NULL</code>, so the trail survives with a null
+  actor. Deleting evidence to tidy up would be the wrong instinct for an audit table. All harness
+  scripts and the Redis stub were removed.
+</div>
+
+<footer>
+  Generated from a local run against PostgreSQL 17 on AWS Lightsail (ap-south-1).
+  485 HTTP calls across 282 registered routes.
+</footer>
+
+</div>

@@ -184,6 +184,27 @@ async function mergeGuestCart(customerId: string, cartToken: string | undefined)
   }
 }
 
+/**
+ * Issue a session for a customer some OTHER flow has already authenticated.
+ *
+ * The Firebase path resolves the customer itself — Google verified the OTP, and
+ * `firebase-auth.service.ts` decided which row that identity maps to. What it
+ * must not do is mint its own session: rotation, the denylist and the cart merge
+ * all live here, and a second implementation of them is a second set of bugs.
+ *
+ * Deliberately takes an already-loaded row rather than an id: the caller has just
+ * written to it, and re-reading would open a window where a row that was linked
+ * one moment is signed into in a different state the next.
+ */
+export async function issueSessionForCustomer(
+  customer: repo.CustomerRow,
+  cartToken: string | undefined,
+  fingerprint: { ip: string | null; deviceLabel: string | null },
+): Promise<IssuedSession> {
+  await mergeGuestCart(customer.id, cartToken);
+  return issueSession(customer, fingerprint);
+}
+
 /* ----------------------------------------------------------------- signup */
 
 export async function signup(

@@ -15,12 +15,53 @@ import { logger } from '../config/logger.js';
  * Raw SQL rather than Drizzle on purpose — this middleware must not depend on
  * the schema module graph, so it keeps working during migrations that touch it.
  */
+/**
+ * The audit table is `activity_logs`, not `audit_log`.
+ *
+ * This statement previously named `audit_log` with eleven columns that do not
+ * exist anywhere in the schema (`operation_id`, `method`, `path`, `status_code`,
+ * `ip_address`, `target_id`, `payload`). Every write therefore failed with
+ * `relation "audit_log" does not exist` — and because the write is deliberately
+ * fire-and-forget, it failed into a log line instead of a response. The API
+ * looked audited and recorded nothing.
+ *
+ * Column mapping worth stating:
+ *  - `action` carries the operationId. operationIds are unique across both
+ *    surfaces, so METHOD and PATH are recoverable from it and lose nothing by
+ *    having no column of their own.
+ *  - `actor_label` is NOT NULL and the request only knows the staff id, so the
+ *    name is fetched inline. The fallback keeps the insert alive if the staff
+ *    row is gone.
+ *  - `entity_id` is UUID. See `uuidish` below — the old code put ANY string
+ *    param here, so `/v1/admin/barcodes/:sku` would have tried to store a SKU
+ *    in a uuid column.
+ */
 const INSERT = `
-  INSERT INTO audit_log
-    (actor_staff_id, actor_role, operation_id, method, path, status_code,
-     request_id, ip_address, user_agent, target_id, payload)
-  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+  INSERT INTO activity_logs
+    (actor_kind, actor_staff_id, actor_label, actor_role,
+     action, entity_type, entity_id, after_data, changed_fields,
+     ip, user_agent, request_id)
+  VALUES (
+    'staff', $1,
+    COALESCE((SELECT full_name FROM staff_users WHERE id = $1), 'staff ' || $1::text),
+    $2, $3, $4, $5, $6, $7, $8, $9, $10)
 `;
+
+const UUID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuidish = (v: unknown): v is string => typeof v === 'string' && UUID_SHAPE.test(v);
+
+/**
+ * `/v1/admin/purchase-orders/:id/receive` → `purchase-orders`.
+ *
+ * `entity_type` is NOT NULL and is what the audit screen groups by, so it has to
+ * be something, and the resource segment is the only honest answer available
+ * without a per-route declaration.
+ */
+function entityTypeOf(path: string): string {
+  const after = path.replace(/^\/v1\/admin\//, '').replace(/^\/v1\//, '');
+  const segment = after.split('/').find((s) => s && !s.startsWith(':'));
+  return segment ?? 'admin';
+}
 
 /** Never persist these, even inside an audit payload. */
 const SENSITIVE = new Set([
@@ -57,28 +98,32 @@ export function auditMutation(operationId: string): RequestHandler {
       if (!auth || auth.kind !== 'staff') return;
 
       const params = (req.valid.params ?? {}) as Record<string, unknown>;
-      const targetId =
-        typeof params.id === 'string'
-          ? params.id
-          // Type predicate rather than an assertion — this actually narrows,
-          // where `as string | undefined` only silenced the compiler.
-          : (Object.values(params).find((v): v is string => typeof v === 'string') ?? null);
+      // Only a UUID may go into `entity_id`. A route keyed by SKU, handle or
+      // report name has no uuid to record, and null is the truthful answer —
+      // the old code took the first string it found and would have failed the
+      // insert on `/v1/admin/barcodes/:sku`.
+      const entityId = uuidish(params.id)
+        ? params.id
+        : (Object.values(params).find(uuidish) ?? null);
 
-      const payload = scrub(req.valid.body ?? {});
+      const body = (req.valid.body ?? {}) as Record<string, unknown>;
+      const payload = scrub(body);
+      const changedFields = Object.keys(body);
+
+      const routePath = (req.route as { path?: string } | undefined)?.path ?? req.path;
 
       pool
         .query(INSERT, [
           auth.staffId,
           auth.role,
           operationId,
-          req.method,
-          (req.route as { path?: string } | undefined)?.path ?? req.path,
-          res.statusCode,
-          req.requestId,
+          entityTypeOf(routePath),
+          entityId,
+          JSON.stringify(payload),
+          changedFields,
           req.ip ?? null,
           req.headers['user-agent'] ?? null,
-          targetId,
-          JSON.stringify(payload),
+          req.requestId,
         ])
         .catch((err: unknown) => {
           // Loud, because a silent audit gap is worse than a failed request.

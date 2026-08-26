@@ -122,7 +122,12 @@ export const documentNumberSeries = pgTable(
     uniqueIndex('document_number_series_doc_type_scope_key_key').on(t.docType, t.scopeKey),
     check(
       'document_number_series_doc_type_check',
-      sql`doc_type IN ('order','invoice','credit_note','refund','return','exchange','purchase_order','goods_receipt','stock_transfer','quotation')`,
+      // The SQL migration is authoritative and this list must be kept in step
+      // with it. `purchase_return`, `stock_count` and `production` were added by
+      // 0003; `campaign` by 0004. Both widenings were missing here until 0004 —
+      // harmless, because nothing reads this list at runtime, but it made the
+      // schema file lie about what the database accepts.
+      sql`doc_type IN ('order','invoice','credit_note','refund','return','exchange','purchase_order','goods_receipt','stock_transfer','quotation','purchase_return','stock_count','production','campaign')`,
     ),
     check('document_number_series_pad_width_check', sql`pad_width BETWEEN 1 AND 12`),
     check('document_number_series_next_value_check', sql`next_value > 0`),

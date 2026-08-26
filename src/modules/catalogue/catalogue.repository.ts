@@ -245,7 +245,11 @@ const sameDayCapable = sql<boolean>`EXISTS (
 )`;
 
 const handlesOfKind = (kinds: string[] | null): SQL<string[]> => {
-  const filter = kinds ? sql`AND c.kind = ANY(${kinds})` : sql``;
+  // `sql.param` + an explicit cast, NOT a bare `${kinds}`. Drizzle expands a JS
+  // array inside a template as a comma-separated tuple, so `ANY(${kinds})`
+  // compiles to `ANY(($1, $2))` — a ROW constructor, which Postgres refuses to
+  // compare against text. `sql.param` binds the whole array as one parameter.
+  const filter = kinds ? sql`AND c.kind = ANY(${sql.param(kinds)}::text[])` : sql``;
   return sql<string[]>`coalesce((
     SELECT array_agg(DISTINCT c.handle)
     FROM product_collections pc
@@ -403,7 +407,7 @@ function productWhere(filters: ProductFilters): SQL {
       SELECT 1 FROM product_collections pc
       JOIN collections c ON c.id = pc.collection_id
       WHERE pc.product_id = ${products.id} AND c.kind = 'category'
-        AND c.handle = ANY(${filters.types})
+        AND c.handle = ANY(${sql.param(filters.types)}::text[])
         AND c.status = 'live' AND c.deleted_at IS NULL
     )`);
   }

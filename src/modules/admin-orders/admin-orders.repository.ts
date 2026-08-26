@@ -44,21 +44,35 @@ export type AdminOrderListRow = {
   courierName: string | null;
 };
 
+/**
+ * The outer order id, written out in full: `orders.id`, never `${orders.id}`.
+ *
+ * Selecting a whole table (`.select({ order: orders })`) makes Drizzle emit the
+ * columns UNQUALIFIED — `select "id", "order_no", …` — and it then renders
+ * `${orders.id}` unqualified inside these correlated subqueries too. In
+ * `latestCourier`, which joins `shipments s` to `couriers c`, a bare `id`
+ * matches both and Postgres refuses the whole statement with
+ * `column reference "id" is ambiguous`. The other three subqueries have only
+ * one table each and got away with it, which is exactly why this is qualified
+ * everywhere rather than only where it happened to break.
+ */
+const outerOrderId = sql.raw('orders.id');
+
 const itemCount = sql<number>`coalesce((
   SELECT sum(ol.quantity)::int FROM order_lines ol
-   WHERE ol.order_id = ${orders.id} AND ol.fulfilment_status <> 'cancelled'), 0)`;
+   WHERE ol.order_id = ${outerOrderId} AND ol.fulfilment_status <> 'cancelled'), 0)`;
 
 const lineCount = sql<number>`coalesce((
-  SELECT count(*)::int FROM order_lines ol WHERE ol.order_id = ${orders.id}), 0)`;
+  SELECT count(*)::int FROM order_lines ol WHERE ol.order_id = ${outerOrderId}), 0)`;
 
 const latestAwb = sql<string | null>`(
   SELECT s.awb FROM shipments s
-   WHERE s.order_id = ${orders.id} AND s.awb IS NOT NULL
+   WHERE s.order_id = ${outerOrderId} AND s.awb IS NOT NULL
    ORDER BY s.created_at DESC LIMIT 1)`;
 
 const latestCourier = sql<string | null>`(
   SELECT c.name FROM shipments s JOIN couriers c ON c.id = s.courier_id
-   WHERE s.order_id = ${orders.id}
+   WHERE s.order_id = ${outerOrderId}
    ORDER BY s.created_at DESC LIMIT 1)`;
 
 /* ------------------------------------------------------------------ list */

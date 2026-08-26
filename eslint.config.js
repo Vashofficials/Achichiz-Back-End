@@ -7,7 +7,7 @@ export default tseslint.config(
     // eslint.config.js is not in tsconfig's `include` (it is JS, and adding it
     // would drag allowJs into the build), so the type-aware parser cannot resolve
     // it. Lint it with the untyped rules only by excluding it here.
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'src/db/migrations/**', 'eslint.config.js'],
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', 'src/db/migrations/**', 'eslint.config.js', 'ecosystem.config.cjs'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

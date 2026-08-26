@@ -158,6 +158,41 @@ export const authSession = z.object({
   customer: customerSummary.describe('The signed-in customer.'),
 });
 
+/* ---------------------------------------------------------- firebase auth */
+
+export const firebaseSignInBody = z.object({
+  idToken: z
+    .string()
+    .min(100)
+    .max(4_096)
+    .describe(
+      'The Firebase ID token, from `await userCredential.user.getIdToken()` after ' +
+        '`signInWithPhoneNumber(...).confirm(code)` completes on the client.\n\n' +
+        'This is NOT the six-digit SMS code and never should be — the code is verified by Firebase, in ' +
+        'the browser, and the server never sees it. Sending the raw code here would mean re-implementing ' +
+        'the verification we moved to Firebase to be rid of.\n\n' +
+        'Single use: exchange it once for an Achichiz session, then send the returned `accessToken` to ' +
+        'every other endpoint. Firebase tokens are not accepted anywhere else in this API.',
+    ),
+  cartToken: cartTokenField,
+});
+
+export const firebaseSession = authSession.extend({
+  isNewAccount: z
+    .boolean()
+    .describe(
+      'True when this sign-in created the account. Route to onboarding on `true` — it is the only ' +
+        'reliable signal, because a Firebase phone sign-in has no separate signup step.',
+    ),
+  linkedExistingAccount: z
+    .boolean()
+    .describe(
+      'True when an existing customer gained Firebase as a new credential — someone who signed up by ' +
+        'password or MSG91 OTP and has now used Firebase for the first time. Their orders and addresses ' +
+        'are intact; nothing was migrated.',
+    ),
+});
+
 export const acceptedResponse = z.object({
   status: z
     .literal('sent')

@@ -44,6 +44,7 @@ import { staffUsers } from './identity.js';
 import { productVariants, hamperItems } from './catalogue.js';
 import { packagingMaterials } from './delivery.js';
 import { carts, orders } from './orders.js';
+import { corporateCampaigns } from './corporate.js';
 
 /* ------------------------------------------------------------- warehouses */
 
@@ -177,8 +178,17 @@ export const inventoryReservations = pgTable(
     orderId: uuid('order_id').references((): AnyPgColumn => orders.id, {
       onDelete: 'cascade',
     }),
+    /**
+     * Added by 0004. A corporate bulk hold: set for campaign reservations, NULL
+     * for carts, orders and manual holds. It is what makes a bulk hold
+     * releasable — without it the only reason an admin hold could carry was
+     * `manual_hold`, which back-references nothing.
+     */
+    campaignId: uuid('campaign_id').references((): AnyPgColumn => corporateCampaigns.id, {
+      onDelete: 'cascade',
+    }),
     reason: text('reason').notNull().default('cart').$type<ReservationReason>(),
-    /** NULL for order-backed reservations. */
+    /** NULL for order-backed reservations, and for campaign holds (0004 CHECK). */
     expiresAt: timestamp('expires_at', { withTimezone: true }),
     releasedAt: timestamp('released_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -191,15 +201,26 @@ export const inventoryReservations = pgTable(
       .on(t.inventoryLevelId)
       .where(sql`released_at IS NULL`),
     index('idx_reservations_order').on(t.orderId).where(sql`order_id IS NOT NULL`),
+    index('idx_reservations_campaign')
+      .on(t.campaignId)
+      .where(sql`campaign_id IS NOT NULL AND released_at IS NULL`),
     check('inventory_reservations_quantity_check', sql`quantity > 0`),
     check(
       'inventory_reservations_reason_check',
       sql`reason IN ('cart','order','manual_hold','quotation')`,
     ),
+    // Widened by 0004. Before it, `reason = 'quotation'` satisfied the reason
+    // CHECK and violated this one for every possible row — an enum value no row
+    // could ever hold.
     check(
       'reservation_has_owner',
-      sql`cart_id IS NOT NULL OR order_id IS NOT NULL OR reason = 'manual_hold'`,
+      sql`cart_id IS NOT NULL OR order_id IS NOT NULL OR campaign_id IS NOT NULL OR reason = 'manual_hold'`,
     ),
+    // A campaign hold mislabelled `cart` would be swept by the cart-expiry job,
+    // silently releasing stock a corporate customer has been quoted on.
+    check('reservation_campaign_reason', sql`campaign_id IS NULL OR reason IN ('quotation','manual_hold')`),
+    // A bulk hold is released explicitly or by fulfilment, never by a timer.
+    check('reservation_campaign_no_expiry', sql`campaign_id IS NULL OR expires_at IS NULL`),
     check(
       'reservation_cart_expires',
       sql`reason <> 'cart' OR expires_at IS NOT NULL`,
@@ -214,6 +235,17 @@ export const inventoryReservations = pgTable(
  * A nightly job asserts SUM(quantity_delta) = inventory_levels.on_hand_qty.
  */
 
+/**
+ * These two lists MUST match the CHECK constraints on `stock_movements`.
+ *
+ * The SQL migration is authoritative — widening the constraint there does not
+ * widen the type here, and the drift is silent in the wrong direction: the
+ * database happily accepts a value TypeScript refuses to construct, so a whole
+ * movement kind quietly becomes unreachable from the application.
+ *
+ * The last five movement types and last three reference types were added by
+ * migration 0003_inventory.sql. Anything added later must be added in both places.
+ */
 export const STOCK_MOVEMENT_TYPES = [
   'inbound',
   'outbound',
@@ -222,6 +254,12 @@ export const STOCK_MOVEMENT_TYPES = [
   'transfer_in',
   'damage',
   'return_in',
+  // 0003 — production, counts, and unexplained loss/gain
+  'production',
+  'raw_material_consumption',
+  'stock_count',
+  'loss',
+  'found',
 ] as const;
 export type StockMovementType = (typeof STOCK_MOVEMENT_TYPES)[number];
 
@@ -233,6 +271,10 @@ export const STOCK_REFERENCE_TYPES = [
   'return',
   'adjustment',
   'import',
+  // 0003
+  'production_order',
+  'stock_count',
+  'purchase_return',
 ] as const;
 export type StockReferenceType = (typeof STOCK_REFERENCE_TYPES)[number];
 

@@ -23,6 +23,7 @@ export * from './identity.js';
 export * from './customers.js';
 export * from './catalogue.js';
 export * from './inventory.js';
+export * from './inventory-ops.js';
 export * from './orders.js';
 export * from './payments.js';
 export * from './corporate.js';
