@@ -79,14 +79,29 @@ async function guardAdminDocs(req: Request, _res: Response, next: NextFunction):
 }
 
 const UI_OPTIONS: swaggerUi.SwaggerUiOptions = {
-  explorer: false,
+  explorer: true,
   swaggerOptions: {
+    urls: [
+      { url: '/openapi/storefront.json', name: '1-Storefront-API' },
+      { url: '/openapi/admin.json', name: '2-Admin-API' }
+    ],
     persistAuthorization: true,
     tryItOutEnabled: true,
     displayRequestDuration: true,
     docExpansion: 'none',
     filter: true,
     defaultModelsExpandDepth: 1,
+    requestInterceptor: (req: any) => {
+      // If an access_token is in the URL, append it to the spec fetch so it can pass guardAdminDocs
+      if (typeof (globalThis as any).window !== 'undefined' && req.url.includes('/openapi/admin.json')) {
+        const urlParams = new (globalThis as any).URLSearchParams((globalThis as any).window.location.search);
+        const token = urlParams.get('access_token');
+        if (token) {
+          req.url += (req.url.includes('?') ? '&' : '?') + 'access_token=' + token;
+        }
+      }
+      return req;
+    },
   },
 };
 
@@ -104,48 +119,20 @@ export function mountSwagger(app: Express): void {
   });
 
   // ---- UIs -------------------------------------------------------------
-  // `serveFiles` per surface, not the shared `serve` middleware — the shared one
-  // would make whichever UI mounted last win for both paths.
+  // We use the `urls` option in Swagger UI to provide a topbar dropdown.
+  // The specs are fetched via XHR from the /openapi/*.json endpoints above.
   app.use(
-    '/docs/storefront',
+    '/docs',
     (_req: Request, res: Response, next: NextFunction) => {
       res.set('X-Robots-Tag', 'noindex');
       next();
     },
-    swaggerUi.serveFiles(storefrontDoc, UI_OPTIONS),
-    swaggerUi.setup(storefrontDoc, {
+    swaggerUi.serve,
+    swaggerUi.setup(undefined, {
       ...UI_OPTIONS,
-      customSiteTitle: 'Achichiz Storefront API',
+      customSiteTitle: 'Achichiz API',
     }),
   );
 
-  app.use(
-    '/docs/admin',
-    guardAdminDocs,
-    (_req: Request, res: Response, next: NextFunction) => {
-      res.set('X-Robots-Tag', 'noindex');
-      next();
-    },
-    swaggerUi.serveFiles(adminDoc, UI_OPTIONS),
-    swaggerUi.setup(adminDoc, {
-      ...UI_OPTIONS,
-      customSiteTitle: 'Achichiz Admin API',
-    }),
-  );
-
-  // Convenience index so `/docs` is not a 404.
-  app.get('/docs', (_req, res) => {
-    res.type('html').send(
-      `<!doctype html><meta charset="utf-8"><title>Achichiz API</title>
-       <style>body{font:16px/1.6 system-ui;margin:4rem auto;max-width:34rem;padding:0 1rem}
-       a{color:#8a6a3b}code{background:#f4f4f5;padding:.1rem .3rem;border-radius:3px}</style>
-       <h1>Achichiz API</h1>
-       <ul>
-         <li><a href="/docs/storefront">Storefront API</a> — public + customer</li>
-         <li><a href="/docs/admin">Admin API</a> — staff only, requires <code>settings:view</code></li>
-       </ul>`,
-    );
-  });
-
-  logger.info('swagger mounted at /docs/storefront and /docs/admin');
+  logger.info('swagger mounted at /docs with topbar dropdown');
 }
