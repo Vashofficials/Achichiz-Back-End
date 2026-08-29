@@ -73,13 +73,13 @@ const PAGE_META: JsonSchema = {
  * Wrap a declared response schema in the response envelope.
  *
  * Routes declare the PAYLOAD — `productSummary`, or `z.array(productSummary)` —
- * because that is the interesting part and repeating `{ data: … }` in 141 route
- * declarations would be noise nobody maintains. The envelope itself is applied
- * uniformly by `lib/http.ts` at runtime, so it is applied uniformly here too.
+ * because that is the interesting part and repeating `{ type, result }` in 200+
+ * route declarations would be noise nobody maintains. The envelope itself is
+ * applied uniformly by `lib/http.ts` at runtime, so it is applied uniformly here.
  *
  * Without this the published contract was wrong for EVERY endpoint: a generated
  * client typed `listProducts` as returning a bare array when it actually returns
- * `{ data, meta }`, and every `.data` access in the frontend would have been a
+ * `{ type, result, meta }`, and every access in the frontend would have been a
  * type error against a spec that looked authoritative. The route-coverage test
  * proves an endpoint EXISTS; nothing proved its response SHAPE — this is the gap
  * that closes it.
@@ -88,37 +88,47 @@ function envelope(payload: JsonSchema): JsonSchema {
   const isList = payload.type === 'array';
   return {
     type: 'object',
-    required: isList ? ['data', 'meta'] : ['data'],
-    properties: isList ? { data: payload, meta: PAGE_META } : { data: payload },
+    required: isList ? ['type', 'result', 'meta'] : ['type', 'result'],
+    properties: {
+      type: { type: 'string', example: 'success' },
+      result: payload,
+      ...(isList ? { meta: PAGE_META } : {}),
+    },
     additionalProperties: false,
   };
 }
 
 const PROBLEM_DETAILS: JsonSchema = {
   type: 'object',
-  description: 'RFC 9457 Problem Details. Every error from this API has this shape.',
-  required: ['type', 'title', 'status', 'code'],
+  description: 'Standard error envelope. Every error from this API has this shape.',
+  required: ['type', 'result'],
   properties: {
-    type: { type: 'string', format: 'uri', example: 'https://api.achichiz.com/errors/validation-failed' },
-    title: { type: 'string', example: 'Validation failed' },
-    status: { type: 'integer', example: 422 },
-    code: {
-      type: 'string',
-      description: 'Stable machine-readable error code. Frontends switch on this, not on `title`.',
-      example: 'validation_failed',
-    },
-    detail: { type: 'string', example: '2 fields are invalid.' },
-    instance: { type: 'string', example: '/v1/checkout/orders' },
-    requestId: { type: 'string', example: '01JK8QP2XM9TZ4W7B3C5D6E7F8' },
-    errors: {
-      type: 'array',
-      items: {
-        type: 'object',
-        required: ['path', 'code', 'message'],
-        properties: {
-          path: { type: 'string', example: 'shippingAddress.pincode' },
-          code: { type: 'string', example: 'invalid_string' },
-          message: { type: 'string', example: 'Pincode must be 6 digits' },
+    type: { type: 'string', example: 'error' },
+    result: {
+      type: 'object',
+      required: ['title', 'status', 'code'],
+      properties: {
+        title: { type: 'string', example: 'Validation failed' },
+        status: { type: 'integer', example: 422 },
+        code: {
+          type: 'string',
+          description: 'Stable machine-readable error code. Frontends switch on this, not on `title`.',
+          example: 'validation_failed',
+        },
+        detail: { type: 'string', example: '2 fields are invalid.' },
+        instance: { type: 'string', example: '/v1/checkout/orders' },
+        requestId: { type: 'string', example: '01JK8QP2XM9TZ4W7B3C5D6E7F8' },
+        errors: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['path', 'code', 'message'],
+            properties: {
+              path: { type: 'string', example: 'shippingAddress.pincode' },
+              code: { type: 'string', example: 'invalid_string' },
+              message: { type: 'string', example: 'Pincode must be 6 digits' },
+            },
+          },
         },
       },
     },
@@ -127,10 +137,9 @@ const PROBLEM_DETAILS: JsonSchema = {
 
 const problemResponse = (description: string) => ({
   description,
-  content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+  content: { 'application/json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
 });
 
-/** Errors every route can return, so each declaration does not have to repeat them. */
 function implicitErrorResponses(route: RegisteredRoute): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   if (route.request.params || route.request.query || route.request.body) {
@@ -144,8 +153,6 @@ function implicitErrorResponses(route: RegisteredRoute): Record<string, unknown>
       `Authenticated, but the staff role lacks \`${route.permission.module}:${route.permission.action}\`.`,
     );
   }
-  out['429'] = problemResponse('Rate limit exceeded.');
-  out['500'] = problemResponse('Unexpected server error.');
   return out;
 }
 
@@ -182,13 +189,22 @@ function operationFor(route: RegisteredRoute): Record<string, unknown> {
     tags: route.tags,
     ...(route.deprecated ? { deprecated: true } : {}),
     ...(parameters.length ? { parameters } : {}),
-    ...(route.request.body
+    ...(route.request.body || route.request.bodyContentType === 'multipart/form-data'
       ? {
           requestBody: {
             required: true,
             content: {
               [route.request.bodyContentType ?? 'application/json']: {
-                schema: toJson(route.request.body, 'input'),
+                schema: (() => {
+                  const s = route.request.body ? toJson(route.request.body, 'input') : { type: 'object', properties: {} };
+                  if (route.request.bodyContentType === 'multipart/form-data' && s.type === 'object') {
+                    s.properties = {
+                      ...(typeof s.properties === 'object' && s.properties !== null ? s.properties : {}),
+                      file: { type: 'string', format: 'binary' },
+                    };
+                  }
+                  return s;
+                })(),
               },
             },
           },
@@ -212,8 +228,8 @@ const SURFACE_META: Record<Surface, { title: string; description: string }> = {
       '',
       '**Money is always an integer number of paise.** `"total": 149900` means ₹1,499.00.',
       '',
-      'Errors follow RFC 9457 (`application/problem+json`) and carry a stable `code`.',
-      'Switch on `code`, never on `title`.',
+      'Errors return a consistent `{ type: "error", result: {...} }` format carrying a stable `code`.',
+      'Switch on `result.code`, never on `title`.',
     ].join('\n'),
   },
   admin: {

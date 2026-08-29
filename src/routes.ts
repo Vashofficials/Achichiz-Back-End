@@ -24,6 +24,7 @@ import { adminStockCountsRouter } from './modules/admin-stock-counts/admin-stock
 import { adminBarcodesRouter } from './modules/admin-barcodes/admin-barcodes.routes.js';
 import { adminBulkOrdersRouter } from './modules/admin-bulk-orders/admin-bulk-orders.routes.js';
 import { adminOrdersRouter } from './modules/admin-orders/admin-orders.routes.js';
+import { mediaRouter } from './modules/media/media.routes.js';
 
 /**
  * The single mount point.
@@ -77,6 +78,7 @@ apiRouter.use(adminStockCountsRouter);
 apiRouter.use(adminBarcodesRouter);
 apiRouter.use(adminBulkOrdersRouter);
 apiRouter.use(adminReportsRouter);   // phase 7 — the 10 report aggregates
+apiRouter.use(mediaRouter);
 
 // ── webhooks (raw body, signature verified) ──────────────────────────────
 // Mounted last: app.ts installs the raw-body parser on /v1/webhooks before the

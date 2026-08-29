@@ -24,13 +24,13 @@ function baseSchema(field: FieldSpec): ZodType {
     case 'reference':
       return z.uuid();
     case 'number':
-      return z.number().int().min(field.min ?? -2_147_483_648).max(field.max ?? 2_147_483_647);
+      return z.coerce.number().int().min(field.min ?? -2_147_483_648).max(field.max ?? 2_147_483_647);
     case 'money':
       // Integer paise. A float here is how ₹1,499.00 becomes ₹1,498.9999999998.
-      return z.number().int().min(field.min ?? 0).max(field.max ?? Number.MAX_SAFE_INTEGER);
+      return z.coerce.number().int().min(field.min ?? 0).max(field.max ?? Number.MAX_SAFE_INTEGER);
     case 'percent':
       // Basis points: 250 = 2.5%.
-      return z.number().int().min(field.min ?? 0).max(field.max ?? 1_000_000);
+      return z.coerce.number().int().min(field.min ?? 0).max(field.max ?? 1_000_000);
     case 'date':
       return z.string().regex(ISO_DATE, 'Use `YYYY-MM-DD`.');
     case 'datetime':
@@ -38,7 +38,10 @@ function baseSchema(field: FieldSpec): ZodType {
         .string()
         .refine((v) => !Number.isNaN(Date.parse(v)), 'Use an ISO-8601 timestamp.');
     case 'boolean':
-      return z.boolean();
+      return z.union([
+        z.boolean(),
+        z.enum(['true', 'false', '1', '0']).transform((v) => v === 'true' || v === '1')
+      ]);
     case 'enum':
       return field.options && field.options.length > 0
         ? z.enum([...field.options] as [string, ...string[]])

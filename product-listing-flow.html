@@ -1,0 +1,318 @@
+<title>Product Listing Request Path</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+:root{
+  --ground:#FBFBFC; --surface:#FFFFFF; --raise:#F3F4F6; --sunk:#ECEEF1;
+  --ink:#14171B; --soft:#565D67; --faint:#89909A;
+  --rule:#E3E6EA; --rule-2:#EEF0F3;
+  --accent:#A96518; --accent-soft:#F8EEDF;
+  --cool:#2F5E8C; --cool-soft:#E6EEF7;
+  --warn:#A33A32; --warn-bg:#FAE9E7;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1114; --surface:#171A1E; --raise:#1E2228; --sunk:#0A0C0E;
+    --ink:#E6E9ED; --soft:#98A0AA; --faint:#6F7882;
+    --rule:#252A31; --rule-2:#1C2127;
+    --accent:#E0A64A; --accent-soft:#2C2113;
+    --cool:#7FA8D4; --cool-soft:#152332;
+    --warn:#E88078; --warn-bg:#331B19;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1114; --surface:#171A1E; --raise:#1E2228; --sunk:#0A0C0E;
+  --ink:#E6E9ED; --soft:#98A0AA; --faint:#6F7882;
+  --rule:#252A31; --rule-2:#1C2127;
+  --accent:#E0A64A; --accent-soft:#2C2113;
+  --cool:#7FA8D4; --cool-soft:#152332;
+  --warn:#E88078; --warn-bg:#331B19;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Source Sans 3",ui-sans-serif,system-ui,sans-serif;
+  font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+code,.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+h1,h2,h3{font-family:Archivo,ui-sans-serif,system-ui,sans-serif; margin:0; text-wrap:balance}
+
+.page{max-width:900px; margin:0 auto; padding:54px 26px 96px}
+
+.mast{border-bottom:1px solid var(--rule); padding-bottom:22px; margin-bottom:14px}
+.eyebrow{
+  font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--faint); margin-bottom:10px;
+}
+.mast h1{font-size:34px; font-weight:700; letter-spacing:-.02em; line-height:1.12}
+.mast .lede{color:var(--soft); font-size:17px; margin-top:11px; max-width:64ch}
+
+h2{font-size:21px; font-weight:600; letter-spacing:-.01em; margin:46px 0 4px}
+h2 + .sub{color:var(--faint); font-size:14px; margin:0 0 18px}
+p{max-width:70ch; color:var(--soft)}
+p strong{color:var(--ink); font-weight:600}
+
+figure{margin:0 0 10px}
+figure svg{max-width:100%; height:auto; display:block}
+.figwrap{
+  border:1px solid var(--rule); border-radius:10px; background:var(--surface);
+  padding:22px 18px; overflow-x:auto;
+}
+figcaption{
+  color:var(--faint); font-size:13.5px; margin-top:14px; padding-top:12px;
+  border-top:1px solid var(--rule-2); max-width:74ch;
+}
+figcaption b{color:var(--soft); font-weight:600}
+
+code{font-size:13.5px; background:var(--raise); padding:1.5px 5px; border-radius:4px; color:var(--ink)}
+pre{
+  background:var(--sunk); border:1px solid var(--rule); border-radius:8px;
+  padding:14px 16px; overflow-x:auto; margin:0 0 18px;
+  font-family:"JetBrains Mono",monospace; font-size:12.5px; line-height:1.6;
+}
+pre code{background:none; padding:0; font-size:inherit}
+
+.scroll{overflow-x:auto; border:1px solid var(--rule); border-radius:9px; background:var(--surface); margin-bottom:20px}
+table{border-collapse:collapse; width:100%; font-size:14px}
+th,td{padding:9px 14px; text-align:left; border-bottom:1px solid var(--rule-2); vertical-align:top}
+thead th{
+  font-size:10.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--faint);
+  font-weight:600; border-bottom:1px solid var(--rule); white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none}
+td.mono{font-family:"JetBrains Mono",monospace; font-size:12.5px; white-space:nowrap}
+td.src{font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--soft)}
+
+.flag{
+  border:1px solid var(--warn); border-left-width:3px; border-radius:0 9px 9px 0;
+  background:var(--warn-bg); padding:16px 19px; margin:24px 0;
+}
+.flag h3{font-size:16px; font-weight:600; margin-bottom:7px; color:var(--ink)}
+.flag p{color:var(--ink); font-size:14.5px; margin:0 0 9px; opacity:.9}
+.flag p:last-child{margin-bottom:0}
+
+.legend{display:flex; gap:20px; flex-wrap:wrap; margin-top:14px; font-size:12.5px; color:var(--soft)}
+.legend span{display:flex; align-items:center; gap:7px}
+.swatch{width:22px; height:0; border-top:2px solid currentColor}
+.sw-accent{color:var(--accent)}
+.sw-ink{color:var(--soft)}
+.sw-dash{color:var(--soft); border-top-style:dashed}
+footer{margin-top:52px; padding-top:18px; border-top:1px solid var(--rule); color:var(--faint); font-size:13px}
+@media (max-width:640px){ .page{padding:32px 16px 64px} .mast h1{font-size:26px} }
+</style>
+
+<div class="page">
+
+<header class="mast">
+  <div class="eyebrow">GET /v1/products · operationId listProducts</div>
+  <h1>Product Listing Request Path</h1>
+  <p class="lede">
+    What actually happens between the storefront asking for a page of products and Postgres
+    answering — traced from <code>catalogue.routes.ts</code> through to the SQL.
+  </p>
+</header>
+
+<h2>The request path</h2>
+<p class="sub">Public, read-only, cached for 60 seconds.</p>
+
+<div class="figwrap">
+<figure>
+<svg viewBox="0 0 940 330" role="img" aria-label="A request flows through query validation into listProducts, which builds a cache key and asks Redis. A cache hit returns immediately. A miss, or an unreachable Redis, falls through to Postgres, whose rows are mapped and written back to the cache before the response.">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+    <marker id="ar-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+
+  <g fill="none" stroke="currentColor" stroke-width="1.4" opacity=".75">
+    <rect x="16"  y="48" width="92"  height="52" rx="6"/>
+    <rect x="136" y="48" width="136" height="52" rx="6"/>
+    <rect x="300" y="48" width="136" height="52" rx="6"/>
+    <rect x="464" y="48" width="120" height="52" rx="6"/>
+  </g>
+
+  <rect x="612" y="48" width="116" height="52" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+  <rect x="744" y="126" width="180" height="56" rx="6" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".75"/>
+
+  <g fill="none" stroke="currentColor" stroke-width="1.4" opacity=".75">
+    <rect x="232" y="232" width="210" height="52" rx="6"/>
+    <rect x="478" y="232" width="170" height="52" rx="6"/>
+    <rect x="684" y="232" width="120" height="52" rx="6"/>
+  </g>
+
+  <g font-family="JetBrains Mono, monospace" font-size="11.5" fill="currentColor" text-anchor="middle">
+    <text x="62"  y="78">client</text>
+    <text x="204" y="71">validate</text>
+    <text x="204" y="86">query schema</text>
+    <text x="368" y="71">listProducts()</text>
+    <text x="368" y="86">filters + sort</text>
+    <text x="524" y="71">cacheKey()</text>
+    <text x="524" y="86">deterministic</text>
+    <text x="670" y="71" fill="var(--accent)">Redis GET</text>
+    <text x="670" y="86" fill="var(--accent)">cat:v1:products</text>
+    <text x="337" y="253">Postgres</text>
+    <text x="337" y="269">rows + count, in parallel</text>
+    <text x="563" y="253">toProductSummary()</text>
+    <text x="563" y="269">derive stock state</text>
+    <text x="744" y="253">Redis SET</text>
+    <text x="744" y="269">EX 60</text>
+    <text x="834" y="150">200</text>
+    <text x="834" y="166">{ data, meta }</text>
+  </g>
+
+  <g fill="none" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar)" opacity=".75">
+    <line x1="108" y1="74" x2="130" y2="74"/>
+    <line x1="272" y1="74" x2="294" y2="74"/>
+    <line x1="436" y1="74" x2="458" y2="74"/>
+    <line x1="584" y1="74" x2="606" y2="74"/>
+    <line x1="442" y1="258" x2="472" y2="258"/>
+    <line x1="648" y1="258" x2="678" y2="258"/>
+  </g>
+
+  <polyline points="728,74 800,74 800,120" fill="none" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#ar-a)"/>
+  <text x="812" y="96" font-family="JetBrains Mono, monospace" font-size="11" fill="var(--accent)">hit</text>
+
+  <polyline points="670,100 670,168 337,168 337,226" fill="none" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar)" opacity=".75"/>
+  <text x="512" y="161" font-family="JetBrains Mono, monospace" font-size="11" fill="currentColor" text-anchor="middle" opacity=".8">miss — or Redis unreachable</text>
+
+  <polyline points="760,232 760,188" fill="none" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar)" opacity=".75"/>
+
+  <line x1="16" y1="200" x2="16" y2="200" stroke="none"/>
+</svg>
+<figcaption>
+  <b>The cache is read-through and fails open.</b> A Redis error on the GET is caught, logged and
+  ignored — the request continues to Postgres rather than 500ing. The same is true of the write
+  back. So the amber path is an optimisation the endpoint can lose entirely without breaking, which
+  is exactly the opposite of how Redis behaves for <em>authentication</em>, where a failed denylist
+  check rejects the request.
+</figcaption>
+</figure>
+<div class="legend">
+  <span><i class="swatch sw-accent"></i> cache fast path</span>
+  <span><i class="swatch sw-ink"></i> request flow</span>
+</div>
+</div>
+
+<h2>What a page of 25 products costs</h2>
+<p class="sub">Every merchandising field is derived at read time. None is a stored column.</p>
+
+<div class="figwrap">
+<figure>
+<svg viewBox="0 0 880 300" role="img" aria-label="One request issues two SQL statements in parallel. The rows query returns 25 products, each of which triggers nine correlated subqueries, giving roughly 225 subquery executions. The count query re-evaluates the same predicates over the whole table.">
+  <defs>
+    <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <rect x="16" y="120" width="176" height="60" rx="6" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".75"/>
+  <g fill="none" stroke="currentColor" stroke-width="1.4" opacity=".75">
+    <rect x="286" y="34"  width="212" height="58" rx="6"/>
+    <rect x="286" y="208" width="212" height="58" rx="6"/>
+  </g>
+  <rect x="592" y="34" width="264" height="58" rx="6" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.6"/>
+  <rect x="592" y="208" width="264" height="58" rx="6" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".75"/>
+
+  <g font-family="JetBrains Mono, monospace" font-size="11.5" fill="currentColor" text-anchor="middle">
+    <text x="104" y="145">repo.listProducts()</text>
+    <text x="104" y="162">Promise.all([ … ])</text>
+    <text x="392" y="58">rows query</text>
+    <text x="392" y="75">LIMIT 25 OFFSET n</text>
+    <text x="392" y="232">count query</text>
+    <text x="392" y="249">count(*) — no LIMIT</text>
+    <text x="724" y="52" fill="var(--accent)">9 correlated subqueries</text>
+    <text x="724" y="69" fill="var(--accent)">per row</text>
+    <text x="724" y="226">same WHERE predicates,</text>
+    <text x="724" y="243">re-evaluated over every</text>
+    <text x="724" y="260">matching product</text>
+  </g>
+
+  <g fill="none" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar2)" opacity=".75">
+    <polyline points="192,140 240,140 240,63 280,63"/>
+    <polyline points="192,160 240,160 240,237 280,237"/>
+    <line x1="498" y1="63" x2="586" y2="63"/>
+    <line x1="498" y1="237" x2="586" y2="237"/>
+  </g>
+
+  <text x="542" y="53" font-family="JetBrains Mono, monospace" font-size="11" fill="currentColor" text-anchor="middle" opacity=".8">×25</text>
+
+  <text x="724" y="112" font-family="JetBrains Mono, monospace" font-size="12" fill="var(--accent)" text-anchor="middle" font-weight="700">≈ 225 subquery executions per page</text>
+</svg>
+<figcaption>
+  <b>Both statements run against the same predicate set.</b> Filters like <code>inStock</code> and
+  <code>sameDay</code> are themselves correlated subqueries over <code>inventory_levels</code>, so
+  the count query pays for them across every matching product, not just the 25 returned. This is
+  the reason the 60-second cache exists.
+</figcaption>
+</figure>
+</div>
+
+<h2>Where each field comes from</h2>
+<p class="sub">All computed in the SELECT — there is no denormalised product table.</p>
+
+<div class="scroll"><table>
+<thead><tr><th>Response field</th><th>Derived from</th></tr></thead>
+<tbody>
+<tr><td class="mono">pricePaise</td><td class="src">min(price_paise) over active product_variants</td></tr>
+<tr><td class="mono">compareAtPaise</td><td class="src">the cheapest active variant's compare_at_paise</td></tr>
+<tr><td class="mono">stock · stockQty</td><td class="src">sum(available_qty) over inventory_levels ⋈ product_variants</td></tr>
+<tr><td class="mono">sameDay</td><td class="src">EXISTS over inventory_levels ⋈ warehouses where supports_same_day</td></tr>
+<tr><td class="mono">collectionHandles</td><td class="src">array_agg over product_collections ⋈ collections</td></tr>
+<tr><td class="mono">occasionHandles</td><td class="src">the same, narrowed to kind ∈ (occasion, festival)</td></tr>
+<tr><td class="mono">recipientHandles</td><td class="src">the same, narrowed to kind = recipient</td></tr>
+<tr><td class="mono">type · typeLabel</td><td class="src">the primary category collection, preferring primary_collection_id</td></tr>
+<tr><td class="mono">image</td><td class="src">lowest-position row of product_media ⋈ media_assets</td></tr>
+<tr><td class="mono">bestSeller</td><td class="src">badge_override, else membership of the best-sellers collection</td></tr>
+<tr><td class="mono">isNew</td><td class="src">badge_override, else published_at within 30 days</td></tr>
+<tr><td class="mono">ratingAvg · reviewCount</td><td class="src">product_stats satellite</td></tr>
+<tr><td class="mono">designer</td><td class="src">the one real LEFT JOIN in the query</td></tr>
+</tbody>
+</table></div>
+
+<h2>Visibility, enforced in one place</h2>
+
+<p>
+  Every product query starts from the same predicate, so no route can forget it:
+</p>
+
+<pre><code>products.status = 'active'
+  AND products.deleted_at IS NULL
+  AND products.published_at IS NOT NULL
+  AND products.published_at &lt;= now()</code></pre>
+
+<p>
+  The last clause is the one worth noticing: a future <code>published_at</code> keeps a product
+  invisible until its own launch time, with no scheduled job to run and nothing to forget to flip.
+</p>
+
+<div class="flag">
+  <h3>Worth a decision: <code>stockQty</code> is public</h3>
+  <p>
+    The response carries both <code>stock</code> (<code>in</code> / <code>low</code> /
+    <code>out</code>) and <code>stockQty</code>, the exact available unit count summed across
+    warehouses. It is in the published schema for both <code>productSummary</code> and
+    <code>productVariant</code>, so it reaches any unauthenticated caller.
+  </p>
+  <p>
+    That contradicts the rule the codebase states for itself, in
+    <code>admin-inventory.stock.ts</code>: <em>"the storefront is told in / low / out, never a
+    number. Publishing '3 left' invites scraping of the whole catalogue's stock position, and it is
+    wrong the instant someone else's cart holds two of them."</em> The <code>stockState</code>
+    helper exists and is used — <code>stockQty</code> is simply published beside it.
+  </p>
+  <p>
+    Not something I changed: removing a field is a breaking change for whatever the storefront
+    already renders, and that is your call rather than mine. Flagging it so the choice is deliberate.
+  </p>
+</div>
+
+<footer>
+  Traced from <code>catalogue.routes.ts</code> → <code>catalogue.service.ts</code> →
+  <code>catalogue.repository.ts</code>. Cache TTL 60s for lists, 120s for product detail.
+</footer>
+
+</div>

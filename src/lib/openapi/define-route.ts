@@ -9,6 +9,7 @@ import { requirePermission } from '../../middleware/require-permission.js';
 import { namedLimiter, type LimiterName } from '../../middleware/rate-limit.js';
 import { auditMutation } from '../../middleware/audit.js';
 import { idempotency } from '../../middleware/idempotency.js';
+import { fileInterceptor } from '../../middleware/file-interceptor.js';
 
 /** Narrowed per `auth` so a public handler cannot read `auth.customerId`. */
 export type CustomerAuth = { kind: 'customer'; customerId: string; sessionId: string };
@@ -119,6 +120,7 @@ export function defineRoute<
     spec.auth !== 'public' ? authenticate(spec.auth) : undefined,
     spec.permission ? requirePermission(spec.permission.module, spec.permission.action) : undefined,
     spec.idempotent ? idempotency() : undefined,
+    spec.request?.bodyContentType === 'multipart/form-data' ? fileInterceptor : undefined,
     validate({
       params: spec.request?.params,
       query: spec.request?.query,

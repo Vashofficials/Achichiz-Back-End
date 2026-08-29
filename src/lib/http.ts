@@ -1,10 +1,17 @@
 /**
  * The response envelope, in one place.
  *
- * Single resource:  { data: {...} }
- * Collection:       { data: [...], meta: { page, perPage, total, totalPages } }
+ * Single resource:  { type: 'success', result: {...} }
+ * Collection:       { type: 'success', result: [...], meta: { page, perPage, total, totalPages } }
  * Deletes:          204, no body
- * Errors:           RFC 9457 problem+json — see middleware/error-handler.ts
+ * Errors:           { type: 'error', result: { title, status, code, detail, instance, requestId, errors? } }
+ *                   — same two keys, served as application/json. See middleware/error-handler.ts.
+ *
+ * `meta` is a SIBLING of `result`, not nested inside it.
+ *
+ * This comment said `{ data: … }` until it was caught by a documentation pass that
+ * had trusted it over the code below. The key is `result`; there is no `data` key
+ * anywhere in this API.
  */
 export type PageMeta = {
   page: number;
@@ -13,8 +20,8 @@ export type PageMeta = {
   totalPages: number;
 };
 
-export type Envelope<T> = { data: T };
-export type PagedEnvelope<T> = { data: T[]; meta: PageMeta };
+export type Envelope<T> = { type: 'success'; result: T };
+export type PagedEnvelope<T> = { type: 'success'; result: T[]; meta: PageMeta };
 
 /**
  * What a route handler may return. `defineRoute` unwraps it.
@@ -33,19 +40,19 @@ export type HandlerResult =
 export const ok = <T>(data: T): HandlerResult => ({
   kind: 'json',
   status: 200,
-  body: { data } satisfies Envelope<T>,
+  body: { type: 'success', result: data } satisfies Envelope<T>,
 });
 
 export const created = <T>(data: T): HandlerResult => ({
   kind: 'json',
   status: 201,
-  body: { data } satisfies Envelope<T>,
+  body: { type: 'success', result: data } satisfies Envelope<T>,
 });
 
 export const accepted = <T>(data: T): HandlerResult => ({
   kind: 'json',
   status: 202,
-  body: { data } satisfies Envelope<T>,
+  body: { type: 'success', result: data } satisfies Envelope<T>,
 });
 
 export const noContent = (): HandlerResult => ({ kind: 'noContent' });
@@ -57,7 +64,7 @@ export function paginated<T>(rows: T[], meta: PageMeta): HandlerResult {
   return {
     kind: 'json',
     status: 200,
-    body: { data: rows, meta } satisfies PagedEnvelope<T>,
+    body: { type: 'success', result: rows, meta } satisfies PagedEnvelope<T>,
   };
 }
 

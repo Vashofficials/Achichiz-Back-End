@@ -20,6 +20,13 @@ services:
     container_name: achichiz-api-prod
     restart: unless-stopped
     env_file: .env
+    volumes:
+      # The Firebase Admin key. Mounted read-only rather than COPYed in the
+      # Dockerfile: image layers are readable by anyone who can pull the image,
+      # and the key would persist in the build cache and any registry.
+      # /app is the WORKDIR, so config/firebase.ts finds it as the third-tier
+      # `serviceAccountKey.json in the working directory` with no env var set.
+      - ./serviceAccountKey.json:/app/serviceAccountKey.json:ro
     environment:
       # Use local dockerized Redis. DATABASE_URL is loaded from .env for AWS RDS
       REDIS_URL: redis://redis:6379
@@ -35,6 +42,9 @@ services:
     restart: unless-stopped
     command: ["dist/worker.js"]
     env_file: .env
+    volumes:
+      # Same key, same reasoning. The worker verifies tokens on queued jobs.
+      - ./serviceAccountKey.json:/app/serviceAccountKey.json:ro
     environment:
       # Use local dockerized Redis. DATABASE_URL is loaded from .env for AWS RDS
       REDIS_URL: redis://redis:6379

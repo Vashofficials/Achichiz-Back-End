@@ -23,3 +23,5 @@ serviceAccountKey.json
 gcp-*.json
 firebase-adminsdk-*.json
 
+
+firebase-env.local.txt

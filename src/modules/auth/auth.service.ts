@@ -38,7 +38,6 @@ import {
   ValidationError,
 } from '../../lib/errors.js';
 import { emailSender, maskEmail } from '../../integrations/ses/index.js';
-import { maskMobile, smsSender } from '../../integrations/msg91/index.js';
 import * as cartService from '../cart/cart.service.js';
 import * as leadsService from '../leads/leads.service.js';
 import * as repo from './auth.repository.js';
@@ -63,10 +62,7 @@ import type { AuthSession, CustomerSummary } from './auth.schemas.js';
 
 /* ------------------------------------------------------------- constants */
 
-const OTP_TTL_MS = 5 * 60 * 1000;
-const OTP_DIGITS = 6;
-/** 3 sends per hour per number (04_architecture.md §3.2). The IP limiter cannot see this. */
-const OTP_MAX_SENDS_PER_HOUR = 3;
+
 const RESET_TTL_MS = 30 * 60 * 1000;
 
 /** The same body every failed credential check returns, whatever actually went wrong. */
@@ -218,10 +214,6 @@ export async function signup(
   },
   fingerprint: { ip: string | null; deviceLabel: string | null },
 ): Promise<IssuedSession> {
-  // Signup is the one flow that cannot avoid disclosing existence — refusing to
-  // say "taken" would just mean a silent failure or a hijacked account. §"never
-  // leak" covers login, forgot-password and OTP request, which have no such
-  // excuse. A 409 with a usable message is the honest trade here.
   if (await repo.findCustomerByEmail(input.email)) {
     throw new ConflictError('An account already exists for that email address. Try signing in instead.');
   }
@@ -229,13 +221,32 @@ export async function signup(
     throw new ConflictError('An account already exists for that mobile number. Try signing in instead.');
   }
 
+  // Create Firebase User
+  try {
+    const { getAuth } = await import('firebase-admin/auth');
+    const { getFirebaseApp } = await import('../../config/firebase.js');
+    await getAuth(getFirebaseApp()).createUser({
+      email: input.email,
+      password: input.password,
+      displayName: input.fullName,
+      ...(input.mobile ? { phoneNumber: '+91' + input.mobile } : {}),
+    });
+  } catch (err: any) {
+    logger.error({ err, email: input.email }, 'auth.firebase_create_user_failed');
+    if (err.code === 'auth/email-already-exists') {
+      throw new ConflictError('An account already exists in Firebase for that email address.');
+    }
+    if (err.code === 'auth/phone-number-already-exists') {
+      throw new ConflictError('An account already exists in Firebase for that mobile number.');
+    }
+    throw new UnprocessableError('Could not create Firebase account: ' + err.message);
+  }
+
   const customer = await repo.insertCustomer({
     fullName: input.fullName,
     email: input.email,
     mobile: input.mobile ?? null,
-    passwordHash: await hashPassword(input.password),
-    // Never `input.marketingOptIn ?? true`, and never a default of true anywhere:
-    // consent starts off and is recorded separately when granted (A10 / DPDP).
+    passwordHash: null,
     marketingOptIn: input.marketingOptIn,
   });
 
@@ -254,156 +265,48 @@ export async function signup(
 /* ------------------------------------------------------------------ login */
 
 export async function login(
-  input: { email: string; password: string; cartToken?: string | undefined },
+  input: { emailOrMobile: string; password: string; cartToken?: string | undefined },
   fingerprint: { ip: string | null; deviceLabel: string | null },
 ): Promise<IssuedSession> {
-  const customer = await repo.findCustomerByEmail(input.email);
+  let email = input.emailOrMobile;
 
-  // No account, or an OTP-only account with no password: still do the work, so
-  // this branch costs the same as a wrong password.
-  if (!customer || customer.passwordHash === null) {
-    await burnVerificationTime(input.password);
+  // Resolve mobile to email if a 10-digit number is provided.
+  if (/^\d{10}$/.test(input.emailOrMobile)) {
+    try {
+      const { getAuth } = await import('firebase-admin/auth');
+      const { getFirebaseApp } = await import('../../config/firebase.js');
+      const userRecord = await getAuth(getFirebaseApp()).getUserByPhoneNumber('+91' + input.emailOrMobile);
+      if (userRecord.email) {
+        email = userRecord.email;
+      } else {
+        throw new UnauthenticatedError(INVALID_CREDENTIALS);
+      }
+    } catch (err) {
+      throw new UnauthenticatedError(INVALID_CREDENTIALS);
+    }
+  }
+
+  // Verify via Identity Toolkit
+  try {
+    const firebaseRest = await import('./firebase-rest.js');
+    const { email: verifiedEmail } = await firebaseRest.signInWithPassword(email, input.password);
+    email = verifiedEmail;
+  } catch (err) {
+    throw new UnauthenticatedError(INVALID_CREDENTIALS);
+  }
+
+  const customer = await repo.findCustomerByEmail(email);
+  if (!customer) {
     throw new UnauthenticatedError(INVALID_CREDENTIALS);
   }
 
   assertUsable(customer);
 
-  const result = await verifyPassword(input.password, customer.passwordHash);
-  if (!result.ok) throw new UnauthenticatedError(INVALID_CREDENTIALS);
-
-  /*
-   * The Supabase migration path, in three lines.
-   *
-   * `verifyPassword` reports `needsRehash` for a verified bcrypt hash (imported
-   * from `auth.users.encrypted_password`) and for an argon2id hash whose
-   * parameters have since been raised. Either way the upgrade happens on this
-   * login, with the plaintext we already have in hand and will never have again.
-   * A failed rehash must not fail the login — the customer proved the password.
-   */
-  if (result.needsRehash) {
-    try {
-      await repo.updateCustomer(customer.id, { passwordHash: await hashPassword(input.password) });
-      logger.info({ customerId: customer.id }, 'auth.password_hash_upgraded');
-    } catch (err) {
-      logger.error({ err, customerId: customer.id }, 'auth.password_rehash_failed');
-    }
-  }
-
   await mergeGuestCart(customer.id, input.cartToken);
   return issueSession(customer, fingerprint);
 }
 
-/* -------------------------------------------------------------------- otp */
 
-const newOtpCode = (): string => String(randomInt(0, 10 ** OTP_DIGITS)).padStart(OTP_DIGITS, '0');
-
-/**
- * Send a login OTP. Always reports success.
- *
- * There is no "unknown number" branch to leak, because a verified OTP on an
- * unknown number *creates* the account — mobile+OTP is the primary Indian D2C
- * login (04_architecture.md §3.2), not a second factor on top of a signup form.
- * The only thing that changes the outcome is the per-number send throttle, and
- * that one deliberately reports success too: telling a scraper it has hit a limit
- * tells it the number is worth retrying.
- */
-export async function requestLoginOtp(mobile: string): Promise<void> {
-  const sentThisHour = await repo.countOtpChallengesSince(
-    mobile,
-    'login',
-    new Date(Date.now() - 60 * 60 * 1000),
-  );
-  if (sentThisHour >= OTP_MAX_SENDS_PER_HOUR) {
-    logger.warn({ mobile: maskMobile(mobile) }, 'auth.otp_send_throttled');
-    return;
-  }
-
-  const code = newOtpCode();
-  await repo.insertOtpChallenge({
-    channel: 'sms',
-    destination: mobile,
-    // argon2id, not sha256: a 6-digit code has a 10^6 search space and a hashed
-    // table dump would otherwise be reversible in seconds (`password.ts`).
-    codeHash: await hashSecret(code),
-    purpose: 'login',
-    expiresAt: new Date(Date.now() + OTP_TTL_MS),
-  });
-
-  try {
-    await smsSender.send({
-      to: mobile,
-      purpose: 'otp',
-      templateId: env.MSG91_OTP_TEMPLATE_ID,
-      variables: { otp: code, ttl: String(OTP_TTL_MS / 60_000) },
-    });
-  } catch (err) {
-    // The challenge row already exists; a vendor outage must not 502 the caller
-    // into believing nothing happened when a retry would be throttled.
-    logger.error({ err, mobile: maskMobile(mobile) }, 'auth.otp_send_failed');
-  }
-}
-
-export async function verifyLoginOtp(
-  input: { mobile: string; code: string; fullName?: string | undefined; cartToken?: string | undefined },
-  fingerprint: { ip: string | null; deviceLabel: string | null },
-): Promise<IssuedSession> {
-  const challenge = await repo.findLatestOtpChallenge(input.mobile, 'login');
-
-  const invalid = (): never => {
-    throw new UnprocessableError(
-      'That code is not valid or has expired. Request a new one.',
-      'otp_invalid',
-    );
-  };
-
-  if (!challenge) {
-    await burnVerificationTime(input.code);
-    return invalid();
-  }
-  if (challenge.expiresAt.getTime() <= Date.now()) return invalid();
-  if (challenge.attempts >= challenge.maxAttempts) {
-    throw new UnprocessableError(
-      'Too many incorrect attempts for that code. Request a new one.',
-      'otp_attempts_exhausted',
-    );
-  }
-
-  if (!(await verifySecret(input.code, challenge.codeHash))) {
-    const attempts = await repo.incrementOtpAttempts(challenge.id);
-    logger.warn(
-      { mobile: maskMobile(input.mobile), attempts, maxAttempts: challenge.maxAttempts },
-      'auth.otp_verify_failed',
-    );
-    return invalid();
-  }
-
-  // Single-use: consumed before the session is issued, so a replay of the same
-  // code cannot mint a second session even if the caller sends it twice.
-  await repo.consumeOtpChallenge(challenge.id);
-
-  const existing = await repo.findCustomerByMobile(input.mobile);
-  let customer: repo.CustomerRow;
-
-  if (existing) {
-    assertUsable(existing);
-    customer = existing.mobileVerifiedAt
-      ? existing
-      : ((await repo.updateCustomer(existing.id, { mobileVerifiedAt: new Date() })) ?? existing);
-  } else {
-    customer = await repo.insertCustomer({
-      mobile: input.mobile,
-      fullName: input.fullName ?? null,
-      mobileVerifiedAt: new Date(),
-      // No password: this account signs in by OTP until it sets one. The
-      // `customer_needs_a_handle` CHECK is satisfied by the mobile.
-      marketingOptIn: false,
-    });
-    logger.info({ customerId: customer.id }, 'auth.customer_created_via_otp');
-  }
-
-  await mergeGuestCart(customer.id, input.cartToken);
-  return issueSession(customer, fingerprint);
-}
 
 /* -------------------------------------------------------------- refresh */
 
@@ -561,81 +464,33 @@ export async function forgotPassword(emailAddress: string): Promise<void> {
     return;
   }
 
-  const secret = newRefreshToken();
-  const challenge = await repo.insertOtpChallenge({
-    channel: 'email',
-    destination: emailAddress,
-    codeHash: await hashSecret(secret),
-    purpose: 'password_reset',
-    expiresAt: new Date(Date.now() + RESET_TTL_MS),
-  });
-
-  // `<challengeId>.<secret>` so the reset form needs the token and nothing else —
-  // no email field to re-type, and no lookup by address on a public endpoint.
-  const token = `${challenge.id}.${secret}`;
-
   try {
-    await emailSender.send({
-      to: emailAddress,
-      subject: 'Reset your Achichiz password',
-      text:
-        `Hello,\n\n` +
-        `Someone asked to reset the password for this Achichiz account. If it was you, open the link ` +
-        `below within 30 minutes:\n\n${resetPageUrl(token)}\n\n` +
-        `If it was not you, you can ignore this email — nothing has changed and your current password ` +
-        `still works.\n\n— Achichiz`,
-    });
+    const firebaseRest = await import('./firebase-rest.js');
+    await firebaseRest.sendPasswordResetEmail(emailAddress);
   } catch (err) {
-    logger.error({ err, email: maskEmail(emailAddress) }, 'auth.password_reset_email_failed');
+    logger.error({ err, email: maskEmail(emailAddress) }, 'auth.firebase_password_reset_failed');
   }
 }
 
 export async function resetPassword(token: string, newPassword: string): Promise<void> {
-  const invalid = (): never => {
+  let email: string;
+  try {
+    const firebaseRest = await import('./firebase-rest.js');
+    const result = await firebaseRest.confirmPasswordReset(token, newPassword);
+    email = result.email;
+  } catch (err) {
     throw new ValidationError('That reset link is invalid or has expired. Request a new one.', {
       issues: [{ path: 'token', code: 'invalid', message: 'This reset link is no longer usable.' }],
     });
-  };
-
-  const separator = token.indexOf('.');
-  if (separator < 1) return invalid();
-  const challengeId = token.slice(0, separator);
-  const secret = token.slice(separator + 1);
-  if (!secret) return invalid();
-
-  const challenge = await repo.findOtpChallengeById(challengeId).catch(() => null);
-  if (
-    !challenge ||
-    challenge.purpose !== 'password_reset' ||
-    challenge.consumedAt !== null ||
-    challenge.expiresAt.getTime() <= Date.now() ||
-    challenge.attempts >= challenge.maxAttempts
-  ) {
-    await burnVerificationTime(secret);
-    return invalid();
   }
 
-  if (!(await verifySecret(secret, challenge.codeHash))) {
-    await repo.incrementOtpAttempts(challenge.id);
-    return invalid();
-  }
+  const customer = await repo.findCustomerByEmail(email);
+  if (!customer) return;
 
-  const customer = await repo.findCustomerByEmail(challenge.destination);
-  if (!customer) return invalid();
-
-  await repo.consumeOtpChallenge(challenge.id);
   await repo.updateCustomer(customer.id, {
-    passwordHash: await hashPassword(newPassword),
-    // Completing the loop proves control of the mailbox, which is the same
-    // evidence a verification email would have produced.
     ...(customer.emailVerifiedAt ? {} : { emailVerifiedAt: new Date() }),
   });
 
-  /*
-   * A password change signs out every device. If the reset happened because the
-   * old password leaked, leaving the attacker's sessions alive would make the
-   * reset theatre — they hold a refresh token, not a password.
-   */
   const revoked = await repo.revokeAllSessionsFor(customer.id);
   await revokeSessions(revoked);
   logger.info({ customerId: customer.id, sessionsRevoked: revoked.length }, 'auth.password_reset');

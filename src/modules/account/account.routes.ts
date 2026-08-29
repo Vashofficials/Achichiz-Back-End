@@ -74,7 +74,7 @@ defineRoute(accountRouter, {
     'append-only consent log. An address or number already in use on another account returns 409.',
   tags: ['Account'],
   auth: 'customer',
-  request: { body: updateProfileBody },
+  request: { body: updateProfileBody, bodyContentType: 'multipart/form-data' },
   responses: {
     200: { description: 'The updated profile.', schema: customerProfile },
     409: { description: 'That email address or mobile number belongs to another account.' },

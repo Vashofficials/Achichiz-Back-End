@@ -47,9 +47,7 @@ const schema = z.object({
   RAZORPAY_KEY_SECRET: z.string().default(''),
   RAZORPAY_WEBHOOK_SECRET: z.string().default(''),
 
-  MSG91_AUTH_KEY: z.string().default(''),
-  MSG91_SENDER_ID: z.string().default(''),
-  MSG91_OTP_TEMPLATE_ID: z.string().default(''),
+
 
   /**
    * Firebase Admin credentials. BOTH OPTIONAL, deliberately.
@@ -65,6 +63,7 @@ const schema = z.object({
    */
   FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
   FIREBASE_SERVICE_ACCOUNT_PATH: z.string().optional(),
+  FIREBASE_API_KEY: z.string().optional(),
 
   AWS_REGION: z.string().default('ap-south-1'),
   AWS_ACCESS_KEY_ID: z.string().default(''),

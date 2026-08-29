@@ -17,7 +17,6 @@ import {
 } from './refresh-token.js';
 import {
   loginBody,
-  otpVerifyBody,
   resetPasswordBody,
   signupBody,
 } from './auth.schemas.js';
@@ -340,27 +339,18 @@ describe('auth request schemas', () => {
     ).toBe(false);
   });
 
-  it('does not cap login password length the way signup does', () => {
-    // Signup bounds the plaintext because it will be hashed; login must still
-    // accept a long-but-wrong string, and reject it as a credential rather than
-    // as a validation error — a 422 here would leak that the format was unusual.
-    expect(loginBody.safeParse({ email: 'a@b.com', password: 'x' }).success).toBe(true);
+  it('does not apply the signup password minimum to login', () => {
+    // Signup requires 10+ characters. Login deliberately does not: a too-short
+    // password must be rejected as a WRONG CREDENTIAL (401), not as a validation
+    // error — a 422 here would tell an attacker the policy without an account.
+    expect(loginBody.safeParse({ emailOrMobile: 'a@b.com', password: 'x' }).success).toBe(true);
   });
 
-  it('accepts a six-digit OTP and nothing else', () => {
-    const base = { mobile: '9820012345' };
-    expect(otpVerifyBody.safeParse({ ...base, code: '482913' }).success).toBe(true);
-    expect(otpVerifyBody.safeParse({ ...base, code: '48291' }).success).toBe(false);
-    expect(otpVerifyBody.safeParse({ ...base, code: '4829133' }).success).toBe(false);
-    expect(otpVerifyBody.safeParse({ ...base, code: '48291a' }).success).toBe(false);
+  it('accepts a bare 10-digit mobile as the login identifier', () => {
+    // The service maps this to +91 and looks the user up in Firebase by phone.
+    expect(loginBody.safeParse({ emailOrMobile: '9876543210', password: 'x' }).success).toBe(true);
   });
 
-  it('rejects a mobile number that is not an Indian ten-digit one', () => {
-    for (const bad of ['5820012345', '98200123', '+919820012345', '09820012345']) {
-      expect(otpVerifyBody.safeParse({ mobile: bad, code: '482913' }).success).toBe(false);
-    }
-    expect(otpVerifyBody.safeParse({ mobile: '9820012345', code: '482913' }).success).toBe(true);
-  });
 
   it('requires a reset token long enough to carry a challenge id and a secret', () => {
     expect(resetPasswordBody.safeParse({ token: 'short', password: 'longenough1' }).success).toBe(false);

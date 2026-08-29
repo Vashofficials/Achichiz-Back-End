@@ -55,6 +55,11 @@ function registerResource(descriptor: ResourceDescriptor): void {
   const base = `/v1/admin/${slug}`;
   const createBody = createBodySchema(descriptor);
   const updateBody = updateBodySchema(descriptor);
+  
+  const hasFile = descriptor.fields.some(
+    (f) => f.reference?.resource === 'media' || f.key === 'imageUrl'
+  );
+  const bodyContentType = hasFile ? 'multipart/form-data' : 'application/json';
 
   /* ------------------------------------------------------------- list */
   defineRoute(adminResourceRouter, {
@@ -161,7 +166,7 @@ function registerResource(descriptor: ResourceDescriptor): void {
     tags: [tag],
     auth: 'staff',
     permission: { module, action: resources.OPERATION_ACTIONS.create },
-    request: { body: createBody },
+    request: { body: createBody, bodyContentType },
     responses: {
       201: { description: 'The created row.', schema: resourceRow },
       409: { description: 'A unique constraint rejected it — a duplicate handle, SKU or code.' },
@@ -210,7 +215,7 @@ function registerResource(descriptor: ResourceDescriptor): void {
     tags: [tag],
     auth: 'staff',
     permission: { module, action: resources.OPERATION_ACTIONS.update },
-    request: { params: resourceIdParam, body: updateBody },
+    request: { params: resourceIdParam, body: updateBody, bodyContentType },
     responses: {
       200: { description: 'The updated row.', schema: resourceRow },
       404: { description: 'No such row, or it is archived.' },

@@ -90,27 +90,12 @@ export const signupBody = z.object({
 });
 
 export const loginBody = z.object({
-  email,
+  emailOrMobile: z.union([email, mobile]).describe('Email address or mobile number.'),
   password: z.string().min(1).max(256).describe('The plaintext password. Never logged — see `config/logger.ts` redaction.'),
   cartToken: cartTokenField,
 });
 
-export const otpRequestBody = z.object({
-  mobile,
-});
 
-export const otpVerifyBody = z.object({
-  mobile,
-  code: otpCode,
-  fullName: z
-    .string()
-    .trim()
-    .min(2)
-    .max(120)
-    .optional()
-    .describe('Only used when this mobile has no account yet — a verified OTP creates one.'),
-  cartToken: cartTokenField,
-});
 
 export const forgotPasswordBody = z.object({
   email,
@@ -122,8 +107,9 @@ export const resetPasswordBody = z.object({
     .min(20)
     .max(400)
     .describe(
-      'The single-use token from the reset email, in `<challengeId>.<secret>` form. The secret half ' +
-        'is argon2id-hashed at rest, so a database dump does not yield a usable reset link.',
+      'The single-use `oobCode` from the reset email. Firebase issues and stores it, so nothing ' +
+        'reset-related lives in our database and a dump yields no usable reset link. Pass it ' +
+        'through verbatim — the storefront reads it from the `?oobCode=` query parameter.',
     ),
   password,
 });
@@ -208,6 +194,6 @@ export const okStatusResponse = z.object({
 
 export type SignupBody = z.infer<typeof signupBody>;
 export type LoginBody = z.infer<typeof loginBody>;
-export type OtpVerifyBody = z.infer<typeof otpVerifyBody>;
+
 export type CustomerSummary = z.infer<typeof customerSummary>;
 export type AuthSession = z.infer<typeof authSession>;

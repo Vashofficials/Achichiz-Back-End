@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Achichiz Storefront API",
-    "description": "Public and customer-authenticated API powering the Achichiz storefront.\n\n**Money is always an integer number of paise.** `\"total\": 149900` means ₹1,499.00.\n\nErrors follow RFC 9457 (`application/problem+json`) and carry a stable `code`.\nSwitch on `code`, never on `title`.",
+    "description": "Public and customer-authenticated API powering the Achichiz storefront.\n\n**Money is always an integer number of paise.** `\"total\": 149900` means ₹1,499.00.\n\nErrors return a consistent `{ type: \"error\", result: {...} }` format carrying a stable `code`.\nSwitch on `result.code`, never on `title`.",
     "version": "0.1.0",
     "contact": {
       "name": "Achichiz Engineering",
@@ -11,12 +11,12 @@
   },
   "servers": [
     {
-      "url": "http://localhost:4000",
-      "description": "Local"
-    },
-    {
       "url": "https://api.achichiz.com",
       "description": "Production"
+    },
+    {
+      "url": "http://localhost:4000",
+      "description": "Local"
     }
   ],
   "tags": [
@@ -84,6 +84,9 @@
       "name": "Search"
     },
     {
+      "name": "Store / Media"
+    },
+    {
       "name": "System"
     },
     {
@@ -110,10 +113,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "status": {
@@ -139,26 +147,6 @@
                 }
               }
             }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": []
@@ -175,26 +163,6 @@
         "responses": {
           "200": {
             "description": "All dependencies reachable."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           },
           "503": {
             "description": "At least one dependency is unreachable."
@@ -372,11 +340,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -704,27 +677,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -765,10 +718,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -1499,27 +1457,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -1560,11 +1498,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -1700,27 +1643,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -1836,11 +1759,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -2078,27 +2006,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -2139,10 +2047,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "collection": {
@@ -2511,27 +2424,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -2723,11 +2616,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -3058,27 +2956,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -3167,11 +3045,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -3313,27 +3196,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -3374,10 +3237,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -3492,27 +3360,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -3614,11 +3462,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -3732,27 +3585,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -3852,11 +3685,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -3968,27 +3806,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -4062,11 +3880,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -4158,27 +3981,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -4219,10 +4022,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -4411,27 +4219,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -4470,10 +4258,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "pincode": {
@@ -4609,27 +4402,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -4750,11 +4523,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -5082,27 +4860,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -5176,11 +4934,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -5508,27 +5271,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -5568,10 +5311,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "didYouMean": {
@@ -5972,27 +5720,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -6076,11 +5804,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -6254,27 +5987,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -6315,10 +6028,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -6576,27 +6294,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -6686,11 +6384,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -6843,27 +6546,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -6904,10 +6587,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -7136,27 +6824,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -7197,10 +6865,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -7429,27 +7102,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -7533,11 +7186,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -7634,27 +7292,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -7743,11 +7381,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -7914,27 +7557,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -8018,11 +7641,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -8244,27 +7872,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -8367,11 +7975,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -8589,27 +8202,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -8674,10 +8267,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "metaTitle": {
@@ -8815,27 +8413,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -8876,10 +8454,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -9039,27 +8622,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -9099,10 +8662,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -9595,27 +9163,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -9653,10 +9201,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -10152,27 +9705,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -10280,10 +9813,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -10778,26 +10316,6 @@
           },
           "422": {
             "description": "Out of stock, personalisation too long, or a builder line was sent."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": []
@@ -10872,10 +10390,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -11370,26 +10893,6 @@
           },
           "422": {
             "description": "Not enough stock, personalisation too long, or a duplicate line."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": []
@@ -11433,10 +10936,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -11932,27 +11440,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -12006,10 +11494,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -12504,26 +11997,6 @@
           },
           "422": {
             "description": "The coupon does not exist, is not live, or does not apply to this cart."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": []
@@ -12556,10 +12029,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -13055,27 +12533,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -13120,10 +12578,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -13616,7 +13079,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -13629,27 +13092,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -13819,10 +13262,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "cartId": {
@@ -14179,7 +13627,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -14191,26 +13639,6 @@
           },
           "422": {
             "description": "The cart is empty, or the coupon/address is invalid."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -14423,10 +13851,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "orderId": {
@@ -14757,7 +14190,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -14772,26 +14205,6 @@
           },
           "422": {
             "description": "Empty cart, an item went out of stock, the coupon stopped applying, the PIN code is unserviceable, or COD is not allowed there."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -14870,11 +14283,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -15038,7 +14456,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -15048,27 +14466,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -15112,10 +14510,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -15778,7 +15181,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -15791,27 +15194,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -15872,10 +15255,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -16538,7 +15926,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -16550,26 +15938,6 @@
           },
           "422": {
             "description": "The order has moved past the point where a customer may cancel it."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -16617,10 +15985,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "orderNo": {
@@ -16789,27 +16162,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -16857,10 +16210,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "gateway": {
@@ -16905,7 +16263,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -16917,26 +16275,6 @@
           },
           "422": {
             "description": "The order is already paid, or has been cancelled or refunded."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           },
           "502": {
             "description": "Razorpay could not be reached. Safe to retry."
@@ -17007,10 +16345,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "orderId": {
@@ -17068,7 +16411,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -17080,26 +16423,6 @@
           },
           "422": {
             "description": "The signature did not verify (`signature_invalid`), the Razorpay order belongs to a different order (`payment_order_mismatch`), or the payment is not captured yet (`payment_not_captured`)."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           },
           "502": {
             "description": "Razorpay could not be reached to confirm the payment."
@@ -17450,10 +16773,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "received": {
@@ -17484,27 +16812,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -17583,10 +16891,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "accessToken": {
@@ -17707,27 +17020,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -17753,12 +17046,22 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "format": "email",
-                    "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
-                    "description": "Email address. Stored CITEXT, so lookups and uniqueness are case-insensitive."
+                  "emailOrMobile": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 255,
+                        "format": "email",
+                        "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                        "description": "Email address. Stored CITEXT, so lookups and uniqueness are case-insensitive."
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^[6-9][0-9]{9}$",
+                        "description": "Ten-digit Indian mobile number without the country code, e.g. `9820012345`."
+                      }
+                    ],
+                    "description": "Email address or mobile number."
                   },
                   "password": {
                     "type": "string",
@@ -17774,7 +17077,7 @@
                   }
                 },
                 "required": [
-                  "email",
+                  "emailOrMobile",
                   "password"
                 ]
               }
@@ -17789,10 +17092,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "accessToken": {
@@ -17913,312 +17221,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": []
-      }
-    },
-    "/v1/auth/otp/request": {
-      "post": {
-        "operationId": "requestLoginOtp",
-        "summary": "Send a login OTP to a mobile number",
-        "description": "The primary login path. A six-digit code, valid for five minutes, argon2id-hashed at rest, five verification attempts, three sends per hour per number on top of the IP rate limit. \n\nThe response is `{ \"status\": \"sent\" }` **always** — for a number with an account, a number without one, and a number that has hit its send throttle. There is no signup step: verifying a code on an unknown number creates the account. \n\nDelivery goes through MSG91, which requires a TRAI DLT-registered template; until that paperwork clears the dev sender logs the code instead of sending it.",
-        "tags": [
-          "Auth"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "mobile": {
-                    "type": "string",
-                    "pattern": "^[6-9][0-9]{9}$",
-                    "description": "Ten-digit Indian mobile number without the country code, e.g. `9820012345`."
-                  }
-                },
-                "required": [
-                  "mobile"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "202": {
-            "description": "A code has been sent, if that number was eligible for one.",
-            "content": {
               "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "data"
-                  ],
-                  "properties": {
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "status": {
-                          "type": "string",
-                          "const": "sent",
-                          "description": "Always `sent`, whether or not an account exists for the address or number supplied. This endpoint is deliberately not an account-existence oracle."
-                        }
-                      },
-                      "required": [
-                        "status"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation failed.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Too many OTP requests from this IP."
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": []
-      }
-    },
-    "/v1/auth/otp/verify": {
-      "post": {
-        "operationId": "verifyLoginOtp",
-        "summary": "Verify a login OTP and sign in",
-        "description": "Verifies the newest unconsumed code for that number. A correct code signs the customer in, marks the mobile verified, and — when the number has no account yet — creates one on the spot with `fullName` if supplied. The code is single-use: it is consumed before the session is issued. \n\nWrong codes increment an attempt counter and burn the challenge after five. Expired, exhausted and simply-wrong all return 422 `otp_invalid` so the response cannot be used to probe which. On success a rotating opaque refresh token is set as the httpOnly `ach_rt` cookie (`Path=/v1/auth`). Send credentialed requests (`fetch(..., { credentials: \"include\" })`) so it travels. It is never present in the response body.",
-        "tags": [
-          "Auth"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "mobile": {
-                    "type": "string",
-                    "pattern": "^[6-9][0-9]{9}$",
-                    "description": "Ten-digit Indian mobile number without the country code, e.g. `9820012345`."
-                  },
-                  "code": {
-                    "type": "string",
-                    "pattern": "^[0-9]{6}$",
-                    "description": "The six-digit code from the SMS. Five wrong attempts burn the challenge."
-                  },
-                  "fullName": {
-                    "description": "Only used when this mobile has no account yet — a verified OTP creates one.",
-                    "type": "string",
-                    "minLength": 2,
-                    "maxLength": 120
-                  },
-                  "cartToken": {
-                    "description": "The guest cart handle to fold into the account on success. May also be sent as the `X-Cart-Token` header, which wins when both are present. Merge failures never fail the login.",
-                    "type": "string",
-                    "minLength": 8,
-                    "maxLength": 255
-                  }
-                },
-                "required": [
-                  "mobile",
-                  "code"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Signed in.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "data"
-                  ],
-                  "properties": {
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "accessToken": {
-                          "type": "string",
-                          "description": "HS256 JWT, audience `customer`. Send it as `Authorization: Bearer <token>`. **Keep it in memory only** — never `localStorage`, which is XSS-lootable."
-                        },
-                        "tokenType": {
-                          "type": "string",
-                          "const": "Bearer",
-                          "description": "Always `Bearer`."
-                        },
-                        "expiresIn": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991,
-                          "description": "Seconds until `accessToken` expires. Refresh before it does via `POST /v1/auth/refresh`."
-                        },
-                        "customer": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string",
-                              "format": "uuid",
-                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                              "description": "`customers.id`. This is the subject of every customer access token."
-                            },
-                            "fullName": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ],
-                              "description": "Display name, or null if never supplied."
-                            },
-                            "email": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ],
-                              "description": "Email address, or null on a mobile-only (OTP) account."
-                            },
-                            "mobile": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ],
-                              "description": "Ten-digit mobile, or null on an email-only account."
-                            },
-                            "emailVerified": {
-                              "type": "boolean",
-                              "description": "True once the address has been proven — today, by completing a password reset."
-                            },
-                            "mobileVerified": {
-                              "type": "boolean",
-                              "description": "True once an OTP for this number has been verified."
-                            },
-                            "marketingOptIn": {
-                              "type": "boolean",
-                              "description": "Marketing consent. False unless explicitly granted."
-                            },
-                            "whatsappOptIn": {
-                              "type": "boolean",
-                              "description": "WhatsApp messaging consent. False unless explicitly granted."
-                            },
-                            "hasPassword": {
-                              "type": "boolean",
-                              "description": "False on an OTP-only account — the storefront should offer “set a password”."
-                            },
-                            "createdAt": {
-                              "type": "string",
-                              "description": "ISO-8601 timestamp of account creation."
-                            }
-                          },
-                          "required": [
-                            "id",
-                            "fullName",
-                            "email",
-                            "mobile",
-                            "emailVerified",
-                            "mobileVerified",
-                            "marketingOptIn",
-                            "whatsappOptIn",
-                            "hasPassword",
-                            "createdAt"
-                          ],
-                          "additionalProperties": false,
-                          "description": "The signed-in customer."
-                        }
-                      },
-                      "required": [
-                        "accessToken",
-                        "tokenType",
-                        "expiresIn",
-                        "customer"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "The code is wrong, expired, or its attempts are exhausted."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -18272,10 +17275,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "accessToken": {
@@ -18405,26 +17413,6 @@
           },
           "422": {
             "description": "The token is valid but unusable: no phone or email (`firebase_no_identifier`), a non-Indian number (`firebase_unusable_phone`), or the number already belongs to a different sign-in (`firebase_uid_conflict`)."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": []
@@ -18446,10 +17434,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "accessToken": {
@@ -18566,26 +17559,6 @@
           },
           "401": {
             "description": "No cookie, an expired session, or a token that had already been spent."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": []
@@ -18605,16 +17578,6 @@
           },
           "429": {
             "description": "Too many requests."
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": []
@@ -18634,16 +17597,6 @@
           },
           "429": {
             "description": "Too many requests."
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": []
@@ -18687,10 +17640,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "status": {
@@ -18713,7 +17671,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -18722,16 +17680,6 @@
           },
           "429": {
             "description": "Too many requests from this IP."
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": []
@@ -18756,7 +17704,7 @@
                     "type": "string",
                     "minLength": 20,
                     "maxLength": 400,
-                    "description": "The single-use token from the reset email, in `<challengeId>.<secret>` form. The secret half is argon2id-hashed at rest, so a database dump does not yield a usable reset link."
+                    "description": "The single-use `oobCode` from the reset email. Firebase issues and stores it, so nothing reset-related lives in our database and a dump yields no usable reset link. Pass it through verbatim — the storefront reads it from the `?oobCode=` query parameter."
                   },
                   "password": {
                     "type": "string",
@@ -18781,10 +17729,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "status": {
@@ -18806,26 +17759,6 @@
           },
           "422": {
             "description": "The token is unknown, already used, or expired."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": []
@@ -18847,10 +17780,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -18939,26 +17877,6 @@
           },
           "401": {
             "description": "Missing, expired or revoked access token."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -18984,10 +17902,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -19111,26 +18034,6 @@
           },
           "401": {
             "description": "Missing, expired or revoked access token."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -19149,7 +18052,7 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {
@@ -19207,6 +18110,10 @@
                   "whatsappOptIn": {
                     "type": "boolean",
                     "description": "Turn WhatsApp messaging on or off."
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
                   }
                 },
                 "description": "Only the fields present are changed. Send `{}` and nothing happens."
@@ -19222,10 +18129,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -19350,7 +18262,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -19363,27 +18275,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -19440,11 +18332,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -19552,27 +18449,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -19622,10 +18499,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "productId": {
@@ -19700,7 +18582,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -19713,27 +18595,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -19776,7 +18638,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -19789,27 +18651,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -19840,11 +18682,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -19976,26 +18823,6 @@
           },
           "401": {
             "description": "Missing, expired or revoked access token."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -20100,10 +18927,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -20206,7 +19038,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -20219,27 +19051,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -20283,10 +19095,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -20389,7 +19206,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -20402,27 +19219,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -20536,10 +19333,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "id": {
@@ -20642,7 +19444,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -20654,26 +19456,6 @@
           },
           "422": {
             "description": "Tried to clear the default flag without nominating a replacement."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": [
@@ -20709,7 +19491,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -20722,27 +19504,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -20786,11 +19548,16 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data",
+                    "type",
+                    "result",
                     "meta"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -20923,7 +19690,7 @@
           "401": {
             "description": "Missing, malformed or expired token.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -20936,27 +19703,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -21035,10 +19782,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "status": {
@@ -21066,7 +19818,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -21075,16 +19827,6 @@
           },
           "429": {
             "description": "Too many submissions from this IP."
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": []
@@ -21177,10 +19919,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "status": {
@@ -21207,26 +19954,6 @@
           },
           "422": {
             "description": "Below the 25-unit minimum, or a field failed validation."
-          },
-          "429": {
-            "description": "Rate limit exceeded.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Unexpected server error.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
           }
         },
         "security": []
@@ -21281,10 +20008,15 @@
                 "schema": {
                   "type": "object",
                   "required": [
-                    "data"
+                    "type",
+                    "result"
                   ],
                   "properties": {
-                    "data": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
                       "type": "object",
                       "properties": {
                         "status": {
@@ -21307,7 +20039,7 @@
           "422": {
             "description": "Validation failed.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -21316,11 +20048,150 @@
           },
           "429": {
             "description": "Too many submissions from this IP."
-          },
-          "500": {
-            "description": "Unexpected server error.",
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/store/media/upload": {
+      "post": {
+        "operationId": "uploadCustomerMedia",
+        "summary": "Upload a media asset",
+        "description": "Uploads a file to S3 and creates a media asset record. The returned `id` can be used in storefront APIs (like reviews or custom orders).",
+        "tags": [
+          "Store / Media"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The uploaded media asset.",
             "content": {
-              "application/problem+json": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "url": {
+                              "type": "string"
+                            },
+                            "cdnUrl": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "filename": {
+                              "type": "string"
+                            },
+                            "mimeType": {
+                              "type": "string"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "image",
+                                "video",
+                                "pdf",
+                                "other"
+                              ]
+                            },
+                            "bytes": {
+                              "type": "number"
+                            },
+                            "widthPx": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "heightPx": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "createdAt": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "url",
+                            "cdnUrl",
+                            "filename",
+                            "mimeType",
+                            "kind",
+                            "bytes",
+                            "widthPx",
+                            "heightPx",
+                            "createdAt"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "data"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No file provided or file too large."
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProblemDetails"
                 }
@@ -21328,7 +20199,11 @@
             }
           }
         },
-        "security": []
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     }
   },
@@ -21336,65 +20211,72 @@
     "schemas": {
       "ProblemDetails": {
         "type": "object",
-        "description": "RFC 9457 Problem Details. Every error from this API has this shape.",
+        "description": "Standard error envelope. Every error from this API has this shape.",
         "required": [
           "type",
-          "title",
-          "status",
-          "code"
+          "result"
         ],
         "properties": {
           "type": {
             "type": "string",
-            "format": "uri",
-            "example": "https://api.achichiz.com/errors/validation-failed"
+            "example": "error"
           },
-          "title": {
-            "type": "string",
-            "example": "Validation failed"
-          },
-          "status": {
-            "type": "integer",
-            "example": 422
-          },
-          "code": {
-            "type": "string",
-            "description": "Stable machine-readable error code. Frontends switch on this, not on `title`.",
-            "example": "validation_failed"
-          },
-          "detail": {
-            "type": "string",
-            "example": "2 fields are invalid."
-          },
-          "instance": {
-            "type": "string",
-            "example": "/v1/checkout/orders"
-          },
-          "requestId": {
-            "type": "string",
-            "example": "01JK8QP2XM9TZ4W7B3C5D6E7F8"
-          },
-          "errors": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "path",
-                "code",
-                "message"
-              ],
-              "properties": {
-                "path": {
-                  "type": "string",
-                  "example": "shippingAddress.pincode"
-                },
-                "code": {
-                  "type": "string",
-                  "example": "invalid_string"
-                },
-                "message": {
-                  "type": "string",
-                  "example": "Pincode must be 6 digits"
+          "result": {
+            "type": "object",
+            "required": [
+              "title",
+              "status",
+              "code"
+            ],
+            "properties": {
+              "title": {
+                "type": "string",
+                "example": "Validation failed"
+              },
+              "status": {
+                "type": "integer",
+                "example": 422
+              },
+              "code": {
+                "type": "string",
+                "description": "Stable machine-readable error code. Frontends switch on this, not on `title`.",
+                "example": "validation_failed"
+              },
+              "detail": {
+                "type": "string",
+                "example": "2 fields are invalid."
+              },
+              "instance": {
+                "type": "string",
+                "example": "/v1/checkout/orders"
+              },
+              "requestId": {
+                "type": "string",
+                "example": "01JK8QP2XM9TZ4W7B3C5D6E7F8"
+              },
+              "errors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "path",
+                    "code",
+                    "message"
+                  ],
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "example": "shippingAddress.pincode"
+                    },
+                    "code": {
+                      "type": "string",
+                      "example": "invalid_string"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Pincode must be 6 digits"
+                    }
+                  }
                 }
               }
             }

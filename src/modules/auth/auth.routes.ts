@@ -12,8 +12,6 @@ import {
   forgotPasswordBody,
   loginBody,
   okStatusResponse,
-  otpRequestBody,
-  otpVerifyBody,
   resetPasswordBody,
   signupBody,
 } from './auth.schemas.js';
@@ -105,7 +103,7 @@ defineRoute(authRouter, {
   },
   handler: async ({ body, req, res }) => {
     const issued = await auth.login(
-      { ...body, cartToken: auth.cartTokenOf(req, body.cartToken) },
+      { emailOrMobile: body.emailOrMobile, password: body.password, cartToken: auth.cartTokenOf(req, body.cartToken) },
       auth.requestFingerprint(req),
     );
     setRefreshCookie(res, issued.refreshToken);
@@ -113,67 +111,7 @@ defineRoute(authRouter, {
   },
 });
 
-defineRoute(authRouter, {
-  method: 'post',
-  path: '/v1/auth/otp/request',
-  surface: 'storefront',
-  operationId: 'requestLoginOtp',
-  summary: 'Send a login OTP to a mobile number',
-  description:
-    'The primary login path. A six-digit code, valid for five minutes, argon2id-hashed at rest, five ' +
-    'verification attempts, three sends per hour per number on top of the IP rate limit. ' +
-    '\n\n' +
-    'The response is `{ "status": "sent" }` **always** — for a number with an account, a number without ' +
-    'one, and a number that has hit its send throttle. There is no signup step: verifying a code on an ' +
-    'unknown number creates the account. ' +
-    '\n\n' +
-    'Delivery goes through MSG91, which requires a TRAI DLT-registered template; until that paperwork ' +
-    'clears the dev sender logs the code instead of sending it.',
-  tags: ['Auth'],
-  auth: 'public',
-  rateLimit: 'otp',
-  request: { body: otpRequestBody },
-  responses: {
-    202: { description: 'A code has been sent, if that number was eligible for one.', schema: acceptedResponse },
-    429: { description: 'Too many OTP requests from this IP.' },
-  },
-  handler: async ({ body }) => {
-    await auth.requestLoginOtp(body.mobile);
-    return accepted({ status: 'sent' });
-  },
-});
 
-defineRoute(authRouter, {
-  method: 'post',
-  path: '/v1/auth/otp/verify',
-  surface: 'storefront',
-  operationId: 'verifyLoginOtp',
-  summary: 'Verify a login OTP and sign in',
-  description:
-    'Verifies the newest unconsumed code for that number. A correct code signs the customer in, marks ' +
-    'the mobile verified, and — when the number has no account yet — creates one on the spot with ' +
-    '`fullName` if supplied. The code is single-use: it is consumed before the session is issued. ' +
-    '\n\n' +
-    'Wrong codes increment an attempt counter and burn the challenge after five. Expired, exhausted and ' +
-    'simply-wrong all return 422 `otp_invalid` so the response cannot be used to probe which. ' +
-    `${COOKIE_NOTE}`,
-  tags: ['Auth'],
-  auth: 'public',
-  rateLimit: 'auth',
-  request: { body: otpVerifyBody },
-  responses: {
-    200: { description: 'Signed in.', schema: authSession },
-    422: { description: 'The code is wrong, expired, or its attempts are exhausted.' },
-  },
-  handler: async ({ body, req, res }) => {
-    const issued = await auth.verifyLoginOtp(
-      { ...body, cartToken: auth.cartTokenOf(req, body.cartToken) },
-      auth.requestFingerprint(req),
-    );
-    setRefreshCookie(res, issued.refreshToken);
-    return ok(issued.session);
-  },
-});
 
 defineRoute(authRouter, {
   method: 'post',

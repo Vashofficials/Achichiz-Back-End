@@ -23,15 +23,17 @@ const pgCode = (err: unknown): string | undefined =>
 export function notFoundHandler(req: Request, res: Response): void {
   res
     .status(404)
-    .type('application/problem+json')
+    .type('application/json')
     .json({
-      type: `${ERROR_BASE}/route-not-found`,
-      title: 'Route not found',
-      status: 404,
-      code: 'route_not_found',
-      detail: `${req.method} ${req.path} is not an endpoint on this API.`,
-      instance: req.originalUrl,
-      requestId: req.requestId,
+      type: 'error',
+      result: {
+        title: 'Route not found',
+        status: 404,
+        code: 'route_not_found',
+        detail: `${req.method} ${req.path} is not an endpoint on this API.`,
+        instance: req.originalUrl,
+        requestId: req.requestId,
+      },
     });
 }
 
@@ -56,16 +58,18 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
 
     res
       .status(e.status)
-      .type('application/problem+json')
+      .type('application/json')
       .json({
-        type: `${ERROR_BASE}/${e.code.replace(/_/g, '-')}`,
-        title: e.name.replace(/Error$/, '').replace(/([a-z])([A-Z])/g, '$1 $2') || 'Error',
-        status: e.status,
-        code: e.code,
-        detail: e.message,
-        instance: req.originalUrl,
-        requestId: req.requestId,
-        ...(e.issues ? { errors: e.issues } : {}),
+        type: 'error',
+        result: {
+          title: e.name.replace(/Error$/, '').replace(/([a-z])([A-Z])/g, '$1 $2') || 'Error',
+          status: e.status,
+          code: e.code,
+          detail: e.message,
+          instance: req.originalUrl,
+          requestId: req.requestId,
+          ...(e.issues ? { errors: e.issues } : {}),
+        },
       });
     return;
   }
@@ -75,15 +79,17 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
     logger.warn({ err, pgCode: pgCode(err) }, 'database constraint failure');
     res
       .status(mapped.status)
-      .type('application/problem+json')
+      .type('application/json')
       .json({
-        type: `${ERROR_BASE}/${mapped.code.replace(/_/g, '-')}`,
-        title: mapped.title,
-        status: mapped.status,
-        code: mapped.code,
-        detail: 'The request conflicts with existing data.',
-        instance: req.originalUrl,
-        requestId: req.requestId,
+        type: 'error',
+        result: {
+          title: mapped.title,
+          status: mapped.status,
+          code: mapped.code,
+          detail: 'The request conflicts with existing data.',
+          instance: req.originalUrl,
+          requestId: req.requestId,
+        },
       });
     return;
   }
@@ -92,16 +98,18 @@ export function errorHandler(err: unknown, req: Request, res: Response, next: Ne
 
   res
     .status(500)
-    .type('application/problem+json')
+    .type('application/json')
     .json({
-      type: `${ERROR_BASE}/internal`,
-      title: 'Internal server error',
-      status: 500,
-      code: 'internal_error',
-      detail: 'Something went wrong on our end. Quote the requestId if you contact support.',
-      instance: req.originalUrl,
-      requestId: req.requestId,
-      // Stack only outside production, and only ever for a genuinely unknown error.
-      ...(env.isProduction ? {} : { stack: err instanceof Error ? err.stack : String(err) }),
+      type: 'error',
+      result: {
+        title: 'Internal server error',
+        status: 500,
+        code: 'internal_error',
+        detail: 'Something went wrong on our end. Quote the requestId if you contact support.',
+        instance: req.originalUrl,
+        requestId: req.requestId,
+        // Stack only outside production, and only ever for a genuinely unknown error.
+        ...(env.isProduction ? {} : { stack: err instanceof Error ? err.stack : String(err) }),
+      },
     });
 }
