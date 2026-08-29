@@ -1,6 +1,6 @@
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
+import helmet, { type HelmetOptions } from 'helmet';
 import hpp from 'hpp';
 // Named import, not default: pino-http is CJS and under NodeNext its callable
 // export is only reachable as the named `pinoHttp` binding.
@@ -13,6 +13,10 @@ import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { namedLimiter } from './middleware/rate-limit.js';
 import { mountSwagger } from './lib/openapi/swagger.js';
 import { apiRouter } from './routes.js';
+
+type HelmetCallable = (
+  options?: Readonly<HelmetOptions>,
+) => (req: IncomingMessage, res: ServerResponse, next: (err?: unknown) => void) => void;
 
 /**
  * Assembles the app. Deliberately does NOT call listen() — that lives in
@@ -48,8 +52,14 @@ export function createApp(): Express {
     }),
   );
 
+  const helmetMiddleware = (
+    typeof helmet === 'function'
+      ? helmet
+      : (helmet as unknown as { default: HelmetCallable }).default
+  ) as HelmetCallable;
+
   app.use(
-    helmet({
+    helmetMiddleware({
       // Swagger UI needs inline styles/scripts; it is the only HTML this API serves.
       contentSecurityPolicy: env.isProduction
         ? {
