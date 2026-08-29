@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '../../config/db.js';
 import { mediaAssets, type MediaKind } from '../../db/schema/content.js';
 
@@ -22,4 +22,14 @@ export async function insertMediaAsset(asset: {
     .returning();
 
   return row!;
+}
+
+export async function findMediaAsset(id: string) {
+  const [row] = await db
+    .select()
+    .from(mediaAssets)
+    .where(and(eq(mediaAssets.id, id), isNull(mediaAssets.deletedAt)))
+    .limit(1);
+
+  return row ?? null;
 }

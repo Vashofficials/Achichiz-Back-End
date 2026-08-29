@@ -192,16 +192,18 @@ flowchart LR
     Runtime[Live Express router stack] --> Coverage[OpenAPI coverage test]
     Register --> Coverage
 
-    PublicUI[/docs currently mounted\ncombined dropdown] --> UI
-    AdminJSON[/openapi/admin.json currently public] --> Document
-    Guard[guardAdminDocs is defined\nbut not mounted] -.-> AdminJSON
+    PublicUI[/docs and /docs/] --> StorefrontUI[Public Storefront Swagger UI]
+    AdminUI[/docs/admin/] --> Guard[guardAdminDocs]
+    Guard --> AdminDocument[Embedded Admin Swagger UI]
+    AdminJSON[/openapi/admin.json] --> Guard
+    StorefrontJSON[/openapi/storefront.json] --> StorefrontUI
     README[README documents\n/docs/admin + /docs/storefront] -.-> PublicUI
 
     classDef risk fill:#ffebee,stroke:#c62828,color:#111
-    class Guard,README risk
+    class Guard risk
 ```
 
-**Current API documentation state:** only `/docs` is mounted, not the two README paths. The combined UI loads the admin definition, and `/openapi/admin.json` has no `guardAdminDocs` middleware. The admin API map is therefore publicly discoverable despite the intended guard.
+**Current API documentation state:** `/docs/` and `/openapi/storefront.json` are public. `/docs/admin/` and `/openapi/admin.json` use the existing IP/staff guard; the Admin document is embedded only after the guard succeeds, so the public Storefront UI does not need to fetch it. `/docs/admin` accepts the documented short-lived `access_token` query parameter for browser navigation, while API clients may use `Authorization`. The README’s `/docs/storefront` path is an alias of the public Storefront UI, not a business API.
 
 ## 4. Route surface map
 
@@ -325,7 +327,7 @@ flowchart TD
 - A cart stores a live product/variant reference and a price snapshot for display only. Totals are recomputed from current catalogue rows.
 - Builder hamper lines are accepted by the request schema but rejected by the service as `builder_lines_unsupported`; their bill-of-materials reservation flow is not implemented.
 - `availableQtyFor()` used by cart reads does not filter inactive/deleted warehouses, while checkout inventory selection does. Cart availability can therefore overstate sellable stock before checkout rejects it.
-- `X-Cart-Token` is not included in the CORS `allowedHeaders` list. A browser on an approved cross-origin storefront cannot use the documented preferred header without a preflight failure; it must fall back to the body/query field.
+- `X-Cart-Token` is included in both the CORS `allowedHeaders` and `exposedHeaders` lists, so an approved cross-origin storefront can use the documented preferred header.
 
 ## 7. Quote, order creation, and cart conversion
 
@@ -686,7 +688,7 @@ flowchart TD
     Missing -- no --> Broken[400 No file provided]
     Missing -- yes --> Service[Upload/persist again]
 
-    Orphan[Review finding:\nfirst upload can remain in S3 + media_assets if downstream validation or second parser fails] -.-> MediaRow
+    Orphan[Review finding:\nfirst upload can remain in S3 + media_assets if downstream validation or a later service step fails] -.-> MediaRow
     Security[Review finding:\nMIME/extension are client-controlled; no content sniffing, file-count, or aggregate-volume cap] -.-> Each
     Ownership[Review finding:\ncustomer media has no ownership field; admin upload only requires dashboard:view] -.-> MediaRow
 
@@ -881,17 +883,17 @@ flowchart TD
 
 | Priority | Area | Current flow impact | Main locations |
 |---|---|---|---|
-| **P0 / immediate** | Secret exposure | A production-looking RDS credential is committed in `drizzle.config.ts`; anyone with repository/history access may be able to connect. | `drizzle.config.ts:16`, commit `002a74a3d9563b959cd0469246467fe0bd39b054` |
+| **P0 / immediate** | Secret exposure | The hardcoded remote fallback has been removed from the working tree, but the exposed credential remains in repository history and must be rotated/revoked and purged from history/caches. | `drizzle.config.ts`, commit `002a74a3d9563b959cd0469246467fe0bd39b054` |
 | **P0 / immediate** | Payment settlement | Captures can be applied after cancellation/refund states, captured amounts are not capped, and stale session state can double-credit or overwrite captures. | `src/modules/payments/payments.service.ts` |
 | **P0 / immediate** | Staff MFA | Old challenge tokens can replay; lockout is not consulted in MFA verification; recovery-code consumption is read/rewrite rather than atomic. | `src/modules/admin-auth/admin-auth.service.ts` |
 | **P1** | Checkout/cart ownership | Concurrent submissions can create multiple orders from one cart; unconditional cart conversion leaves multiple durable orders. | `src/modules/checkout/checkout.service.ts`, `checkout.repository.ts` |
-| **P1** | Media upload | Dedicated upload endpoints double-parse multipart input, and the first parser has already persisted the file before validation. | `src/middleware/file-interceptor.ts`, `src/modules/media/media.routes.ts` |
+| **P1** | Media upload | The dedicated double parser is removed, but the shared interceptor still persists before downstream validation; MIME/content sniffing, ownership, file limits, and S3/DB cleanup remain. | `src/middleware/file-interceptor.ts`, `src/modules/media/*` |
 | **P1** | Warehouse authorization | A staff user can supply warehouse IDs outside their assigned scope in multiple inventory/transfer/report paths. | `src/modules/admin-*`, staff warehouse scope repository |
-| **P1** | Admin docs | Admin OpenAPI JSON and combined Swagger UI are public because the guard is unused. | `src/lib/openapi/swagger.ts` |
+| **Done / follow-up** | Admin docs | Admin OpenAPI JSON and UI now use `guardAdminDocs`; the Storefront UI and JSON remain public. Authorized documentation access should be tested with a real staff token. | `src/lib/openapi/swagger.ts` |
 | **P1** | Production operations | Worker entrypoint is absent; SES production sender is a rejecting stub; deployment does not provide the promised asynchronous processing. | `src/`, `Dockerfile`, `docker-compose.prod.yml`, `src/integrations/ses/index.ts` |
 | **P2** | Auth consistency | Firebase signup does not save returned UID, Firebase linking is race-prone, and external account creation has no compensation. | `src/modules/auth/auth.service.ts`, `firebase-auth.service.ts` |
 | **P2** | Refresh/idempotency | Staff refresh rotation is non-conditional; staff keys share `anon`; successful response persistence is asynchronous. | `src/modules/admin-auth/admin-auth.service.ts`, `src/middleware/idempotency.ts` |
-| **P2** | Search/API delivery | Search limiter is absent, vocabulary has no refresh path, and CORS excludes `X-Cart-Token`. | `src/modules/search/search.routes.ts`, `src/modules/cart/*`, `src/app.ts` |
+| **P2** | Search/API delivery | Search limiter is absent and vocabulary has no refresh path. The cart token CORS allow/expose headers are now configured. | `src/modules/search/search.routes.ts`, `src/modules/cart/*`, `src/app.ts` |
 | **P2** | Database correctness | Order trigger references an order row field that does not exist; invoice FY calculation uses UTC in TypeScript versus IST in SQL. | `src/db/migrations/0001_initial.sql`, `admin-orders.service.ts` |
 | **P2** | Build hygiene | Lint fails, production audit has six moderate findings, and documentation scripts are missing. | `package.json`, lint output, `npm audit` |
 
@@ -904,9 +906,9 @@ flowchart TD
     C --> D[4. Atomically claim carts and\nmake payment/session operations idempotent]
     D --> E[5. Fix staff MFA and refresh\nconditional consumption/rotation]
     E --> F[6. Enforce warehouse scope\nat service/repository boundary]
-    F --> G[7. Replace media double parsing\nvalidate/sniff/cleanup files]
-    G --> H[8. Protect admin docs\nand align README/OpenAPI routes]
-    H --> I[9. Add worker + durable outbox/jobs\nimplement SES]
-    I --> J[10. Add real integration tests\nPostgres, Redis, HTTP, S3, Razorpay]
-    J --> K[11. Fix lint/audit and restore\nOpenAPI generation gates]
+    F --> G[7. Finish media hardening\nvalidate/sniff/cleanup files]
+    G --> H[8. Add worker + durable outbox/jobs\nimplement SES]
+    H --> I[9. Add real integration tests\nPostgres, Redis, HTTP, S3, Razorpay]
+    I --> J[10. Fix lint/audit and restore\nOpenAPI generation gates]
+    J --> K[11. Re-run production readiness review]
 ```

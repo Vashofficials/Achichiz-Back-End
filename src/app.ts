@@ -76,8 +76,8 @@ export function createApp(): Express {
       },
       credentials: true,
       methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id'],
-      exposedHeaders: ['X-Request-Id', 'Idempotent-Replay', 'RateLimit'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id', 'X-Cart-Token'],
+      exposedHeaders: ['X-Request-Id', 'X-Cart-Token', 'Idempotent-Replay', 'RateLimit'],
       maxAge: 86_400,
     }),
   );

@@ -99,26 +99,18 @@ export function mountSwagger(app: Express): void {
     res.set('X-Robots-Tag', 'noindex').json(storefrontDoc);
   });
 
-  // Removed guardAdminDocs from the JSON spec so the multi-ui dropdown can load it
-  // without failing. The actual endpoints are still protected by their own RBAC.
-  app.get('/openapi/admin.json', (_req, res) => {
+  app.get('/openapi/admin.json', guardAdminDocs, (_req, res) => {
     res.set('X-Robots-Tag', 'noindex').json(adminDoc);
   });
 
   // ---- UI --------------------------------------------------------------
-  // The user requested a single Swagger UI with a dropdown (explorer mode)
-  // to toggle between Storefront and Admin APIs.
-  const multiUiOptions: swaggerUi.SwaggerUiOptions = {
+  // The storefront documentation remains public. The admin document is embedded
+  // in a separate UI and guarded before HTML is returned, so it never needs a
+  // public JSON fetch from a dropdown. Staff may pass a short-lived token as
+  // `?access_token=` for browser navigation; API clients can use Authorization.
+  const storefrontUiOptions: swaggerUi.SwaggerUiOptions = {
     ...UI_OPTIONS,
-    explorer: true,
-    swaggerOptions: {
-      ...UI_OPTIONS.swaggerOptions,
-      urls: [
-        { url: '/openapi/admin.json', name: '1-Admin-APIs' },
-        { url: '/openapi/storefront.json', name: '2-Customer-APIs' },
-      ],
-    },
-    customSiteTitle: 'Achichiz API',
+    customSiteTitle: 'Achichiz Storefront API',
     customCss: `
       /* Fix typography and overlapping code blocks in the authorization modal and descriptions */
       .swagger-ui .auth-container p { line-height: 2.2 !important; margin-bottom: 12px !important; font-size: 14px; }
@@ -126,22 +118,42 @@ export function mountSwagger(app: Express): void {
       .swagger-ui .markdown p { line-height: 1.8 !important; }
       .swagger-ui .markdown code { padding: 2px 6px !important; border-radius: 4px !important; font-size: 13px; }
       .swagger-ui .opblock-description-wrapper p { line-height: 1.8 !important; }
-      
-      /* Polish overall appearance */
       .swagger-ui .wrapper { max-width: 1200px !important; }
       .swagger-ui .dialog-ux .modal-ux { max-width: 700px !important; }
     `,
   };
 
+  const adminUiOptions: swaggerUi.SwaggerUiOptions = {
+    ...storefrontUiOptions,
+    customSiteTitle: 'Achichiz Admin API',
+  };
+  // Serve static Swagger assets without the API document, then guard the HTML
+  // page that embeds the admin document. This keeps CSS/JS cacheable without
+  // making the route inventory publicly discoverable.
+  app.use('/docs/admin', swaggerUi.serveFiles(adminDoc, adminUiOptions));
   app.use(
-    '/docs',
+    '/docs/admin',
+    guardAdminDocs,
     (_req: Request, res: Response, next: NextFunction) => {
       res.set('X-Robots-Tag', 'noindex');
       next();
     },
-    swaggerUi.serveFiles(undefined, multiUiOptions),
-    swaggerUi.setup(undefined, multiUiOptions)
+    swaggerUi.setup(adminDoc, adminUiOptions),
   );
 
-  logger.info('swagger mounted at /docs with multi-definition dropdown');
+  const publicStorefrontDocs = [
+    (_req: Request, res: Response, next: NextFunction) => {
+      res.set('X-Robots-Tag', 'noindex');
+      next();
+    },
+    swaggerUi.serveFiles(storefrontDoc, storefrontUiOptions),
+    swaggerUi.setup(storefrontDoc, storefrontUiOptions),
+  ] as const;
+
+  // Keep both the historical `/docs` entrypoint and the README's explicit
+  // `/docs/storefront` path; neither exposes the Admin document.
+  app.use('/docs/storefront', ...publicStorefrontDocs);
+  app.use('/docs', ...publicStorefrontDocs);
+
+  logger.info('swagger mounted at /docs and /docs/storefront (public), /docs/admin (staff only)');
 }

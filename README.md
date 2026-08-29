@@ -4,7 +4,7 @@ Express 5 · TypeScript · PostgreSQL (Drizzle) · Redis · OpenAPI 3.1 + Swagge
 
 Serves two API surfaces from one process: the public **storefront** API and the staff **admin** API.
 
-For the complete current request, commerce, payment, authentication, inventory, media, database, webhook, and operations diagrams, see [`docs/BACKEND-FLOW.md`](docs/BACKEND-FLOW.md).
+For the complete current request, commerce, payment, authentication, inventory, media, database, webhook, and operations diagrams, see [`docs/BACKEND-FLOW.md`](docs/BACKEND-FLOW.md). For the endpoint inventory and verification results, see [`docs/API-AUDIT-REPORT.md`](docs/API-AUDIT-REPORT.md).
 
 ---
 

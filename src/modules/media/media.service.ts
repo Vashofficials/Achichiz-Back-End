@@ -1,5 +1,6 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { env } from '../../config/env.js';
+import { NotFoundError } from '../../lib/errors.js';
 import * as repo from './media.repository.js';
 import { ulid } from 'ulid';
 
@@ -63,6 +64,27 @@ export async function uploadMedia(file: Express.Multer.File, staffUserId: string
     uploadedBy: staffUserId,
   });
 
+  return toMediaSummary(asset);
+}
+
+export async function getMedia(id: string) {
+  const asset = await repo.findMediaAsset(id);
+  if (!asset) throw new NotFoundError('Media asset', id);
+  return toMediaSummary(asset);
+}
+
+function toMediaSummary(asset: {
+  id: string;
+  url: string;
+  cdnUrl: string | null;
+  filename: string;
+  mimeType: string;
+  kind: 'image' | 'video' | 'pdf' | 'other';
+  bytes: number;
+  widthPx: number | null;
+  heightPx: number | null;
+  createdAt: Date;
+}) {
   return {
     id: asset.id,
     url: asset.url,
