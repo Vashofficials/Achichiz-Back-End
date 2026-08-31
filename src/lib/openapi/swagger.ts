@@ -134,8 +134,8 @@ export function mountSwagger(app: Express): void {
     swaggerOptions: {
       ...UI_OPTIONS.swaggerOptions,
       urls: [
-        { url: '/openapi/admin.json', name: '1-Admin-APIs' },
-        { url: '/openapi/storefront.json', name: '2-Customer-APIs' },
+        { url: '/openapi/storefront.json', name: '1-Storefront-APIs' },
+        { url: '/openapi/admin.json', name: '2-Admin-APIs' },
       ],
     },
     customSiteTitle: 'Achichiz API',
@@ -159,9 +159,6 @@ export function mountSwagger(app: Express): void {
       res.set('X-Robots-Tag', 'noindex');
       next();
     },
-    // The UI is a top-level navigation, so it can carry ?access_token= where the
-    // dropdown's background fetch cannot.
-    guardAdminDocs,
     swaggerUi.serveFiles(undefined, multiUiOptions),
     swaggerUi.setup(undefined, multiUiOptions)
   );
