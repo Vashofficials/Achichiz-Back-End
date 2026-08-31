@@ -32,20 +32,37 @@ function ipAllowed(req: Request): boolean {
 }
 
 /**
- * Gate for the admin spec and UI.
+ * Gate for the admin spec and the Swagger UI, in this order of precedence.
  *
- * A browser loading `/docs/admin` cannot send an Authorization header, so a
- * staff token is also accepted as `?access_token=` for that navigation. That is
- * a deliberate, documented trade-off: the token lands in the URL (and therefore
- * in proxy logs and browser history), which is why it is a 10-minute staff token
- * and why the IP allowlist exists. In production, prefer putting `/docs/admin`
- * behind your VPN or reverse-proxy auth and leaving DOCS_ADMIN_REQUIRE_AUTH on
- * as defence in depth.
+ * The UI fetches `/openapi/admin.json` with a plain `fetch()` — no Authorization
+ * header, and the staff refresh cookie is scoped to `/v1/admin/auth` so it is
+ * not sent either. That is why the guard was previously dropped from the spec
+ * route altogether, which left a complete map of every admin endpoint readable
+ * by anyone on the internet.
+ *
+ * 1. **A configured allowlist is sufficient on its own.** On a VPN or office
+ *    range the network is the control, the dropdown keeps working, and no token
+ *    has to be smuggled through a URL where it would land in proxy logs and
+ *    browser history.
+ * 2. **Otherwise a staff token with `settings:view` is required.** Accepted as a
+ *    Bearer header or, for the top-level UI navigation which can carry one, as
+ *    `?access_token=`. It is a 10-minute token precisely because of where that
+ *    query string ends up.
+ *
+ * With neither configured the docs are closed, which is the safe default and the
+ * case this guard exists to cover.
  */
 async function guardAdminDocs(req: Request, _res: Response, next: NextFunction): Promise<void> {
-  if (!ipAllowed(req)) {
-    logger.warn({ ip: clientIp(req), path: req.path }, 'admin docs blocked by ip allowlist');
-    next(new ForbiddenError('Admin API documentation is not available from this network.'));
+  const allowlistConfigured = env.docsAdminIpAllowlist.length > 0;
+
+  if (allowlistConfigured) {
+    if (!ipAllowed(req)) {
+      logger.warn({ ip: clientIp(req), path: req.path }, 'admin docs blocked by ip allowlist');
+      next(new ForbiddenError('Admin API documentation is not available from this network.'));
+      return;
+    }
+    // On an allowlisted network. The network IS the control.
+    next();
     return;
   }
 
@@ -99,9 +116,12 @@ export function mountSwagger(app: Express): void {
     res.set('X-Robots-Tag', 'noindex').json(storefrontDoc);
   });
 
-  // Removed guardAdminDocs from the JSON spec so the multi-ui dropdown can load it
-  // without failing. The actual endpoints are still protected by their own RBAC.
-  app.get('/openapi/admin.json', (_req, res) => {
+  /*
+   * Guarded. The endpoints are protected by their own RBAC, but this document is
+   * a complete map of all 212 of them — every path, parameter and schema — and
+   * serving it unauthenticated hands an attacker the reconnaissance for free.
+   */
+  app.get('/openapi/admin.json', guardAdminDocs, (_req, res) => {
     res.set('X-Robots-Tag', 'noindex').json(adminDoc);
   });
 
@@ -139,6 +159,9 @@ export function mountSwagger(app: Express): void {
       res.set('X-Robots-Tag', 'noindex');
       next();
     },
+    // The UI is a top-level navigation, so it can carry ?access_token= where the
+    // dropdown's background fetch cannot.
+    guardAdminDocs,
     swaggerUi.serveFiles(undefined, multiUiOptions),
     swaggerUi.setup(undefined, multiUiOptions)
   );
