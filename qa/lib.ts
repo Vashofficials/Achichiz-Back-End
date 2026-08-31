@@ -14,6 +14,7 @@
  * Credentials come from the environment — never hard-coded.
  */
 
+import { readFileSync, writeFileSync } from 'node:fs';
 import { Pool } from 'pg';
 import { authenticator } from 'otplib';
 
@@ -89,9 +90,49 @@ export type AdminSession = { access: string; staffId: string };
  * `result.tokens` directly gets null and appears to hang, so the branch is
  * explicit here.
  */
+/**
+ * Where a session is cached between harness runs.
+ *
+ * `/v1/admin/auth/*` allows TEN requests per FIFTEEN minutes, and each login is
+ * two of them (password, then TOTP). Five harness runs in a row therefore lock
+ * the suite out of authenticating at all — which is the limiter working, and a
+ * harness that re-authenticates on every run simply cannot be used.
+ *
+ * Staff access tokens live ten minutes, so the cache is honoured for nine.
+ * Gitignored: it holds a real, if short-lived, credential.
+ */
+const TOKEN_CACHE = '.qa-admin-session.json';
+const TOKEN_TTL_MS = 9 * 60_000;
+
+function readCachedSession(): AdminSession | null {
+  try {
+    const raw = JSON.parse(readFileSync(TOKEN_CACHE, 'utf8')) as AdminSession & { at: number };
+    if (Date.now() - raw.at > TOKEN_TTL_MS) return null;
+    return { access: raw.access, staffId: raw.staffId };
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedSession(s: AdminSession): void {
+  try {
+    writeFileSync(TOKEN_CACHE, JSON.stringify({ ...s, at: Date.now() }), 'utf8');
+  } catch {
+    /* a cache miss is not a failure */
+  }
+}
+
 export async function adminLogin(email = ADMIN_EMAIL, password = ADMIN_PASSWORD): Promise<AdminSession> {
   if (!email || !password) {
     throw new Error('Set QA_ADMIN_EMAIL and QA_ADMIN_PASSWORD — this harness never hard-codes credentials.');
+  }
+
+  const cached = readCachedSession();
+  if (cached) {
+    // Confirm it is still good before handing it out — a stale token would turn
+    // every downstream row into an indistinguishable 401.
+    const probe = await call('GET', '/v1/admin/me', { token: cached.access });
+    if (probe.status === 200) return cached;
   }
 
   const login = await call('POST', '/v1/admin/auth/login', { body: { email, password } });
@@ -99,7 +140,9 @@ export async function adminLogin(email = ADMIN_EMAIL, password = ADMIN_PASSWORD)
 
   const first = unwrap(login.body);
   if (first.status === 'session' && first.tokens?.accessToken) {
-    return { access: first.tokens.accessToken, staffId: first.staffId ?? '' };
+    const s0 = { access: first.tokens.accessToken as string, staffId: (first.staffId ?? '') as string };
+    writeCachedSession(s0);
+    return s0;
   }
   if (first.status !== 'mfa_required') throw new Error(`unexpected login outcome: ${first.status}`);
 
@@ -117,5 +160,7 @@ export async function adminLogin(email = ADMIN_EMAIL, password = ADMIN_PASSWORD)
   const session = unwrap(verify.body);
   const access = session.tokens?.accessToken;
   if (!access) throw new Error(`no access token in verify response: ${verify.text.slice(0, 200)}`);
-  return { access, staffId: rows[0].id };
+  const session0 = { access: access as string, staffId: rows[0].id };
+  writeCachedSession(session0);
+  return session0;
 }
