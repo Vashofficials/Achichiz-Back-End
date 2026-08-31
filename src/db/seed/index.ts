@@ -1,6 +1,8 @@
 import { logger } from '../../config/logger.js';
 import { closeDb } from '../../config/db.js';
 import { seedRoles } from './roles.js';
+import { seedGstStates } from './gst-states.js';
+import { seedHsnCodes } from './hsn-codes.js';
 
 /**
  * Seeds reference data the application cannot function without.
@@ -14,6 +16,12 @@ import { seedRoles } from './roles.js';
  */
 async function main(): Promise<void> {
   logger.info('seeding reference data');
+
+  const gstStates = await seedGstStates();
+  logger.info({ count: gstStates.upserted }, 'gst_states seeded');
+
+  const hsnCodes = await seedHsnCodes();
+  logger.info({ count: hsnCodes.upserted }, 'hsn_codes seeded');
 
   const roles = await seedRoles();
   logger.info(
