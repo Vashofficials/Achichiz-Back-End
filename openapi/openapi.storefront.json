@@ -20096,86 +20096,77 @@
                     "result": {
                       "type": "object",
                       "properties": {
-                        "data": {
-                          "type": "object",
-                          "properties": {
-                            "id": {
-                              "type": "string",
-                              "format": "uuid",
-                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                            },
-                            "url": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "url": {
+                          "type": "string"
+                        },
+                        "cdnUrl": {
+                          "anyOf": [
+                            {
                               "type": "string"
                             },
-                            "cdnUrl": {
-                              "anyOf": [
-                                {
-                                  "type": "string"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "filename": {
-                              "type": "string"
-                            },
-                            "mimeType": {
-                              "type": "string"
-                            },
-                            "kind": {
-                              "type": "string",
-                              "enum": [
-                                "image",
-                                "video",
-                                "pdf",
-                                "other"
-                              ]
-                            },
-                            "bytes": {
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "filename": {
+                          "type": "string"
+                        },
+                        "mimeType": {
+                          "type": "string"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "image",
+                            "video",
+                            "pdf",
+                            "other"
+                          ]
+                        },
+                        "bytes": {
+                          "type": "number"
+                        },
+                        "widthPx": {
+                          "anyOf": [
+                            {
                               "type": "number"
                             },
-                            "widthPx": {
-                              "anyOf": [
-                                {
-                                  "type": "number"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "heightPx": {
-                              "anyOf": [
-                                {
-                                  "type": "number"
-                                },
-                                {
-                                  "type": "null"
-                                }
-                              ]
-                            },
-                            "createdAt": {
-                              "type": "string"
+                            {
+                              "type": "null"
                             }
-                          },
-                          "required": [
-                            "id",
-                            "url",
-                            "cdnUrl",
-                            "filename",
-                            "mimeType",
-                            "kind",
-                            "bytes",
-                            "widthPx",
-                            "heightPx",
-                            "createdAt"
-                          ],
-                          "additionalProperties": false
+                          ]
+                        },
+                        "heightPx": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "createdAt": {
+                          "type": "string"
                         }
                       },
                       "required": [
-                        "data"
+                        "id",
+                        "url",
+                        "cdnUrl",
+                        "filename",
+                        "mimeType",
+                        "kind",
+                        "bytes",
+                        "widthPx",
+                        "heightPx",
+                        "createdAt"
                       ],
                       "additionalProperties": false
                     }
