@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { z } from 'zod';
 import { defineRoute } from '../../lib/openapi/define-route.js';
 import { created } from '../../lib/http.js';
 import { BadRequestError } from '../../lib/errors.js';
@@ -31,9 +30,7 @@ defineRoute(mediaRouter, {
   responses: {
     201: {
       description: 'The uploaded media asset.',
-      schema: z.object({
-        data: mediaAssetSummary,
-      }),
+      schema: mediaAssetSummary,
     },
     400: { description: 'No file provided or file too large.' },
   },
@@ -68,9 +65,7 @@ defineRoute(mediaRouter, {
   responses: {
     201: {
       description: 'The uploaded media asset.',
-      schema: z.object({
-        data: mediaAssetSummary,
-      }),
+      schema: mediaAssetSummary,
     },
     400: { description: 'No file provided or file too large.' },
   },

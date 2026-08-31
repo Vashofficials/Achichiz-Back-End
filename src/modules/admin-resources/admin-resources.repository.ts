@@ -17,6 +17,7 @@
  * `BEFORE UPDATE` trigger that maintains it (see `db/schema/identity.ts`).
  */
 
+import { translateConstraintError } from './constraint-errors.js';
 import { and, asc, eq, inArray, isNull, sql, type SQL } from 'drizzle-orm';
 import { db, type Executor } from '../../config/db.js';
 import type { ResourceDescriptor, ResourceRow } from './resource.types.js';
@@ -123,11 +124,22 @@ export async function insertRow(
     sql`, `,
   );
 
-  const result = await exec.execute<{ id: string }>(sql`
-    INSERT INTO ${descriptor.table} (${columnList})
-    VALUES (${valueList})
-    RETURNING ${sql.identifier(pkName(descriptor))} AS id
-  `);
+  /*
+   * Integrity violations are the caller's problem, not a server fault. Without
+   * this translation a duplicate handle, an unknown `stateCode` or a failed
+   * check constraint all surfaced as 500 "Something went wrong on our end".
+   */
+  let result;
+  try {
+    result = await exec.execute<{ id: string }>(sql`
+      INSERT INTO ${descriptor.table} (${columnList})
+      VALUES (${valueList})
+      RETURNING ${sql.identifier(pkName(descriptor))} AS id
+    `);
+  } catch (err) {
+    const translated = translateConstraintError(err, descriptor.slug);
+    throw translated ?? err;
+  }
 
   const id = result.rows[0]?.id;
   if (!id) throw new Error(`${descriptor.slug}: insert returned no id`);
@@ -150,9 +162,16 @@ export async function updateRow(
   );
   const where = and(eq(descriptor.primaryKey, id), aliveGuard(descriptor));
 
-  const result = await exec.execute(sql`
-    UPDATE ${descriptor.table} SET ${assignments} WHERE ${where}
-  `);
+  // Same reasoning as insertRow: a PATCH can violate the same constraints.
+  let result;
+  try {
+    result = await exec.execute(sql`
+      UPDATE ${descriptor.table} SET ${assignments} WHERE ${where}
+    `);
+  } catch (err) {
+    const translated = translateConstraintError(err, descriptor.slug);
+    throw translated ?? err;
+  }
   return (result.rowCount ?? 0) > 0;
 }
 

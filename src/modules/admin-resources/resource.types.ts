@@ -185,6 +185,20 @@ export type ResourceDescriptor = {
   /** For tables with no `deleted_at`: DELETE flips a status column instead. */
   archiveStatus?: { column: PgColumn; value: string };
 
+  /**
+   * Why this resource cannot be created through the generic engine.
+   *
+   * Some tables have NOT NULL columns the engine structurally cannot supply —
+   * `gift_cards.code_hash` is a server-computed digest that is deliberately
+   * absent from `columns`, and `code_last4` is `readOnly`. A create there could
+   * never succeed, and before this existed it failed as a 422 naming a raw
+   * snake_case column the client has no way to send. Declaring the reason lets
+   * the API say so plainly and lets the console hide a button that never worked.
+   *
+   * Absent means creatable, so every existing resource is unaffected.
+   */
+  createUnsupported?: string;
+
   bulkActions: readonly BulkActionSpec[];
 };
 

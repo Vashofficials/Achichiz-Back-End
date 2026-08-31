@@ -514,6 +514,8 @@ const couponsResource = defineResource({
 
 const giftCardsResource = defineResource({
   slug: 'gift-cards',
+  createUnsupported:
+    'Gift cards are issued by a purchase, not created by hand. The card code is generated and hashed at issue time — code_hash and codeLast4 cannot be supplied by a client, so this endpoint could never succeed.',
   title: 'Gift cards',
   description:
     'Issued cards. The code itself is never stored — only its hash and the last four characters — so ' +

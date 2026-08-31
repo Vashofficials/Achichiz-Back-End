@@ -105,6 +105,14 @@ export const resourceSchemaView = z.object({
     .describe('operation → the action required, e.g. `{ "delete": "delete" }`.'),
   columns: z.array(z.string()).describe('Every selectable field. The `?fields=` allowlist.'),
   listColumns: z.array(z.string()).describe('Default table projection.'),
+  createUnsupported: z
+    .string()
+    .nullable()
+    .describe(
+      'Null when the resource can be created. Otherwise the reason it cannot — some tables have ' +
+        'server-computed NOT NULL columns no client can supply, and the console should hide its ' +
+        'create button rather than offer a call that always fails.',
+    ),
   fields: z.array(publishedField).describe('The editable spec. This is what the create/edit form renders.'),
   searchable: z.array(z.string()).describe('Fields `?q=` ORs across.'),
   sortable: z.array(z.string()).describe('Fields `?sort=` accepts.'),

@@ -168,6 +168,12 @@ export async function createRow(
   descriptor: ResourceDescriptor,
   body: Record<string, unknown>,
 ): Promise<ResourceRow> {
+  // Refused before touching the database, so the caller gets the real reason
+  // rather than a not-null violation naming a column they cannot send.
+  if (descriptor.createUnsupported) {
+    throw new BadRequestError(descriptor.createUnsupported);
+  }
+
   const patch = toDbPatch(descriptor, body);
   if (Object.keys(patch).length === 0) {
     throw new BadRequestError(`Nothing to create — no writable field was supplied.`);
@@ -254,6 +260,8 @@ export function describeResource(descriptor: ResourceDescriptor): ResourceSchema
     permissions: { ...OPERATION_ACTIONS },
     columns: Object.keys(descriptor.columns),
     listColumns: [...descriptor.listColumns],
+    /** null when the resource can be created; a human reason when it cannot. */
+    createUnsupported: descriptor.createUnsupported ?? null,
     fields: descriptor.fields.map(publishField),
     searchable: [...descriptor.searchable],
     sortable: [...descriptor.sortable],
