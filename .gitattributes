@@ -22,5 +22,18 @@ Dockerfile.*    text eol=lf
 *.yaml          text eol=lf
 .dockerignore   text eol=lf
 
+# Migrations are CHECKSUMMED, so byte-exactness matters even more here than for
+# the scripts above. `db/migrate.ts` stores sha256 of the raw file text and
+# refuses to run when it changes, because a silently edited migration means the
+# database and the repo disagree about what was applied.
+#
+# A CRLF working copy therefore does not merely look different — it aborts the
+# deploy outright:
+#
+#   Migration 0001_initial.sql has changed since it was applied.
+#
+# The live database recorded LF checksums, so LF is the canonical form.
+*.sql           text eol=lf
+
 # Lockfiles are huge and diff badly; keep them byte-stable across platforms.
 package-lock.json -text
