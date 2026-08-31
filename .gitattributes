@@ -1,0 +1,26 @@
+# Line endings for files Linux has to execute or parse.
+#
+# `core.autocrlf=true` on a Windows checkout rewrites LF to CRLF in the WORKING
+# TREE, even though git stores LF. That is harmless until the tree is copied to
+# a server — bash then reads the trailing \r as part of every command and the
+# script dies with:
+#
+#   scripts/deploy-docker.sh: line 8: $'\r': command not found
+#   scripts/deploy-docker.sh: line 49: syntax error: unexpected end of file
+#
+# `eol=lf` overrides autocrlf for these paths, so the Windows working copy holds
+# LF too and any copy of it — git, scp, rsync, a zip — is safe to run.
+#
+# Deliberately scoped rather than a blanket `* text=auto eol=lf`: only files the
+# server executes need this, and a repo-wide conversion would rewrite every
+# source file for no benefit.
+
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+Dockerfile.*    text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+.dockerignore   text eol=lf
+
+# Lockfiles are huge and diff badly; keep them byte-stable across platforms.
+package-lock.json -text
