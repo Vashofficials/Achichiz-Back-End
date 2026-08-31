@@ -27,7 +27,6 @@
  *    through `leads.service` — the module that owns the subscriber list.
  */
 
-import { randomInt } from 'node:crypto';
 import type { Request } from 'express';
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
@@ -37,18 +36,11 @@ import {
   UnprocessableError,
   ValidationError,
 } from '../../lib/errors.js';
-import { emailSender, maskEmail } from '../../integrations/ses/index.js';
+import { maskEmail } from '../../integrations/ses/index.js';
 import * as cartService from '../cart/cart.service.js';
 import * as leadsService from '../leads/leads.service.js';
 import * as repo from './auth.repository.js';
 import { signCustomerToken } from './customer-token.js';
-import {
-  burnVerificationTime,
-  hashPassword,
-  hashSecret,
-  verifyPassword,
-  verifySecret,
-} from './password.js';
 import { findSpentToken, rememberSpentToken } from './refresh-replay-store.js';
 import {
   decideRefresh,
@@ -62,8 +54,6 @@ import type { AuthSession, CustomerSummary } from './auth.schemas.js';
 
 /* ------------------------------------------------------------- constants */
 
-
-const RESET_TTL_MS = 30 * 60 * 1000;
 
 /** The same body every failed credential check returns, whatever actually went wrong. */
 const INVALID_CREDENTIALS = 'That email and password combination is not valid.';
@@ -231,15 +221,21 @@ export async function signup(
       displayName: input.fullName,
       ...(input.mobile ? { phoneNumber: '+91' + input.mobile } : {}),
     });
-  } catch (err: any) {
+  } catch (err) {
     logger.error({ err, email: input.email }, 'auth.firebase_create_user_failed');
-    if (err.code === 'auth/email-already-exists') {
+    /*
+     * Firebase Admin throws `FirebaseAuthError`, whose `code` and `message` are
+     * the only parts contracted. Narrowing beats `any`: an unexpected shape then
+     * falls through to the generic message instead of reading undefined.
+     */
+    const fb = err as { code?: string; message?: string };
+    if (fb.code === 'auth/email-already-exists') {
       throw new ConflictError('An account already exists in Firebase for that email address.');
     }
-    if (err.code === 'auth/phone-number-already-exists') {
+    if (fb.code === 'auth/phone-number-already-exists') {
       throw new ConflictError('An account already exists in Firebase for that mobile number.');
     }
-    throw new UnprocessableError('Could not create Firebase account: ' + err.message);
+    throw new UnprocessableError('Could not create Firebase account: ' + (fb.message ?? 'unknown error'));
   }
 
   const customer = await repo.insertCustomer({
@@ -282,6 +278,9 @@ export async function login(
         throw new UnauthenticatedError(INVALID_CREDENTIALS);
       }
     } catch (err) {
+      // The response must not distinguish causes, but an operator still needs
+      // to see WHY — a Firebase outage and a wrong password look identical.
+      logger.warn({ err }, 'auth.firebase_signin_failed');
       throw new UnauthenticatedError(INVALID_CREDENTIALS);
     }
   }
@@ -292,6 +291,7 @@ export async function login(
     const { email: verifiedEmail } = await firebaseRest.signInWithPassword(email, input.password);
     email = verifiedEmail;
   } catch (err) {
+    logger.warn({ err }, 'auth.firebase_password_signin_failed');
     throw new UnauthenticatedError(INVALID_CREDENTIALS);
   }
 
@@ -437,19 +437,6 @@ export async function logoutEverywhere(presentedToken: string | undefined): Prom
 /* ------------------------------------------------------- password reset */
 
 /**
- * The reset link's landing page.
- *
- * The storefront origin is not its own env var (adding one means touching
- * `config/env.ts`, which this module does not own), so the first configured CORS
- * origin is used — that is by construction the storefront — with the API's own
- * URL as a last resort so the email is never sent with a broken link.
- */
-const resetPageUrl = (token: string): string => {
-  const origin = env.corsOrigins[0] ?? env.API_PUBLIC_URL;
-  return `${origin.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(token)}`;
-};
-
-/**
  * Always resolves, and always the same way.
  *
  * `POST /v1/auth/forgot-password` returning 404 for an unknown address turns the
@@ -479,6 +466,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
     const result = await firebaseRest.confirmPasswordReset(token, newPassword);
     email = result.email;
   } catch (err) {
+    logger.debug({ err }, 'auth.password_reset_code_rejected');
     throw new ValidationError('That reset link is invalid or has expired. Request a new one.', {
       issues: [{ path: 'token', code: 'invalid', message: 'This reset link is no longer usable.' }],
     });

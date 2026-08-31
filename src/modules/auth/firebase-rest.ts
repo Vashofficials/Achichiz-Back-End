@@ -2,6 +2,24 @@ import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
 import { UnauthenticatedError, UnprocessableError } from '../../lib/errors.js';
 
+/**
+ * The Identity Toolkit REST shapes this module relies on.
+ *
+ * Only the fields actually read are declared — Google returns considerably more,
+ * and pinning the whole payload would break on their next additive change. Every
+ * field is optional because an error response carries `error` and none of the
+ * success fields, and the previous `as any` meant a missing `localId` flowed on
+ * as `undefined` instead of failing here.
+ */
+type IdentityToolkitResponse = {
+  localId?: string;
+  email?: string;
+  error?: { code?: number; message?: string; status?: string };
+};
+
+const parse = async (res: Response): Promise<IdentityToolkitResponse> =>
+  (await res.json().catch(() => ({}))) as IdentityToolkitResponse;
+
 export async function signInWithPassword(email: string, password: string): Promise<{ localId: string; email: string }> {
   if (!env.FIREBASE_API_KEY) {
     throw new Error('FIREBASE_API_KEY is required for password authentication.');
@@ -15,12 +33,15 @@ export async function signInWithPassword(email: string, password: string): Promi
     body: JSON.stringify({ email, password, returnSecureToken: true }),
   });
 
-  const data = (await res.json()) as any;
+  const data = await parse(res);
   if (!res.ok) {
     logger.warn({ error: data.error }, 'auth.firebase_rest_login_failed');
     throw new UnauthenticatedError('That email and password combination is not valid.');
   }
 
+  if (!data.localId || !data.email) {
+    throw new UnauthenticatedError('That email and password combination is not valid.');
+  }
   return { localId: data.localId, email: data.email };
 }
 
@@ -38,7 +59,7 @@ export async function sendPasswordResetEmail(email: string): Promise<void> {
   });
 
   if (!res.ok) {
-    const data = (await res.json()) as any;
+    const data = await parse(res);
     logger.warn({ error: data.error, email }, 'auth.firebase_rest_reset_failed');
     // We don't throw here to avoid email enumeration, just log it.
   }
@@ -57,11 +78,12 @@ export async function confirmPasswordReset(oobCode: string, newPassword: string)
     body: JSON.stringify({ oobCode, newPassword }),
   });
 
-  const data = (await res.json()) as any;
+  const data = await parse(res);
   if (!res.ok) {
     logger.warn({ error: data.error }, 'auth.firebase_rest_confirm_reset_failed');
     throw new UnprocessableError('That reset link is invalid or has expired.');
   }
 
+  if (!data.email) throw new UnprocessableError('That reset link is invalid or has expired.');
   return { email: data.email };
 }

@@ -3,7 +3,6 @@ import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
 import { isAppError } from '../lib/errors.js';
 
-const ERROR_BASE = 'https://api.achichiz.com/errors';
 
 /** Postgres error codes we can turn into a decent client message. */
 const PG_CODES: Record<string, { status: number; code: string; title: string }> = {

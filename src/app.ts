@@ -56,7 +56,7 @@ export function createApp(): Express {
     typeof helmet === 'function'
       ? helmet
       : (helmet as unknown as { default: HelmetCallable }).default
-  ) as HelmetCallable;
+  );
 
   app.use(
     helmetMiddleware({

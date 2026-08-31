@@ -1,4 +1,3 @@
-import { eq } from 'drizzle-orm';
 import { db } from '../../config/db.js';
 import { mediaAssets, type MediaKind } from '../../db/schema/content.js';
 

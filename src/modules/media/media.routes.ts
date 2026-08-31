@@ -36,15 +36,21 @@ defineRoute(mediaRouter, {
   },
   handler: async ({ req, res, auth }) => {
     return new Promise((resolve, reject) => {
-      upload.single('file')(req, res, async (err: any) => {
-        if (err) return reject(new BadRequestError(err.message));
-        if (!req.file) return reject(new BadRequestError('No file provided'));
-        try {
-          const asset = await service.uploadMedia(req.file, auth.staffId);
-          resolve(created(asset));
-        } catch (e) {
-          reject(e);
+      // Multer's callback is void-returning: running the async work inside it
+      // rather than passing an async function keeps rejections handled.
+      upload.single('file')(req, res, (err: unknown) => {
+        if (err) {
+          reject(new BadRequestError(err instanceof Error ? err.message : 'The upload could not be read.'));
+          return;
         }
+        if (!req.file) {
+          reject(new BadRequestError('No file provided'));
+          return;
+        }
+        void service
+          .uploadMedia(req.file, auth.staffId)
+          .then((asset) => resolve(created(asset)))
+          .catch((e: unknown) => reject(e instanceof Error ? e : new Error(String(e))));
       });
     });
   },
@@ -69,18 +75,24 @@ defineRoute(mediaRouter, {
     },
     400: { description: 'No file provided or file too large.' },
   },
-  handler: async ({ req, res, auth }) => {
+  handler: async ({ req, res }) => {
     return new Promise((resolve, reject) => {
-      upload.single('file')(req, res, async (err: any) => {
-        if (err) return reject(new BadRequestError(err.message));
-        if (!req.file) return reject(new BadRequestError('No file provided'));
-        try {
-          // Customers don't have a staff ID, so we leave uploadedBy as null.
-          const asset = await service.uploadMedia(req.file, null);
-          resolve(created(asset));
-        } catch (e) {
-          reject(e);
+      // Multer's callback is void-returning: running the async work inside it
+      // rather than passing an async function keeps rejections handled.
+      upload.single('file')(req, res, (err: unknown) => {
+        if (err) {
+          reject(new BadRequestError(err instanceof Error ? err.message : 'The upload could not be read.'));
+          return;
         }
+        if (!req.file) {
+          reject(new BadRequestError('No file provided'));
+          return;
+        }
+        // Customers don't have a staff ID, so uploadedBy stays null.
+        void service
+          .uploadMedia(req.file, null)
+          .then((asset) => resolve(created(asset)))
+          .catch((e: unknown) => reject(e instanceof Error ? e : new Error(String(e))));
       });
     });
   },
