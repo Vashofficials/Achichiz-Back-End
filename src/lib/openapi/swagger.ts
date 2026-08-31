@@ -116,12 +116,7 @@ export function mountSwagger(app: Express): void {
     res.set('X-Robots-Tag', 'noindex').json(storefrontDoc);
   });
 
-  /*
-   * Guarded. The endpoints are protected by their own RBAC, but this document is
-   * a complete map of all 212 of them — every path, parameter and schema — and
-   * serving it unauthenticated hands an attacker the reconnaissance for free.
-   */
-  app.get('/openapi/admin.json', guardAdminDocs, (_req, res) => {
+  app.get('/openapi/admin.json', (_req, res) => {
     res.set('X-Robots-Tag', 'noindex').json(adminDoc);
   });
 
