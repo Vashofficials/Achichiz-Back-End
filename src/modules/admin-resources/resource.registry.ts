@@ -38,6 +38,7 @@
  */
 
 import {
+  addOns,
   banners,
   collections,
   coupons,
@@ -45,6 +46,8 @@ import {
   designers,
   faqs,
   giftCards,
+  hamperItems,
+  personalisationTemplates,
   productVariants,
   products,
   suppliers,
@@ -881,6 +884,192 @@ const warehousesResource = defineResource({
 /* ================================================================ the list */
 
 /** Registration order is route order, which is also OpenAPI tag order. */
+/**
+ * The three catalogue tables that existed with no admin API at all.
+ *
+ * `hamper_items`, `add_ons` and `personalisation_templates` have been in the
+ * schema since the initial migration; the console rendered them from
+ * `src/mock/catalog.ts`. Nothing new is created here — no table, no migration,
+ * no bespoke handler. Each is a descriptor, which is what this engine exists
+ * for, so they inherit pagination, search, filters, sorting, bulk actions,
+ * RBAC and audit logging unchanged.
+ *
+ * The fields below follow the ACTUAL columns rather than the shapes the task
+ * brief guessed at: there is no `stockQuantity` on an add-on and no
+ * `templateUrl` on a personalisation template, and inventing them would mean
+ * inventing storage for them.
+ */
+const hamperItemsResource = defineResource({
+  slug: 'hamper-items',
+  title: 'Hamper items',
+  description:
+    'Individual components a hamper is built from. Costs are integer paise; `cost_paise` is what the ' +
+    'item costs US, and is never exposed on the storefront.',
+  group: 'Catalogue',
+  module: 'catalogue',
+  name: { singular: 'HamperItem', plural: 'HamperItems' },
+  tag: 'Admin catalogue',
+  table: hamperItems,
+  primaryKey: hamperItems.id,
+  columns: {
+    id: hamperItems.id,
+    sku: hamperItems.sku,
+    name: hamperItems.name,
+    supplierId: hamperItems.supplierId,
+    category: hamperItems.category,
+    costPaise: hamperItems.costPaise,
+    unit: hamperItems.unit,
+    weightGrams: hamperItems.weightGrams,
+    hsnCode: hamperItems.hsnCode,
+    isPerishable: hamperItems.isPerishable,
+    shelfLifeDays: hamperItems.shelfLifeDays,
+    status: hamperItems.status,
+    createdAt: hamperItems.createdAt,
+    updatedAt: hamperItems.updatedAt,
+  },
+  listColumns: ['id', 'sku', 'name', 'category', 'costPaise', 'unit', 'isPerishable', 'status', 'updatedAt'],
+  fields: [
+    { key: 'sku', label: 'SKU', kind: 'text', required: true, max: 64 },
+    { key: 'name', label: 'Item', kind: 'text', required: true, max: 160 },
+    { key: 'supplierId', label: 'Supplier', kind: 'reference', required: false, reference: { resource: 'suppliers', labelField: 'name' } },
+    { key: 'category', label: 'Category', kind: 'text', required: false, max: 80, help: 'Gourmet, Décor, Packaging, Beverage, Wellness.' },
+    { key: 'costPaise', label: 'Cost', kind: 'money', required: true, unit: 'paise', help: 'What we pay, not what we charge.' },
+    { key: 'unit', label: 'Unit', kind: 'enum', required: true, options: ['pcs', 'box', 'pack', 'kg', 'g', 'ml', 'l'] },
+    { key: 'weightGrams', label: 'Weight (g)', kind: 'number', required: false },
+    { key: 'hsnCode', label: 'HSN code', kind: 'text', required: false, max: 12, help: 'Must already exist in the HSN table.' },
+    { key: 'isPerishable', label: 'Perishable', kind: 'boolean', required: false },
+    { key: 'shelfLifeDays', label: 'Shelf life (days)', kind: 'number', required: false },
+    { key: 'status', label: 'Status', kind: 'enum', required: true, options: ['active', 'inactive'] },
+    { key: 'createdAt', label: 'Created', kind: 'datetime', required: false, readOnly: true },
+    { key: 'updatedAt', label: 'Updated', kind: 'datetime', required: false, readOnly: true },
+  ],
+  searchable: ['name', 'sku', 'category'],
+  filterable: [
+    enumFilter('status', 'Status', hamperItems.status, ['active', 'inactive']),
+    enumFilter('unit', 'Unit', hamperItems.unit, ['pcs', 'box', 'pack', 'kg', 'g', 'ml', 'l']),
+    refFilter('supplierId', 'Supplier', hamperItems.supplierId),
+    boolFilter('isPerishable', 'Perishable', hamperItems.isPerishable),
+    moneyFilter('costPaise', 'Cost (paise)', hamperItems.costPaise),
+  ],
+  sortable: ['name', 'sku', 'costPaise', 'category', 'status', 'createdAt', 'updatedAt'],
+  defaultSort: { field: 'name', direction: 'asc' },
+  softDeleteColumn: hamperItems.deletedAt,
+  bulkActions: [
+    { action: 'activate', label: 'Activate', requires: 'edit', set: { status: 'active' } },
+    { action: 'deactivate', label: 'Deactivate', requires: 'edit', set: { status: 'inactive' }, destructive: true },
+  ],
+});
+
+const addOnsResource = defineResource({
+  slug: 'add-ons',
+  title: 'Add-ons & packaging',
+  description:
+    'Wax seals, ribbons, gift boxes, calligraphy notes. `price_paise` is GST-INCLUSIVE, matching every ' +
+    'other price in this API.',
+  group: 'Catalogue',
+  module: 'catalogue',
+  name: { singular: 'AddOn', plural: 'AddOns' },
+  tag: 'Admin catalogue',
+  table: addOns,
+  primaryKey: addOns.id,
+  columns: {
+    id: addOns.id,
+    code: addOns.code,
+    name: addOns.name,
+    kind: addOns.kind,
+    pricePaise: addOns.pricePaise,
+    hsnCode: addOns.hsnCode,
+    requiresInput: addOns.requiresInput,
+    inputCharLimit: addOns.inputCharLimit,
+    leadTimeHours: addOns.leadTimeHours,
+    status: addOns.status,
+    createdAt: addOns.createdAt,
+    updatedAt: addOns.updatedAt,
+  },
+  listColumns: ['id', 'code', 'name', 'kind', 'pricePaise', 'requiresInput', 'leadTimeHours', 'status', 'updatedAt'],
+  fields: [
+    { key: 'code', label: 'Code', kind: 'text', required: true, max: 120, help: 'Lowercase handle form, e.g. `wax-seal-gold`. Unique.' },
+    { key: 'name', label: 'Add-on', kind: 'text', required: true, max: 160 },
+    { key: 'kind', label: 'Kind', kind: 'enum', required: true, options: ['packaging', 'message', 'fresh', 'bakery', 'digital', 'engraving', 'other'] },
+    { key: 'pricePaise', label: 'Price', kind: 'money', required: true, unit: 'paise', help: 'GST-inclusive.' },
+    { key: 'hsnCode', label: 'HSN code', kind: 'text', required: false, max: 12 },
+    { key: 'requiresInput', label: 'Needs customer input', kind: 'boolean', required: false, help: 'Engraving text, card message.' },
+    { key: 'inputCharLimit', label: 'Input character limit', kind: 'number', required: false },
+    { key: 'leadTimeHours', label: 'Lead time (hours)', kind: 'number', required: false },
+    { key: 'status', label: 'Status', kind: 'enum', required: true, options: ['active', 'inactive'] },
+    { key: 'createdAt', label: 'Created', kind: 'datetime', required: false, readOnly: true },
+    { key: 'updatedAt', label: 'Updated', kind: 'datetime', required: false, readOnly: true },
+  ],
+  searchable: ['name', 'code'],
+  filterable: [
+    enumFilter('status', 'Status', addOns.status, ['active', 'inactive']),
+    enumFilter('kind', 'Kind', addOns.kind, ['packaging', 'message', 'fresh', 'bakery', 'digital', 'engraving', 'other']),
+    boolFilter('requiresInput', 'Needs input', addOns.requiresInput),
+    moneyFilter('pricePaise', 'Price (paise)', addOns.pricePaise),
+  ],
+  sortable: ['name', 'code', 'kind', 'pricePaise', 'leadTimeHours', 'status', 'createdAt', 'updatedAt'],
+  defaultSort: { field: 'name', direction: 'asc' },
+  softDeleteColumn: addOns.deletedAt,
+  bulkActions: [
+    { action: 'activate', label: 'Activate', requires: 'edit', set: { status: 'active' } },
+    { action: 'deactivate', label: 'Deactivate', requires: 'edit', set: { status: 'inactive' }, destructive: true },
+  ],
+});
+
+const personalisationResource = defineResource({
+  slug: 'personalisation',
+  title: 'Personalisation templates',
+  description:
+    'Engraving, embroidery, print, digital and laser templates. `surcharge_paise` is what the ' +
+    'personalisation adds to the line, in integer paise.',
+  group: 'Catalogue',
+  module: 'catalogue',
+  name: { singular: 'PersonalisationTemplate', plural: 'PersonalisationTemplates' },
+  tag: 'Admin catalogue',
+  table: personalisationTemplates,
+  primaryKey: personalisationTemplates.id,
+  columns: {
+    id: personalisationTemplates.id,
+    name: personalisationTemplates.name,
+    method: personalisationTemplates.method,
+    turnaroundHours: personalisationTemplates.turnaroundHours,
+    charLimit: personalisationTemplates.charLimit,
+    allowsImage: personalisationTemplates.allowsImage,
+    proofRequired: personalisationTemplates.proofRequired,
+    surchargePaise: personalisationTemplates.surchargePaise,
+    status: personalisationTemplates.status,
+    createdAt: personalisationTemplates.createdAt,
+    updatedAt: personalisationTemplates.updatedAt,
+  },
+  listColumns: ['id', 'name', 'method', 'turnaroundHours', 'charLimit', 'surchargePaise', 'status', 'updatedAt'],
+  fields: [
+    { key: 'name', label: 'Template', kind: 'text', required: true, max: 160, help: 'Unique among live templates.' },
+    { key: 'method', label: 'Method', kind: 'enum', required: true, options: ['engraving', 'embroidery', 'print', 'digital', 'laser'] },
+    { key: 'turnaroundHours', label: 'Turnaround (hours)', kind: 'number', required: true, help: 'Must be greater than zero — a CHECK enforces it.' },
+    { key: 'charLimit', label: 'Character limit', kind: 'number', required: false, help: 'Null means no limit. Zero is rejected.' },
+    { key: 'allowsImage', label: 'Allows image upload', kind: 'boolean', required: false },
+    { key: 'proofRequired', label: 'Proof required', kind: 'boolean', required: false },
+    { key: 'surchargePaise', label: 'Surcharge', kind: 'money', required: false, unit: 'paise' },
+    { key: 'status', label: 'Status', kind: 'enum', required: true, options: ['active', 'draft', 'archived'] },
+    { key: 'createdAt', label: 'Created', kind: 'datetime', required: false, readOnly: true },
+    { key: 'updatedAt', label: 'Updated', kind: 'datetime', required: false, readOnly: true },
+  ],
+  searchable: ['name'],
+  filterable: [
+    enumFilter('status', 'Status', personalisationTemplates.status, ['active', 'draft', 'archived']),
+    enumFilter('method', 'Method', personalisationTemplates.method, ['engraving', 'embroidery', 'print', 'digital', 'laser']),
+    boolFilter('allowsImage', 'Allows image', personalisationTemplates.allowsImage),
+    boolFilter('proofRequired', 'Proof required', personalisationTemplates.proofRequired),
+  ],
+  sortable: ['name', 'method', 'turnaroundHours', 'surchargePaise', 'status', 'createdAt', 'updatedAt'],
+  defaultSort: { field: 'name', direction: 'asc' },
+  softDeleteColumn: personalisationTemplates.deletedAt,
+  bulkActions: [
+    { action: 'activate', label: 'Activate', requires: 'edit', set: { status: 'active' } },
+    { action: 'archive', label: 'Archive', requires: 'delete', set: { status: 'archived' }, destructive: true },
+  ],
+});
+
 export const RESOURCES: readonly ResourceDescriptor[] = [
   productsResource,
   productVariantsResource,
@@ -894,6 +1083,9 @@ export const RESOURCES: readonly ResourceDescriptor[] = [
   testimonialsResource,
   suppliersResource,
   warehousesResource,
+  hamperItemsResource,
+  addOnsResource,
+  personalisationResource,
 ];
 
 const BY_SLUG = new Map(RESOURCES.map((r) => [r.slug, r]));
