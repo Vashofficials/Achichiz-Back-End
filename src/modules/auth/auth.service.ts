@@ -36,7 +36,7 @@ import {
   UnprocessableError,
   ValidationError,
 } from '../../lib/errors.js';
-import { maskEmail } from '../../integrations/ses/index.js';
+import { maskEmail } from '../../integrations/email/index.js';
 import * as cartService from '../cart/cart.service.js';
 import * as leadsService from '../leads/leads.service.js';
 import * as repo from './auth.repository.js';

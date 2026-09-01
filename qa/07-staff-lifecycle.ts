@@ -16,7 +16,7 @@
  *   - it touches no existing account.
  */
 
-import { setEmailSender } from '../src/integrations/ses/index.js';
+import { setEmailSender } from '../src/integrations/email/index.js';
 
 const sent: string[] = [];
 setEmailSender({

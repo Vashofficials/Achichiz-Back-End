@@ -18,7 +18,7 @@
  * or account-lockout counter is touched.
  */
 
-import { setEmailSender } from '../src/integrations/ses/index.js';
+import { setEmailSender } from '../src/integrations/email/index.js';
 
 let lastEmail = '';
 setEmailSender({

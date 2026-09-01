@@ -24,7 +24,7 @@
 import { db } from '../../config/db.js';
 import { logger, requestContext } from '../../config/logger.js';
 import { env } from '../../config/env.js';
-import { defaultFrom, emailSender, maskEmail } from '../../integrations/ses/index.js';
+import { defaultFrom, emailSender, maskEmail } from '../../integrations/email/index.js';
 import * as repo from './leads.repository.js';
 import type { ContactEnquiryBody, CorporateBriefBody } from './leads.schemas.js';
 

@@ -10,7 +10,7 @@
  * `invited` with no password — unusable — and is soft-deleted at the end.
  */
 
-import { setEmailSender } from '../src/integrations/ses/index.js';
+import { setEmailSender } from '../src/integrations/email/index.js';
 
 let captured: { to: string; subject: string; text: string } | null = null;
 setEmailSender({

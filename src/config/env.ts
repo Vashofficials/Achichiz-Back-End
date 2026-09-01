@@ -83,6 +83,24 @@ const schema = z.object({
   DOCS_ADMIN_IP_ALLOWLIST: z.string().default(''),
 
   /**
+   * Gmail / Google Workspace SMTP. Setting USER and PASSWORD is what ENABLES
+   * real email delivery — see `createEmailSender`.
+   *
+   * SMTP_PASSWORD must be a Google APP PASSWORD (myaccount.google.com →
+   * Security → 2-Step Verification → App passwords), not the account password;
+   * Google rejects the latter for SMTP. It is a credential: keep it out of the
+   * repo and out of logs.
+   *
+   * EMAIL_FROM has to be SMTP_USER or an alias that mailbox owns — Gmail
+   * silently rewrites a From it does not recognise, so mail appears to send and
+   * arrives from the wrong address.
+   */
+  SMTP_HOST: z.string().default('smtp.gmail.com'),
+  SMTP_PORT: z.coerce.number().int().positive().default(465),
+  SMTP_USER: z.string().default(''),
+  SMTP_PASSWORD: z.string().default(''),
+
+  /**
    * Where the admin panel is served, used to build password-reset and invite
    * links. No trailing slash.
    *
