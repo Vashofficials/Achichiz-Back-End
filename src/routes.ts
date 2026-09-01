@@ -14,7 +14,6 @@ import { addressesRouter } from './modules/addresses/addresses.routes.js';
 import { leadsRouter } from './modules/leads/leads.routes.js';
 import { adminAuthRouter } from './modules/admin-auth/admin-auth.routes.js';
 import { rbacRouter } from './modules/rbac/rbac.routes.js';
-import { adminStaffRouter } from './modules/admin-staff/admin-staff.routes.js';
 import { adminResourceRouter } from './modules/admin-resources/admin-resources.routes.js';
 import { adminInventoryRouter } from './modules/admin-inventory/admin-inventory.routes.js';
 import { adminWarehousingRouter } from './modules/admin-warehousing/admin-warehousing.routes.js';
@@ -68,7 +67,6 @@ import { adminReportsRouter } from './modules/admin-reports/admin-reports.routes
 // ── admin (staff) ────────────────────────────────────────────────────────
 apiRouter.use(adminAuthRouter);
 apiRouter.use(rbacRouter);
-apiRouter.use(adminStaffRouter);
 apiRouter.use(adminResourceRouter);
 apiRouter.use(adminOrdersRouter);
 apiRouter.use(adminInventoryRouter);

@@ -75,9 +75,6 @@
       "name": "Admin resources"
     },
     {
-      "name": "Admin staff"
-    },
-    {
       "name": "Admin stock counts"
     },
     {
@@ -2194,1392 +2191,6 @@
         ]
       }
     },
-    "/v1/admin/staff": {
-      "get": {
-        "operationId": "adminListStaff",
-        "summary": "List staff accounts",
-        "description": "Every staff account except deleted ones, with role, MFA state and warehouse scope. Filter by `status` or `roleId`; `q` matches name or email.",
-        "tags": [
-          "Admin staff"
-        ],
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "description": "1-indexed page number.",
-            "schema": {
-              "default": 1,
-              "type": "integer",
-              "exclusiveMinimum": 0,
-              "maximum": 9007199254740991
-            }
-          },
-          {
-            "name": "perPage",
-            "in": "query",
-            "required": false,
-            "description": "Items per page. Maximum 100.",
-            "schema": {
-              "default": 25,
-              "type": "integer",
-              "exclusiveMinimum": 0,
-              "maximum": 100
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "required": false,
-            "description": "Field to sort by. Prefix with `-` for descending, e.g. `-createdAt`.",
-            "schema": {
-              "type": "string",
-              "pattern": "^-?[a-zA-Z][a-zA-Z0-9_]*$"
-            }
-          },
-          {
-            "name": "q",
-            "in": "query",
-            "required": false,
-            "description": "Free-text search.",
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 120
-            }
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "required": false,
-            "description": "Filter by lifecycle status.",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "active",
-                "invited",
-                "suspended"
-              ]
-            }
-          },
-          {
-            "name": "roleId",
-            "in": "query",
-            "required": false,
-            "description": "Filter by assigned role.",
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A page of staff accounts.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "type",
-                    "result",
-                    "meta"
-                  ],
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "result": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid",
-                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                            "description": "Staff user id."
-                          },
-                          "fullName": {
-                            "type": "string",
-                            "description": "Display name."
-                          },
-                          "email": {
-                            "type": "string",
-                            "description": "Work email. Unique among non-deleted accounts, compared case-insensitively."
-                          },
-                          "roleId": {
-                            "type": "string",
-                            "format": "uuid",
-                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                            "description": "Assigned role id."
-                          },
-                          "roleKey": {
-                            "type": "string",
-                            "description": "Stable role key, e.g. `operations_manager`."
-                          },
-                          "roleName": {
-                            "type": "string",
-                            "description": "Role display name."
-                          },
-                          "warehouseScope": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "format": "uuid",
-                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                            },
-                            "description": "Warehouse ids this member is restricted to. EMPTY = all warehouses."
-                          },
-                          "mfaEnabled": {
-                            "type": "boolean",
-                            "description": "Whether the member has completed TOTP enrolment."
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "active",
-                              "invited",
-                              "suspended"
-                            ],
-                            "description": "`invited` until a password is set, `active` once it is, `suspended` when access is withdrawn. Deleted accounts are not returned at all."
-                          },
-                          "lastActiveAt": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "format": "date-time",
-                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ],
-                            "description": "Last authenticated request, or null."
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                            "description": "When the account was created."
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                            "description": "Last modification."
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "fullName",
-                          "email",
-                          "roleId",
-                          "roleKey",
-                          "roleName",
-                          "warehouseScope",
-                          "mfaEnabled",
-                          "status",
-                          "lastActiveAt",
-                          "createdAt",
-                          "updatedAt"
-                        ],
-                        "additionalProperties": false
-                      }
-                    },
-                    "meta": {
-                      "type": "object",
-                      "required": [
-                        "page",
-                        "perPage",
-                        "total",
-                        "totalPages"
-                      ],
-                      "properties": {
-                        "page": {
-                          "type": "integer",
-                          "description": "1-indexed page number."
-                        },
-                        "perPage": {
-                          "type": "integer",
-                          "description": "Items in this page."
-                        },
-                        "total": {
-                          "type": "integer",
-                          "description": "Total items matching the query."
-                        },
-                        "totalPages": {
-                          "type": "integer",
-                          "description": "Total pages at this `perPage`."
-                        }
-                      }
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, malformed or expired token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated, but the staff role lacks `settings:view`.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "adminBearerAuth": []
-          }
-        ]
-      },
-      "post": {
-        "operationId": "adminInviteStaff",
-        "summary": "Invite a staff member",
-        "description": "Creates the account as `invited` with no password and emails a one-time token valid for seven days. The account cannot sign in until that token is used. A mail failure does NOT roll back the account — use the password-reset endpoint to send another.",
-        "tags": [
-          "Admin staff"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "fullName": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 120,
-                    "description": "Display name."
-                  },
-                  "email": {
-                    "description": "Work email. Must not already be in use.",
-                    "type": "string"
-                  },
-                  "roleId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                    "description": "Role to assign. Must exist."
-                  },
-                  "warehouseScope": {
-                    "description": "Omit for access to all warehouses.",
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                    }
-                  }
-                },
-                "required": [
-                  "fullName",
-                  "email",
-                  "roleId"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "The new account.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "type",
-                    "result"
-                  ],
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "result": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                          "description": "Staff user id."
-                        },
-                        "fullName": {
-                          "type": "string",
-                          "description": "Display name."
-                        },
-                        "email": {
-                          "type": "string",
-                          "description": "Work email. Unique among non-deleted accounts, compared case-insensitively."
-                        },
-                        "roleId": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                          "description": "Assigned role id."
-                        },
-                        "roleKey": {
-                          "type": "string",
-                          "description": "Stable role key, e.g. `operations_manager`."
-                        },
-                        "roleName": {
-                          "type": "string",
-                          "description": "Role display name."
-                        },
-                        "warehouseScope": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "format": "uuid",
-                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                          },
-                          "description": "Warehouse ids this member is restricted to. EMPTY = all warehouses."
-                        },
-                        "mfaEnabled": {
-                          "type": "boolean",
-                          "description": "Whether the member has completed TOTP enrolment."
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "active",
-                            "invited",
-                            "suspended"
-                          ],
-                          "description": "`invited` until a password is set, `active` once it is, `suspended` when access is withdrawn. Deleted accounts are not returned at all."
-                        },
-                        "lastActiveAt": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "format": "date-time",
-                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Last authenticated request, or null."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                          "description": "When the account was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                          "description": "Last modification."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "fullName",
-                        "email",
-                        "roleId",
-                        "roleKey",
-                        "roleName",
-                        "warehouseScope",
-                        "mfaEnabled",
-                        "status",
-                        "lastActiveAt",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, malformed or expired token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated, but the staff role lacks `settings:manage-settings`.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "That email is already in use."
-          },
-          "422": {
-            "description": "Unknown role."
-          }
-        },
-        "security": [
-          {
-            "adminBearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v1/admin/staff/{id}": {
-      "get": {
-        "operationId": "adminGetStaff",
-        "summary": "Get one staff account",
-        "tags": [
-          "Admin staff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Staff user id from `GET /v1/admin/staff`.",
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The staff account.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "type",
-                    "result"
-                  ],
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "result": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                          "description": "Staff user id."
-                        },
-                        "fullName": {
-                          "type": "string",
-                          "description": "Display name."
-                        },
-                        "email": {
-                          "type": "string",
-                          "description": "Work email. Unique among non-deleted accounts, compared case-insensitively."
-                        },
-                        "roleId": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                          "description": "Assigned role id."
-                        },
-                        "roleKey": {
-                          "type": "string",
-                          "description": "Stable role key, e.g. `operations_manager`."
-                        },
-                        "roleName": {
-                          "type": "string",
-                          "description": "Role display name."
-                        },
-                        "warehouseScope": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "format": "uuid",
-                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                          },
-                          "description": "Warehouse ids this member is restricted to. EMPTY = all warehouses."
-                        },
-                        "mfaEnabled": {
-                          "type": "boolean",
-                          "description": "Whether the member has completed TOTP enrolment."
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "active",
-                            "invited",
-                            "suspended"
-                          ],
-                          "description": "`invited` until a password is set, `active` once it is, `suspended` when access is withdrawn. Deleted accounts are not returned at all."
-                        },
-                        "lastActiveAt": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "format": "date-time",
-                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Last authenticated request, or null."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                          "description": "When the account was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                          "description": "Last modification."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "fullName",
-                        "email",
-                        "roleId",
-                        "roleKey",
-                        "roleName",
-                        "warehouseScope",
-                        "mfaEnabled",
-                        "status",
-                        "lastActiveAt",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, malformed or expired token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated, but the staff role lacks `settings:view`.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such staff account."
-          },
-          "422": {
-            "description": "Validation failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "adminBearerAuth": []
-          }
-        ]
-      },
-      "patch": {
-        "operationId": "adminUpdateStaff",
-        "summary": "Update a staff member",
-        "description": "Change name, email, role or warehouse scope. Reassigning a role or suspending the account terminates its live sessions, because the old JWT still carries the old grants. Setting `status: active` is refused for an account that has never set a password.",
-        "tags": [
-          "Admin staff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Staff user id from `GET /v1/admin/staff`.",
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "fullName": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 120
-                  },
-                  "email": {
-                    "type": "string"
-                  },
-                  "roleId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                  },
-                  "warehouseScope": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                    },
-                    "description": "Warehouse ids this member is restricted to. EMPTY = all warehouses."
-                  },
-                  "status": {
-                    "type": "string",
-                    "enum": [
-                      "active",
-                      "suspended"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The updated account.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "type",
-                    "result"
-                  ],
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "result": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                          "description": "Staff user id."
-                        },
-                        "fullName": {
-                          "type": "string",
-                          "description": "Display name."
-                        },
-                        "email": {
-                          "type": "string",
-                          "description": "Work email. Unique among non-deleted accounts, compared case-insensitively."
-                        },
-                        "roleId": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                          "description": "Assigned role id."
-                        },
-                        "roleKey": {
-                          "type": "string",
-                          "description": "Stable role key, e.g. `operations_manager`."
-                        },
-                        "roleName": {
-                          "type": "string",
-                          "description": "Role display name."
-                        },
-                        "warehouseScope": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "format": "uuid",
-                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                          },
-                          "description": "Warehouse ids this member is restricted to. EMPTY = all warehouses."
-                        },
-                        "mfaEnabled": {
-                          "type": "boolean",
-                          "description": "Whether the member has completed TOTP enrolment."
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "active",
-                            "invited",
-                            "suspended"
-                          ],
-                          "description": "`invited` until a password is set, `active` once it is, `suspended` when access is withdrawn. Deleted accounts are not returned at all."
-                        },
-                        "lastActiveAt": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "format": "date-time",
-                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Last authenticated request, or null."
-                        },
-                        "createdAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                          "description": "When the account was created."
-                        },
-                        "updatedAt": {
-                          "type": "string",
-                          "format": "date-time",
-                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                          "description": "Last modification."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "fullName",
-                        "email",
-                        "roleId",
-                        "roleKey",
-                        "roleName",
-                        "warehouseScope",
-                        "mfaEnabled",
-                        "status",
-                        "lastActiveAt",
-                        "createdAt",
-                        "updatedAt"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, malformed or expired token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated, but the staff role lacks `settings:manage-settings`.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such staff account."
-          },
-          "409": {
-            "description": "That email belongs to another account."
-          },
-          "422": {
-            "description": "Unknown role, no password set, or the last super admin."
-          }
-        },
-        "security": [
-          {
-            "adminBearerAuth": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "adminDeleteStaff",
-        "summary": "Delete a staff member",
-        "description": "A SOFT delete: the row is retained with `deleted_at` set so sessions, audit records and order history keep their references, and the email becomes free for re-use. Refused for your own account and for the last active super admin.",
-        "tags": [
-          "Admin staff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Staff user id from `GET /v1/admin/staff`.",
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Deleted.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "type",
-                    "result"
-                  ],
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "result": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "deleted": {
-                          "type": "boolean",
-                          "const": true
-                        },
-                        "revokedSessions": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "deleted",
-                        "revokedSessions"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, malformed or expired token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated, but the staff role lacks `settings:manage-settings`.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such staff account."
-          },
-          "422": {
-            "description": "Your own account, or the last active super admin."
-          }
-        },
-        "security": [
-          {
-            "adminBearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v1/admin/staff/{id}/deactivate": {
-      "post": {
-        "operationId": "adminDeactivateStaff",
-        "summary": "Suspend a staff member",
-        "description": "Sets `suspended` and terminates every live session immediately, in both the session table and the token revocation set. Refused for your own account and for the last active super admin.",
-        "tags": [
-          "Admin staff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Staff user id from `GET /v1/admin/staff`.",
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "reason": {
-                    "description": "Recorded in the log, not shown to the member.",
-                    "type": "string",
-                    "maxLength": 500
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Suspended.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "type",
-                    "result"
-                  ],
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "result": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "active",
-                            "invited",
-                            "suspended"
-                          ],
-                          "description": "`invited` until a password is set, `active` once it is, `suspended` when access is withdrawn. Deleted accounts are not returned at all."
-                        },
-                        "revokedSessions": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991,
-                          "description": "Sessions terminated by this call."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "status",
-                        "revokedSessions"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, malformed or expired token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated, but the staff role lacks `settings:manage-settings`.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such staff account."
-          },
-          "422": {
-            "description": "Your own account, or the last active super admin."
-          }
-        },
-        "security": [
-          {
-            "adminBearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v1/admin/staff/{id}/reactivate": {
-      "post": {
-        "operationId": "adminReactivateStaff",
-        "summary": "Restore a suspended staff member",
-        "description": "Returns the account to `active`, or to `invited` if it never set a password — a database CHECK forbids an active account without one, so the status reported back may not be `active`.",
-        "tags": [
-          "Admin staff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Staff user id from `GET /v1/admin/staff`.",
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Restored.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "type",
-                    "result"
-                  ],
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "result": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "active",
-                            "invited",
-                            "suspended"
-                          ],
-                          "description": "`invited` until a password is set, `active` once it is, `suspended` when access is withdrawn. Deleted accounts are not returned at all."
-                        },
-                        "revokedSessions": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991,
-                          "description": "Sessions terminated by this call."
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "status",
-                        "revokedSessions"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, malformed or expired token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated, but the staff role lacks `settings:manage-settings`.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such staff account."
-          },
-          "422": {
-            "description": "That account is not suspended."
-          }
-        },
-        "security": [
-          {
-            "adminBearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v1/admin/staff/{id}/sessions/revoke": {
-      "post": {
-        "operationId": "adminRevokeStaffSessions",
-        "summary": "Force sign-out",
-        "description": "Terminates live sessions without changing the account status — the member can sign straight back in. To withdraw access, suspend the account instead.",
-        "tags": [
-          "Admin staff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Staff user id from `GET /v1/admin/staff`.",
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Sessions terminated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "type",
-                    "result"
-                  ],
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "result": {
-                      "type": "object",
-                      "properties": {
-                        "revokedSessions": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991,
-                          "description": "Live sessions terminated."
-                        }
-                      },
-                      "required": [
-                        "revokedSessions"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, malformed or expired token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated, but the staff role lacks `settings:manage-settings`.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such staff account."
-          },
-          "422": {
-            "description": "Validation failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "adminBearerAuth": []
-          }
-        ]
-      }
-    },
-    "/v1/admin/staff/{id}/password/reset": {
-      "post": {
-        "operationId": "adminSendStaffPasswordReset",
-        "summary": "Send a password reset",
-        "description": "Emails a one-time token valid for 30 minutes. `sent` is always true: a mail failure is logged rather than reported, so the response cannot be used to probe anything.",
-        "tags": [
-          "Admin staff"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Staff user id from `GET /v1/admin/staff`.",
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Reset dispatched.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "type",
-                    "result"
-                  ],
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "example": "success"
-                    },
-                    "result": {
-                      "type": "object",
-                      "properties": {
-                        "sent": {
-                          "type": "boolean",
-                          "description": "Always true — a mail failure is logged, never reported, so this is not a probe."
-                        }
-                      },
-                      "required": [
-                        "sent"
-                      ],
-                      "additionalProperties": false
-                    }
-                  },
-                  "additionalProperties": false
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing, malformed or expired token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated, but the staff role lacks `settings:manage-settings`.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No such staff account."
-          },
-          "422": {
-            "description": "Validation failed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "adminBearerAuth": []
-          }
-        ]
-      }
-    },
     "/v1/admin/resources": {
       "get": {
         "operationId": "adminListResources",
@@ -4345,17 +2956,6 @@
                           },
                           "description": "Default table projection."
                         },
-                        "createUnsupported": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Null when the resource can be created. Otherwise the reason it cannot — some tables have server-computed NOT NULL columns no client can supply, and the console should hide its create button rather than offer a call that always fails."
-                        },
                         "fields": {
                           "type": "array",
                           "items": {
@@ -4683,7 +3283,6 @@
                         "permissions",
                         "columns",
                         "listColumns",
-                        "createUnsupported",
                         "fields",
                         "searchable",
                         "sortable",
@@ -5951,17 +4550,6 @@
                           },
                           "description": "Default table projection."
                         },
-                        "createUnsupported": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Null when the resource can be created. Otherwise the reason it cannot — some tables have server-computed NOT NULL columns no client can supply, and the console should hide its create button rather than offer a call that always fails."
-                        },
                         "fields": {
                           "type": "array",
                           "items": {
@@ -6289,7 +4877,6 @@
                         "permissions",
                         "columns",
                         "listColumns",
-                        "createUnsupported",
                         "fields",
                         "searchable",
                         "sortable",
@@ -7488,17 +6075,6 @@
                           },
                           "description": "Default table projection."
                         },
-                        "createUnsupported": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Null when the resource can be created. Otherwise the reason it cannot — some tables have server-computed NOT NULL columns no client can supply, and the console should hide its create button rather than offer a call that always fails."
-                        },
                         "fields": {
                           "type": "array",
                           "items": {
@@ -7826,7 +6402,6 @@
                         "permissions",
                         "columns",
                         "listColumns",
-                        "createUnsupported",
                         "fields",
                         "searchable",
                         "sortable",
@@ -8927,17 +7502,6 @@
                           },
                           "description": "Default table projection."
                         },
-                        "createUnsupported": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Null when the resource can be created. Otherwise the reason it cannot — some tables have server-computed NOT NULL columns no client can supply, and the console should hide its create button rather than offer a call that always fails."
-                        },
                         "fields": {
                           "type": "array",
                           "items": {
@@ -9265,7 +7829,6 @@
                         "permissions",
                         "columns",
                         "listColumns",
-                        "createUnsupported",
                         "fields",
                         "searchable",
                         "sortable",
@@ -10403,17 +8966,6 @@
                           },
                           "description": "Default table projection."
                         },
-                        "createUnsupported": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Null when the resource can be created. Otherwise the reason it cannot — some tables have server-computed NOT NULL columns no client can supply, and the console should hide its create button rather than offer a call that always fails."
-                        },
                         "fields": {
                           "type": "array",
                           "items": {
@@ -10741,7 +9293,6 @@
                         "permissions",
                         "columns",
                         "listColumns",
-                        "createUnsupported",
                         "fields",
                         "searchable",
                         "sortable",
@@ -11974,17 +10525,6 @@
                           },
                           "description": "Default table projection."
                         },
-                        "createUnsupported": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Null when the resource can be created. Otherwise the reason it cannot — some tables have server-computed NOT NULL columns no client can supply, and the console should hide its create button rather than offer a call that always fails."
-                        },
                         "fields": {
                           "type": "array",
                           "items": {
@@ -12312,7 +10852,6 @@
                         "permissions",
                         "columns",
                         "listColumns",
-                        "createUnsupported",
                         "fields",
                         "searchable",
                         "sortable",
@@ -13422,17 +11961,6 @@
                           },
                           "description": "Default table projection."
                         },
-                        "createUnsupported": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Null when the resource can be created. Otherwise the reason it cannot — some tables have server-computed NOT NULL columns no client can supply, and the console should hide its create button rather than offer a call that always fails."
-                        },
                         "fields": {
                           "type": "array",
                           "items": {
@@ -13760,7 +12288,6 @@
                         "permissions",
                         "columns",
                         "listColumns",
-                        "createUnsupported",
                         "fields",
                         "searchable",
                         "sortable",
@@ -14824,17 +13351,6 @@
                           },
                           "description": "Default table projection."
                         },
-                        "createUnsupported": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Null when the resource can be created. Otherwise the reason it cannot — some tables have server-computed NOT NULL columns no client can supply, and the console should hide its create button rather than offer a call that always fails."
-                        },
                         "fields": {
                           "type": "array",
                           "items": {
@@ -15162,7 +13678,6 @@
                         "permissions",
                         "columns",
                         "listColumns",
-                        "createUnsupported",
                         "fields",
                         "searchable",
                         "sortable",
@@ -16211,17 +14726,6 @@
                           },
                           "description": "Default table projection."
                         },
-                        "createUnsupported": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Null when the resource can be created. Otherwise the reason it cannot — some tables have server-computed NOT NULL columns no client can supply, and the console should hide its create button rather than offer a call that always fails."
-                        },
                         "fields": {
                           "type": "array",
                           "items": {
@@ -16549,7 +15053,6 @@
                         "permissions",
                         "columns",
                         "listColumns",
-                        "createUnsupported",
                         "fields",
                         "searchable",
                         "sortable",
@@ -17564,17 +16067,6 @@
                           },
                           "description": "Default table projection."
                         },
-                        "createUnsupported": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Null when the resource can be created. Otherwise the reason it cannot — some tables have server-computed NOT NULL columns no client can supply, and the console should hide its create button rather than offer a call that always fails."
-                        },
                         "fields": {
                           "type": "array",
                           "items": {
@@ -17902,7 +16394,6 @@
                         "permissions",
                         "columns",
                         "listColumns",
-                        "createUnsupported",
                         "fields",
                         "searchable",
                         "sortable",
@@ -19038,17 +17529,6 @@
                           },
                           "description": "Default table projection."
                         },
-                        "createUnsupported": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Null when the resource can be created. Otherwise the reason it cannot — some tables have server-computed NOT NULL columns no client can supply, and the console should hide its create button rather than offer a call that always fails."
-                        },
                         "fields": {
                           "type": "array",
                           "items": {
@@ -19376,7 +17856,6 @@
                         "permissions",
                         "columns",
                         "listColumns",
-                        "createUnsupported",
                         "fields",
                         "searchable",
                         "sortable",
@@ -20519,17 +18998,6 @@
                           },
                           "description": "Default table projection."
                         },
-                        "createUnsupported": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ],
-                          "description": "Null when the resource can be created. Otherwise the reason it cannot — some tables have server-computed NOT NULL columns no client can supply, and the console should hide its create button rather than offer a call that always fails."
-                        },
                         "fields": {
                           "type": "array",
                           "items": {
@@ -20857,7 +19325,6 @@
                         "permissions",
                         "columns",
                         "listColumns",
-                        "createUnsupported",
                         "fields",
                         "searchable",
                         "sortable",
@@ -58101,77 +56568,86 @@
                     "result": {
                       "type": "object",
                       "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "url": {
-                          "type": "string"
-                        },
-                        "cdnUrl": {
-                          "anyOf": [
-                            {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "url": {
                               "type": "string"
                             },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "filename": {
-                          "type": "string"
-                        },
-                        "mimeType": {
-                          "type": "string"
-                        },
-                        "kind": {
-                          "type": "string",
-                          "enum": [
-                            "image",
-                            "video",
-                            "pdf",
-                            "other"
-                          ]
-                        },
-                        "bytes": {
-                          "type": "number"
-                        },
-                        "widthPx": {
-                          "anyOf": [
-                            {
+                            "cdnUrl": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "filename": {
+                              "type": "string"
+                            },
+                            "mimeType": {
+                              "type": "string"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "image",
+                                "video",
+                                "pdf",
+                                "other"
+                              ]
+                            },
+                            "bytes": {
                               "type": "number"
                             },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "heightPx": {
-                          "anyOf": [
-                            {
-                              "type": "number"
+                            "widthPx": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
-                            {
-                              "type": "null"
+                            "heightPx": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "createdAt": {
+                              "type": "string"
                             }
-                          ]
-                        },
-                        "createdAt": {
-                          "type": "string"
+                          },
+                          "required": [
+                            "id",
+                            "url",
+                            "cdnUrl",
+                            "filename",
+                            "mimeType",
+                            "kind",
+                            "bytes",
+                            "widthPx",
+                            "heightPx",
+                            "createdAt"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "required": [
-                        "id",
-                        "url",
-                        "cdnUrl",
-                        "filename",
-                        "mimeType",
-                        "kind",
-                        "bytes",
-                        "widthPx",
-                        "heightPx",
-                        "createdAt"
+                        "data"
                       ],
                       "additionalProperties": false
                     }

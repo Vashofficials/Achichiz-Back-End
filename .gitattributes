@@ -37,8 +37,3 @@ Dockerfile.*    text eol=lf
 
 # Lockfiles are huge and diff badly; keep them byte-stable across platforms.
 package-lock.json -text
-
-# The OpenAPI documents are a CI-diffed artifact (`openapi:generate` +
-# `git diff --exit-code`). Pin them to LF so regenerating on Windows does not
-# report every line as changed.
-openapi/*.json  text eol=lf
