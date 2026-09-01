@@ -107,7 +107,10 @@ export const resetPasswordBody = z.object({
     .trim()
     .min(20)
     .max(200)
-    .describe('The single-use token from the reset email. Only its argon2id hash is stored.'),
+    .describe(
+      "Firebase's `oobCode`, taken from the reset link. Google validates it, enforces expiry and " +
+        'single use, and applies the new password; nothing about it is stored here.',
+    ),
   newPassword,
 });
 

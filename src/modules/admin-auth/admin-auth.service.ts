@@ -14,20 +14,12 @@
  * 401. Forgot-password always returns 200.
  */
 
-import { randomBytes } from 'node:crypto';
 import { db } from '../../config/db.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
-import { emailSender } from '../../integrations/ses/index.js';
 import { ForbiddenError, NotFoundError, UnauthenticatedError, UnprocessableError } from '../../lib/errors.js';
 import { MODULES, ACTIONS, type ModuleKey } from '../../lib/rbac-matrix.js';
-import {
-  burnVerificationTime,
-  hashPassword,
-  hashSecret,
-  verifyPassword,
-  verifySecret,
-} from '../auth/password.js';
+import { burnVerificationTime } from '../auth/password.js';
 // The shared revocation denylist the `authenticate` middleware reads on EVERY
 // request. Reimplementing it here would produce a "revoked" session that the
 // middleware happily keeps accepting, so this import is deliberate.
@@ -65,10 +57,22 @@ import type {
   TwoFactorSetupResponse,
 } from './admin-auth.schemas.js';
 
+/**
+ * Firebase is imported lazily, matching the customer module.
+ *
+ * `firebase-rest` reads `FIREBASE_API_KEY` at call time, and a static import
+ * would pull it into every process that merely loads the route graph —
+ * `openapi:generate` and the test suite included, neither of which authenticates
+ * anyone.
+ */
+async function firebaseSignIn(email: string, password: string): Promise<void> {
+  const firebaseRest = await import('../auth/firebase-rest.js');
+  await firebaseRest.signInWithPassword(email, password);
+}
+
 /** Five wrong passwords, then fifteen minutes of nothing. */
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_MINUTES = 15;
-const RESET_TOKEN_TTL_MINUTES = 30;
 
 /** Everything the transport knows that the session row wants recorded. */
 export type RequestMeta = {
@@ -134,14 +138,9 @@ export async function login(
 ): Promise<{ result: LoginResultResponse; refreshToken: string | null }> {
   const found = await repo.findByEmail(input.email);
 
-  // Captured here rather than re-read off `staff` below: destructuring `found`
-  // creates a fresh binding that loses this narrowing, and `password_hash` is
-  // genuinely nullable for an invited account that has never set one.
-  const passwordHash = found?.staff.passwordHash;
-
-  // No account, or an invited account that has never set a password. Burn the
-  // same CPU a real verification would, so latency is not an oracle.
-  if (!found || !passwordHash) {
+  // No such account. Burn the same CPU a real verification would, so latency is
+  // not an oracle.
+  if (!found) {
     await burnVerificationTime(input.password);
     throw badCredentials();
   }
@@ -155,8 +154,26 @@ export async function login(
     );
   }
 
-  const verified = await verifyPassword(input.password, passwordHash);
-  if (!verified.ok) {
+  /*
+   * FIREBASE owns the staff password, exactly as it already owns the customer's.
+   *
+   * It used to be an argon2 hash in `staff_users.password_hash`, which meant the
+   * only way to reset it was an email this API had to send itself — and the
+   * sender was never implemented, so no staff member could ever reset anything.
+   * Firebase sends its own reset mail, so moving verification here is what makes
+   * that flow real rather than decorative.
+   *
+   * `password_hash` is deliberately NOT consulted any more. It stays in the
+   * table because `staff_active_needs_password` still requires it non-null, and
+   * because dropping a column is a migration this change does not need.
+   *
+   * Everything that follows — status, role, permissions, TOTP policy, lockout,
+   * sessions — remains local. Firebase answers exactly one question: is this
+   * password correct?
+   */
+  try {
+    await firebaseSignIn(input.email, input.password);
+  } catch {
     await repo.registerFailedLogin(staff.id, LOCKOUT_THRESHOLD, LOCKOUT_MINUTES);
     throw badCredentials();
   }
@@ -165,10 +182,6 @@ export async function login(
   // costs a valid credential.
   if (staff.status !== 'active') {
     throw new ForbiddenError('This account is not active. Ask an administrator to reinstate it.');
-  }
-
-  if (verified.needsRehash) {
-    await repo.updateStaff(staff.id, { passwordHash: await hashPassword(input.password) });
   }
 
   const permissions = await repo.permissionsForRole(staff.roleId);
@@ -478,26 +491,19 @@ export async function forgotPassword(email: string): Promise<void> {
     return;
   }
 
-  const token = randomBytes(32).toString('base64url');
-
-  await repo.insertResetChallenge({
-    channel: 'email',
-    destination: found.staff.email,
-    codeHash: await hashSecret(token),
-    purpose: 'password_reset',
-    expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60_000),
-  });
-
+  /*
+   * GOOGLE sends this email, not us.
+   *
+   * The previous implementation minted its own token, stored the hash in
+   * `otp_challenges` and handed the mail to `emailSender` — whose production
+   * implementation was never written, so every reset produced a valid token and
+   * delivered nothing. There is no local token any more: the `oobCode` in
+   * Firebase's email IS the credential, and `resetPassword` hands it straight
+   * back to Firebase.
+   */
   try {
-    await emailSender.send({
-      to: found.staff.email,
-      subject: 'Reset your Achichiz admin password',
-      text:
-        `Hello ${found.staff.fullName},\n\n` +
-        `Use this token to set a new password. It expires in ${RESET_TOKEN_TTL_MINUTES} minutes ` +
-        `and works once.\n\n${token}\n\n` +
-        `If you did not ask for this, ignore this email — nothing has changed.\n`,
-    });
+    const firebaseRest = await import('../auth/firebase-rest.js');
+    await firebaseRest.sendPasswordResetEmail(found.staff.email);
   } catch (err) {
     // A mail outage must not turn into a signal about whether the account exists.
     logger.error({ err, staffId: found.staff.id }, 'staff password reset email failed to send');
@@ -509,32 +515,34 @@ export async function resetPassword(input: {
   token: string;
   newPassword: string;
 }): Promise<void> {
-  const found = await repo.findByEmail(input.email);
-  const challenge = found ? await repo.findLiveResetChallenge(found.staff.email) : null;
-
-  if (!found || !challenge) {
-    await burnVerificationTime(input.token);
+  /*
+   * `token` is Firebase's `oobCode`, taken from the reset link. Firebase both
+   * validates it and applies the new password; there is no local challenge to
+   * check, and single-use enforcement, expiry and attempt limits are Google's.
+   *
+   * It reports the address back, which is what we look the staff row up by —
+   * the caller's `email` is not trusted for that. Sending the code with a
+   * different address must not reset somebody else's account.
+   */
+  let verifiedEmail: string;
+  try {
+    const firebaseRest = await import('../auth/firebase-rest.js');
+    ({ email: verifiedEmail } = await firebaseRest.confirmPasswordReset(input.token, input.newPassword));
+  } catch (err) {
+    logger.debug({ err }, 'admin.password_reset_code_rejected');
     throw new UnprocessableError('That reset link is invalid or has expired.', 'reset_token_invalid');
   }
 
-  if (challenge.attempts >= challenge.maxAttempts) {
-    await repo.consumeResetChallenge(challenge.id);
-    throw new UnprocessableError('That reset link has been tried too many times.', 'reset_token_invalid');
-  }
-
-  if (!(await verifySecret(input.token, challenge.codeHash))) {
-    await repo.bumpResetAttempts(challenge.id);
-    throw new UnprocessableError('That reset link is invalid or has expired.', 'reset_token_invalid');
-  }
-
-  const passwordHash = await hashPassword(input.newPassword);
+  const found = await repo.findByEmail(verifiedEmail);
+  // The password IS changed at this point — Firebase already applied it. A
+  // missing staff row means a Firebase user with no console account, which is
+  // not an error to surface here.
+  if (!found) return;
 
   const revoked = await db.transaction(async (tx) => {
-    await repo.consumeResetChallenge(challenge.id, tx);
     await repo.updateStaff(
       found.staff.id,
       {
-        passwordHash,
         passwordChangedAt: new Date(),
         failedLoginCount: 0,
         lockedUntil: null,
@@ -556,13 +564,22 @@ export async function resetPassword(input: {
 
 export async function stepUp(auth: StaffAuth, password: string): Promise<{ expiresInSeconds: number }> {
   const found = await repo.findById(auth.staffId);
-  if (!found?.staff.passwordHash || found.staff.status !== 'active') {
+  if (!found || found.staff.status !== 'active') {
     await burnVerificationTime(password);
     throw badCredentials();
   }
 
-  const verified = await verifyPassword(password, found.staff.passwordHash);
-  if (!verified.ok) {
+  /*
+   * Firebase, for the same reason `login` uses it.
+   *
+   * Leaving this on the local hash would be worse than inconsistent: after a
+   * Firebase reset the stored hash is stale, so step-up would reject the user's
+   * CURRENT password — and step-up is what gates refunds. The two must verify
+   * against the same authority or the sensitive path is the one that breaks.
+   */
+  try {
+    await firebaseSignIn(found.staff.email, password);
+  } catch {
     await repo.registerFailedLogin(found.staff.id, LOCKOUT_THRESHOLD, LOCKOUT_MINUTES);
     throw badCredentials();
   }
