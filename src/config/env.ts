@@ -82,17 +82,6 @@ const schema = z.object({
     .transform((v) => v === 'true'),
   DOCS_ADMIN_IP_ALLOWLIST: z.string().default(''),
 
-  /**
-   * IPs exempt from the ABUSE limiters, so testing from a known network is not
-   * throttled. Comma-separated exact addresses; empty disables the exemption.
-   *
-   * It deliberately does NOT cover the COST limiters (`otp`, `payment`,
-   * `webhook`) — those exist because each request spends real money on SMS or
-   * touches live Razorpay, and that is true no matter who is calling. A test
-   * loop is precisely how an SMS bill runs away.
-   */
-  RATE_LIMIT_SKIP_IPS: z.string().default(''),
-
   FREE_SHIPPING_THRESHOLD_PAISE: z.coerce.number().int().nonnegative().default(99900),
   SHIPPING_FEE_PAISE: z.coerce.number().int().nonnegative().default(14900),
 });
@@ -259,7 +248,6 @@ export const env = Object.freeze({
   ...raw,
   corsOrigins: csv(raw.CORS_ORIGINS),
   docsAdminIpAllowlist: csv(raw.DOCS_ADMIN_IP_ALLOWLIST),
-  rateLimitSkipIps: csv(raw.RATE_LIMIT_SKIP_IPS),
   isProduction: raw.NODE_ENV === 'production',
   isTest: raw.NODE_ENV === 'test',
 });
