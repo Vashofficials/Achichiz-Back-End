@@ -188,6 +188,29 @@ export async function login(
     throw badCredentials();
   }
 
+  /*
+   * An invited member who has just proved a password is active by definition.
+   *
+   * `invited -> active` used to happen only in `resetPassword`, this API's own
+   * endpoint. But Firebase's reset email links to GOOGLE's hosted page, so the
+   * common path sets the password without ever calling us — the staff row stays
+   * `invited`, the status gate below rejects the correct password, and the
+   * account is stranded with no way out. Firebase having just verified the
+   * password IS the proof the row was waiting for.
+   *
+   * The marker satisfies `staff_active_needs_password`; see
+   * FIREBASE_MANAGED_PASSWORD.
+   */
+  if (staff.status === 'invited') {
+    await repo.updateStaff(staff.id, {
+      status: 'active',
+      passwordHash: FIREBASE_MANAGED_PASSWORD,
+      passwordChangedAt: new Date(),
+    });
+    logger.info({ staffId: staff.id }, 'invited staff account activated on first successful sign-in');
+    staff.status = 'active';
+  }
+
   // A suspended account is checked AFTER the password so that probing suspension
   // costs a valid credential.
   if (staff.status !== 'active') {

@@ -27,8 +27,23 @@ type Rule = { windowMs: number; limit: number; byUser?: boolean };
 
 const RULES: Record<LimiterName, Rule> = {
   default: { windowMs: 60_000, limit: 120 },
-  // Credential endpoints. Deliberately tight.
-  auth: { windowMs: 15 * 60_000, limit: 10 },
+  /*
+   * Credential endpoints, keyed by IP.
+   *
+   * This was 10 per 15 minutes, which is not "tight" so much as broken for a
+   * team: the key is the IP, so EVERY staff member behind one office NAT shares
+   * the budget, and an MFA sign-in spends two of it (password, then TOTP). That
+   * is five sign-ins per office per fifteen minutes, shared — reached by two
+   * people having a bad morning, and it locked the only administrator out
+   * repeatedly.
+   *
+   * 100 is still throttled: a dictionary attack gets ~6 attempts a minute, which
+   * is useless. And this was never the real brute-force control anyway — that is
+   * the PER-ACCOUNT lockout in admin-auth (five failures, then fifteen minutes),
+   * which is untouched, applies per account rather than per IP, and cannot be
+   * sidestepped by rotating addresses.
+   */
+  auth: { windowMs: 15 * 60_000, limit: 100 },
   // OTP costs real money per send and is the classic abuse target.
   otp: { windowMs: 15 * 60_000, limit: 5 },
   checkout: { windowMs: 60_000, limit: 20, byUser: true },
