@@ -16,14 +16,12 @@
 
 import { randomBytes } from 'node:crypto';
 import { db } from '../../config/db.js';
-import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
 import { emailSender } from '../../integrations/ses/index.js';
 import { ConflictError, NotFoundError, UnprocessableError } from '../../lib/errors.js';
 import { hashSecret } from '../auth/password.js';
 import { revokeSessions } from '../auth/session-store.js';
 import * as authRepo from '../admin-auth/admin-auth.repository.js';
-import { resetLink } from '../admin-auth/reset-link.js';
 import * as repo from './admin-staff.repository.js';
 import type { StaffAccount, InviteStaffInput, StaffListQuery, UpdateStaffInput } from './admin-staff.schemas.js';
 
@@ -151,12 +149,8 @@ export async function inviteStaff(input: InviteStaffInput): Promise<StaffAccount
       subject: 'Your Achichiz admin account',
       text:
         `Hello ${input.fullName},\n\n` +
-        `An admin account has been created for you. Open this link to set your password and ` +
-        `activate it. The link expires in ${INVITE_TTL_HOURS / 24} days and works once.\n\n` +
-        `${resetLink(input.email, token)}\n\n` +
-        `If the link does not open, go to ${env.ADMIN_PANEL_URL}/reset-password and enter this ` +
-        `token:\n\n${token}\n\n` +
-        `You will be asked to set up two-factor authentication the first time you sign in.\n\n` +
+        `An admin account has been created for you. Use this token to set your password. ` +
+        `It expires in ${INVITE_TTL_HOURS / 24} days and works once.\n\n${token}\n\n` +
         `If you were not expecting this, ignore the email — the account cannot be used until a password is set.\n`,
     });
   } catch (err) {
