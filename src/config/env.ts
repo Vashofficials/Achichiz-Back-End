@@ -83,6 +83,20 @@ const schema = z.object({
   DOCS_ADMIN_IP_ALLOWLIST: z.string().default(''),
 
   /**
+   * Where the admin panel is served, used to build password-reset and invite
+   * links. No trailing slash.
+   *
+   * Without it the reset emails carried a bare token and nothing to click,
+   * while the panel's /reset-password page reads `?token=&email=` and shows
+   * "This reset link is missing its token" — so neither flow could be completed
+   * by the person receiving the mail.
+   */
+  ADMIN_PANEL_URL: z
+    .string()
+    .default('https://admin.achichiz.com')
+    .transform((v) => v.replace(/\/+$/, '')),
+
+  /**
    * IPs exempt from the ABUSE limiters, so testing from a known network is not
    * throttled. Comma-separated exact addresses; empty disables the exemption.
    *

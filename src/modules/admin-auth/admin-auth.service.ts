@@ -33,6 +33,7 @@ import {
 // middleware happily keeps accepting, so this import is deliberate.
 import { revokeSession, revokeSessions } from '../auth/session-store.js';
 import { signStaffToken } from './staff-token.js';
+import { resetLink } from './reset-link.js';
 import * as repo from './admin-auth.repository.js';
 import {
   clearStepUp,
@@ -494,8 +495,10 @@ export async function forgotPassword(email: string): Promise<void> {
       subject: 'Reset your Achichiz admin password',
       text:
         `Hello ${found.staff.fullName},\n\n` +
-        `Use this token to set a new password. It expires in ${RESET_TOKEN_TTL_MINUTES} minutes ` +
-        `and works once.\n\n${token}\n\n` +
+        `Open this link to set a new password. It expires in ${RESET_TOKEN_TTL_MINUTES} minutes ` +
+        `and works once.\n\n${resetLink(found.staff.email, token)}\n\n` +
+        `If the link does not open, go to ${env.ADMIN_PANEL_URL}/reset-password and enter this ` +
+        `token:\n\n${token}\n\n` +
         `If you did not ask for this, ignore this email — nothing has changed.\n`,
     });
   } catch (err) {
