@@ -106,6 +106,7 @@ export function defineRoute<
     auth: spec.auth,
     ...(spec.permission ? { permission: spec.permission } : {}),
     ...(spec.deprecated ? { deprecated: spec.deprecated } : {}),
+    ...(spec.idempotent ? { idempotent: spec.idempotent } : {}),
     request: {
       ...(spec.request?.params ? { params: spec.request.params } : {}),
       ...(spec.request?.query ? { query: spec.request.query } : {}),
