@@ -35,15 +35,6 @@ export type RegisteredRoute = {
   auth: AuthMode;
   permission?: { module: ModuleKey; action: Action };
   deprecated?: boolean;
-  /**
-   * The route rejects without an `Idempotency-Key` header.
-   *
-   * Carried into the document as a required header parameter. It used to be
-   * applied as middleware only, so eighteen routes 422'd on a missing header
-   * that appeared nowhere in the spec — Swagger's "Try it out" and any generated
-   * client hit it with no way to know why.
-   */
-  idempotent?: boolean;
   request: {
     params?: ZodType;
     query?: ZodType;

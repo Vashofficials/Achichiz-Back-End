@@ -2462,21 +2462,9 @@
       "post": {
         "operationId": "adminInviteStaff",
         "summary": "Invite a staff member",
-        "description": "Creates the account as `invited` with no password and emails a one-time token valid for seven days. The account cannot sign in until that token is used. A mail failure does NOT roll back the account — use the password-reset endpoint to send another.\n\nREQUIRES an `Idempotency-Key` header (a UUID, reused on retry). It is the only endpoint in this module that does: a repeated invite creates a second account and sends a second setup token, whereas the lifecycle transitions below are all safe to repeat.",
+        "description": "Creates the account as `invited` with no password and emails a one-time token valid for seven days. The account cannot sign in until that token is used. A mail failure does NOT roll back the account — use the password-reset endpoint to send another.",
         "tags": [
           "Admin staff"
-        ],
-        "parameters": [
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
         ],
         "requestBody": {
           "required": true,
@@ -22876,18 +22864,6 @@
         "tags": [
           "Admin inventory"
         ],
-        "parameters": [
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -23171,18 +23147,6 @@
         "description": "All-or-nothing in ONE transaction — unlike the order desk’s bulk action, which reports per-order outcomes. Stock is different: a stocktake correction that half-applied leaves a warehouse in a state nobody chose and nobody can describe. Every line succeeds or nothing is written.\n\n**Each SKU still gets its own movement row.** The batch is a unit of atomicity, not a unit of bookkeeping; one movement covering fifty SKUs would be unusable for reconciling any of them.\n\nLevels are locked in a single statement in ascending `inventory_level_id` order, and the work is sorted the same way. Without that, batch A holding level 1 and wanting level 2 deadlocks against batch B holding 2 and wanting 1 — PostgreSQL would detect it and abort one, but a `deadlock_timeout` stall is not an acceptable way to find out (§62).\n\nEvery (`sku`, `warehouseId`) pair must be distinct. Two deltas against one level in one batch is ambiguous about which movement’s `balanceAfter` comes first, so it is refused rather than guessed at.\n\nValidation is front-loaded: unknown SKUs and items not stocked at the named warehouse come back as field-level issues BEFORE any lock is taken.",
         "tags": [
           "Admin inventory"
-        ],
-        "parameters": [
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
         ],
         "requestBody": {
           "required": true,
@@ -25250,18 +25214,6 @@
         "description": "Puts units beyond the reach of the storefront — for a corporate quote being negotiated, a photoshoot, a replacement being held for a support case.\n\n**A hold moves `reservedQty` and nothing else.** `onHandQty` is untouched, because the units have not moved, and NO `stock_movements` row is written: the ledger records physical movement, and a hold in it would double-count against `balanceAfter` the moment the goods actually shipped (§14). The effect is recorded in the activity log instead, where the before/after pair shows `onHandQty` unchanged.\n\nThe hold is refused with `insufficient_stock` when it will not fit in current sellable stock, using the same conditional-UPDATE guard as an adjustment.\n\nThe reason is always `manual_hold`. The `reservation_has_owner` CHECK requires a cart or an order for every other reason, and this endpoint has neither — cart and order holds are placed by checkout, inside the transaction that creates them.\n\nOmit `expiresAt` for an open-ended hold. Note that the expiry sweeper only touches holds that carry one, so an open-ended hold stays until a person releases it — which is the point, and also the risk.",
         "tags": [
           "Admin inventory"
-        ],
-        "parameters": [
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
         ],
         "requestBody": {
           "required": true,
@@ -30966,16 +30918,6 @@
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
           }
         ],
         "requestBody": {
@@ -31369,16 +31311,6 @@
               "type": "string",
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-            }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
             }
           }
         ],
@@ -35612,16 +35544,6 @@
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
           }
         ],
         "responses": {
@@ -36932,18 +36854,6 @@
         "description": "The stock-in step, and ONE transaction end to end. Per line: increment on-hand by `acceptedQty`, write an `inbound` movement carrying the balance that increment returned, add to the PO line’s `receivedQty`, and lower `incomingQty` by everything that turned up. If any line fails, none of it happened.\n\n**Rejected units never enter stock.** They are recorded on the receipt line with a reason and go no further — damaged goods inside `on_hand_qty` are sellable goods, and no downstream report undoes that. They also do not count towards `receivedQty`, so a PO with rejections stays open for what it is still owed. Send them back with a purchase return.\n\n**Partial receipts are normal.** The PO becomes `partially_received` and stays there until ordered equals accepted across ALL lines, at which point it becomes `received` and `closedAt` is stamped. Accepting more than a line still has outstanding is 422 `over_receipt`.\n\nThe warehouse is taken from the PO, not from the request: receiving into a different warehouse than the one that ordered would leave `incomingQty` raised forever at the warehouse still waiting.\n\nRequires an `Idempotency-Key`: a retried receipt must not add the stock twice.",
         "tags": [
           "Admin goods receipts"
-        ],
-        "parameters": [
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
         ],
         "requestBody": {
           "required": true,
@@ -39525,16 +39435,6 @@
               "type": "string",
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-            }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
             }
           }
         ],
@@ -45037,16 +44937,6 @@
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
           }
         ],
         "requestBody": {
@@ -48466,16 +48356,6 @@
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
           }
         ],
         "requestBody": {
@@ -49103,18 +48983,6 @@
         "tags": [
           "Admin barcodes"
         ],
-        "parameters": [
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -49263,18 +49131,6 @@
         "description": "All-or-nothing in one transaction. Codes are minted distinct from each other AND from every barcode already stored — a duplicate EAN-13 across two SKUs makes the scanner ambiguous, which is worse than having no barcode at all.",
         "tags": [
           "Admin barcodes"
-        ],
-        "parameters": [
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
         ],
         "requestBody": {
           "required": true,
@@ -51661,16 +51517,6 @@
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
             }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
           }
         ],
         "requestBody": {
@@ -51959,16 +51805,6 @@
               "type": "string",
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-            }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
             }
           }
         ],
@@ -57760,16 +57596,6 @@
               "type": "string",
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-            }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
             }
           }
         ],

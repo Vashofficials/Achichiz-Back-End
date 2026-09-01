@@ -156,28 +156,10 @@ function implicitErrorResponses(route: RegisteredRoute): Record<string, unknown>
   return out;
 }
 
-/**
- * The header an idempotent route rejects without.
- *
- * Declared here rather than hand-written on each route so the middleware and the
- * document cannot disagree: `idempotent: true` is the single switch that turns
- * both on.
- */
-const IDEMPOTENCY_HEADER = {
-  name: 'Idempotency-Key',
-  in: 'header',
-  required: true,
-  description:
-    'A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. ' +
-    'A new key on a retry is treated as a new operation and will duplicate the effect.',
-  schema: { type: 'string', format: 'uuid' },
-} as const;
-
 function operationFor(route: RegisteredRoute): Record<string, unknown> {
   const parameters = [
     ...parametersFrom(route.request.params, 'path'),
     ...parametersFrom(route.request.query, 'query'),
-    ...(route.idempotent ? [IDEMPOTENCY_HEADER] : []),
   ];
 
   const responses: Record<string, unknown> = { ...implicitErrorResponses(route) };

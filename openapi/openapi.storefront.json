@@ -13656,18 +13656,6 @@
         "tags": [
           "Checkout"
         ],
-        "parameters": [
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "description": "A UUID identifying this logical operation. REUSE it when retrying — that is what makes the retry safe. A new key on a retry is treated as a new operation and will duplicate the effect.",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {

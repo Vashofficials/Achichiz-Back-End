@@ -82,10 +82,7 @@ defineRoute(adminStaffRouter, {
   description:
     'Creates the account as `invited` with no password and emails a one-time token valid for seven days. ' +
     'The account cannot sign in until that token is used. A mail failure does NOT roll back the account — ' +
-    'use the password-reset endpoint to send another.\n\n' +
-    'REQUIRES an `Idempotency-Key` header (a UUID, reused on retry). It is the only endpoint in this module ' +
-    'that does: a repeated invite creates a second account and sends a second setup token, whereas the ' +
-    'lifecycle transitions below are all safe to repeat.',
+    'use the password-reset endpoint to send another.',
   tags: [TAG],
   auth: 'staff',
   permission: { module: 'settings', action: 'manage-settings' },
@@ -135,6 +132,7 @@ defineRoute(adminStaffRouter, {
   auth: 'staff',
   permission: { module: 'settings', action: 'manage-settings' },
   request: { params: staffIdParam, body: deactivateBody },
+  idempotent: true,
   responses: {
     200: { description: 'Suspended.', schema: staffLifecycleResult },
     404: { description: 'No such staff account.' },
@@ -157,6 +155,7 @@ defineRoute(adminStaffRouter, {
   auth: 'staff',
   permission: { module: 'settings', action: 'manage-settings' },
   request: { params: staffIdParam },
+  idempotent: true,
   responses: {
     200: { description: 'Restored.', schema: staffLifecycleResult },
     404: { description: 'No such staff account.' },
@@ -178,6 +177,7 @@ defineRoute(adminStaffRouter, {
   auth: 'staff',
   permission: { module: 'settings', action: 'manage-settings' },
   request: { params: staffIdParam },
+  idempotent: true,
   responses: {
     200: { description: 'Sessions terminated.', schema: revokeResult },
     404: { description: 'No such staff account.' },
@@ -198,6 +198,7 @@ defineRoute(adminStaffRouter, {
   auth: 'staff',
   permission: { module: 'settings', action: 'manage-settings' },
   request: { params: staffIdParam },
+  idempotent: true,
   responses: {
     200: { description: 'Reset dispatched.', schema: acknowledgedResult },
     404: { description: 'No such staff account.' },
