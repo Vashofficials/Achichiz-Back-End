@@ -18,7 +18,7 @@ import { randomBytes } from 'node:crypto';
 import { db } from '../../config/db.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
-import { emailSender } from '../../integrations/email/index.js';
+import { emailSender } from '../../integrations/ses/index.js';
 import { ConflictError, NotFoundError, UnprocessableError } from '../../lib/errors.js';
 import { hashSecret } from '../auth/password.js';
 import { revokeSessions } from '../auth/session-store.js';

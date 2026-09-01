@@ -18,7 +18,7 @@ import { randomBytes } from 'node:crypto';
 import { db } from '../../config/db.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
-import { emailSender } from '../../integrations/email/index.js';
+import { emailSender } from '../../integrations/ses/index.js';
 import { ForbiddenError, NotFoundError, UnauthenticatedError, UnprocessableError } from '../../lib/errors.js';
 import { MODULES, ACTIONS, type ModuleKey } from '../../lib/rbac-matrix.js';
 import {
