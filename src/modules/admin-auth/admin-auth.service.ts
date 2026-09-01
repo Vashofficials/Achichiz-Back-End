@@ -70,6 +70,16 @@ async function firebaseSignIn(email: string, password: string): Promise<void> {
   await firebaseRest.signInWithPassword(email, password);
 }
 
+/**
+ * What goes in `staff_users.password_hash` now that Firebase holds the password.
+ *
+ * The column cannot simply be left NULL: `staff_active_needs_password` requires
+ * it non-null for an active account. This is a marker, not a hash — it cannot
+ * verify against any password, and nothing verifies against it, because both
+ * `login` and `stepUp` ask Firebase instead.
+ */
+export const FIREBASE_MANAGED_PASSWORD = 'firebase-managed';
+
 /** Five wrong passwords, then fifteen minutes of nothing. */
 const LOCKOUT_THRESHOLD = 5;
 const LOCKOUT_MINUTES = 15;
@@ -546,9 +556,22 @@ export async function resetPassword(input: {
         passwordChangedAt: new Date(),
         failedLoginCount: 0,
         lockedUntil: null,
-        // An invited account becomes usable the moment it has a password, which
-        // is what `staff_active_needs_password` is asserting from the other side.
-        ...(found.staff.status === 'invited' ? { status: 'active' as const } : {}),
+        /*
+         * An invited account becomes usable the moment it has a password.
+         *
+         * `staff_active_needs_password` is a CHECK: status='active' requires
+         * password_hash NOT NULL. Firebase holds the real password now, so there
+         * is no hash to write and activating without this marker is a constraint
+         * violation — a 500 on the last step of every invite.
+         *
+         * The marker is deliberately not a hash and can never verify as one.
+         * Nothing reads it for authentication any more; it means "Firebase owns
+         * this password", and `hasPassword` uses it to tell an account that has
+         * completed setup from one that has not.
+         */
+        ...(found.staff.status === 'invited'
+          ? { status: 'active' as const, passwordHash: FIREBASE_MANAGED_PASSWORD }
+          : {}),
       },
       tx,
     );

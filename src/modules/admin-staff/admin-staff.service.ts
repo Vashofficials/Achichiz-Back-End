@@ -17,17 +17,13 @@
 import { randomBytes } from 'node:crypto';
 import { db } from '../../config/db.js';
 import { logger } from '../../config/logger.js';
-import { emailSender } from '../../integrations/ses/index.js';
+import { maskEmail } from '../../integrations/ses/index.js';
 import { ConflictError, NotFoundError, UnprocessableError } from '../../lib/errors.js';
-import { hashSecret } from '../auth/password.js';
 import { revokeSessions } from '../auth/session-store.js';
 import * as authRepo from '../admin-auth/admin-auth.repository.js';
 import * as repo from './admin-staff.repository.js';
 import type { StaffAccount, InviteStaffInput, StaffListQuery, UpdateStaffInput } from './admin-staff.schemas.js';
 
-/** Invites are long-lived; a password RESET is not. These are different jobs. */
-const INVITE_TTL_HOURS = 7 * 24;
-const RESET_TTL_MINUTES = 30;
 
 const view = (row: repo.StaffRow, warehouseScope: string[]): StaffAccount => ({
   id: row.id,
@@ -111,55 +107,71 @@ export async function inviteStaff(input: InviteStaffInput): Promise<StaffAccount
     throw new ConflictError('A staff account already uses that email.');
   }
 
-  const token = randomBytes(32).toString('base64url');
-  const expiresAt = new Date(Date.now() + INVITE_TTL_HOURS * 3_600_000);
-
   const id = await db.transaction(async (tx) => {
     const newId = await repo.insertStaff(
       {
         email: input.email,
         fullName: input.fullName,
         roleId: input.roleId,
-        // No password yet — the CHECK permits NULL precisely while `invited`.
+        // No password here — Firebase holds it. The CHECK permits NULL precisely
+        // while `invited`, and `resetPassword` flips the row to `active` once
+        // Firebase reports a password was set.
         status: 'invited',
         invitedAt: new Date(),
       },
       tx,
     );
     if (input.warehouseScope?.length) await repo.replaceScope(newId, input.warehouseScope, tx);
-    await authRepo.insertResetChallenge(
-      {
-        channel: 'email',
-        destination: input.email,
-        codeHash: await hashSecret(token),
-        // The CHECK allows five purposes and `invite` is not one of them; an
-        // invite IS a first password set, so it reuses the reset machinery
-        // rather than requiring a migration to widen the constraint.
-        purpose: 'password_reset',
-        expiresAt,
-      },
-      tx,
-    );
     return newId;
   });
 
+  /*
+   * The Firebase user must exist before Google will email a reset for it.
+   *
+   * It is created with a random password nobody ever sees — not left
+   * passwordless — so the `password` provider exists from the start. Without
+   * that provider `signInWithPassword` has nothing to check against, which is
+   * exactly the state that blocks the existing Google-Sign-In admin. The only
+   * way into the account is the reset link below.
+   */
   try {
-    await emailSender.send({
-      to: input.email,
-      subject: 'Your Achichiz admin account',
-      text:
-        `Hello ${input.fullName},\n\n` +
-        `An admin account has been created for you. Use this token to set your password. ` +
-        `It expires in ${INVITE_TTL_HOURS / 24} days and works once.\n\n${token}\n\n` +
-        `If you were not expecting this, ignore the email — the account cannot be used until a password is set.\n`,
-    });
+    await ensureFirebaseUser(input.email, input.fullName);
+    const firebaseRest = await import('../auth/firebase-rest.js');
+    await firebaseRest.sendPasswordResetEmail(input.email);
   } catch (err) {
-    // The account exists either way. A mail outage must not roll it back, or the
-    // operator retries, hits the email conflict, and cannot proceed at all.
+    // The staff row exists either way. A failure here must not roll it back, or
+    // the operator retries, hits the email conflict, and cannot proceed at all —
+    // use the password-reset endpoint to send another.
     logger.error({ err, staffId: id }, 'staff invite email failed to send');
   }
 
   return getStaff(id);
+}
+
+/**
+ * Create the Firebase user for a staff address, or accept that it is already there.
+ *
+ * `email-already-exists` is a success for our purposes: somebody who shopped on
+ * the storefront, or signed in with Google, already has a Firebase identity, and
+ * that same identity is what the console will authenticate against.
+ */
+async function ensureFirebaseUser(email: string, displayName: string): Promise<void> {
+  const [{ getAuth }, { getFirebaseApp }] = await Promise.all([
+    import('firebase-admin/auth'),
+    import('../../config/firebase.js'),
+  ]);
+  try {
+    await getAuth(getFirebaseApp()).createUser({
+      email,
+      displayName,
+      // 32 random bytes. Never logged, never sent, never recoverable — the
+      // account is reachable only through the reset link.
+      password: randomBytes(32).toString('base64url'),
+    });
+  } catch (err) {
+    if ((err as { code?: string }).code !== 'auth/email-already-exists') throw err;
+    logger.info({ email: maskEmail(email) }, 'staff invite reused an existing firebase user');
+  }
 }
 
 export async function updateStaff(id: string, input: UpdateStaffInput): Promise<StaffAccount> {
@@ -243,26 +255,19 @@ export async function revokeStaffSessions(id: string): Promise<{ revokedSessions
 
 export async function sendPasswordReset(id: string): Promise<{ sent: true }> {
   const row = await loadOr404(id);
-  const token = randomBytes(32).toString('base64url');
 
-  await authRepo.insertResetChallenge({
-    channel: 'email',
-    destination: row.email,
-    codeHash: await hashSecret(token),
-    purpose: 'password_reset',
-    expiresAt: new Date(Date.now() + RESET_TTL_MINUTES * 60_000),
-  });
-
+  /*
+   * Google sends this, exactly as it does for the member-initiated reset on the
+   * sign-in screen. Both paths end at the same `oobCode`, so there is one way to
+   * set a staff password and one place it lives.
+   *
+   * `ensureFirebaseUser` covers the account invited before this module existed,
+   * which has a staff row but no Firebase identity to reset.
+   */
   try {
-    await emailSender.send({
-      to: row.email,
-      subject: 'Reset your Achichiz admin password',
-      text:
-        `Hello ${row.fullName},\n\n` +
-        `An administrator asked us to send you a password reset. This token expires in ` +
-        `${RESET_TTL_MINUTES} minutes and works once.\n\n${token}\n\n` +
-        `If you did not expect this, tell your administrator — nothing has changed yet.\n`,
-    });
+    await ensureFirebaseUser(row.email, row.fullName);
+    const firebaseRest = await import('../auth/firebase-rest.js');
+    await firebaseRest.sendPasswordResetEmail(row.email);
   } catch (err) {
     logger.error({ err, staffId: id }, 'staff password reset email failed to send');
   }
