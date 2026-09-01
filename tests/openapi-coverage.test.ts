@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeAll } from 'vitest';
 import type { Express } from 'express';
 import { registry } from '../src/lib/openapi/registry.js';
+import { buildDocument } from '../src/lib/openapi/document.js';
 
 /**
  * CI GATE 2 OF 3 — the actual anti-drift mechanism.
@@ -88,5 +89,33 @@ describe('OpenAPI ↔ Express coverage', () => {
       .map((r) => `${r.method.toUpperCase()} ${r.path}`);
 
     expect(ungated, 'an admin route without a permission is an open admin route').toEqual([]);
+  });
+
+  /**
+   * A required header that the document does not mention is invisible to every
+   * consumer of it: Swagger's "Try it out", a generated client, an integrator
+   * reading the spec. All of them get a 422 with nothing in the contract
+   * explaining it — which is exactly how the admin panel's invite button shipped
+   * broken.
+   */
+  it('every idempotent route documents its Idempotency-Key header', () => {
+    for (const surface of ['storefront', 'admin'] as const) {
+      const doc = buildDocument(surface) as {
+        paths: Record<string, Record<string, { parameters?: { name?: string; required?: boolean }[] }>>;
+      };
+
+      const required = registry.list(surface).filter((r) => r.idempotent);
+      expect(required.length, `expected ${surface} to have idempotent routes to check`).toBeGreaterThan(0);
+
+      for (const route of required) {
+        // The registry stores Express paths; the document uses OpenAPI braces.
+        const openApiPath = route.path.replace(/:(\w+)/g, '{$1}');
+        const op = doc.paths[openApiPath]?.[route.method];
+        const header = op?.parameters?.find((p) => p.name === 'Idempotency-Key');
+
+        expect(header, `${route.operationId} rejects without Idempotency-Key but never documents it`).toBeDefined();
+        expect(header?.required, `${route.operationId} documents Idempotency-Key as optional; it is not`).toBe(true);
+      }
+    }
   });
 });
