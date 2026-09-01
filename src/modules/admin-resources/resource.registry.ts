@@ -40,6 +40,7 @@
 import {
   addOns,
   banners,
+  builderTemplates,
   collections,
   coupons,
   customers,
@@ -1074,6 +1075,64 @@ const personalisationResource = defineResource({
   ],
 });
 
+/**
+ * Build Your Own Hamper templates.
+ *
+ * The console was falling back to the manufacturing BOM endpoints for this
+ * screen, which is the wrong entity: a BOM is an internal assembly recipe, a
+ * builder template is what a CUSTOMER is offered. `builder_templates` — with
+ * `builder_template_steps` and `builder_step_options` beneath it — has been in
+ * the schema all along, so nothing is created here and no relationship to
+ * production BOMs is introduced.
+ *
+ * Slot capacity and allowed categories per slot live in `builder_template_steps`,
+ * not on the template, so they are not fields here. Exposing them means a second
+ * descriptor for the child rows; this covers the template itself, which is what
+ * the screen lists.
+ */
+const builderTemplatesResource = defineResource({
+  slug: 'hamper-builder-templates',
+  title: 'Hamper builder templates',
+  description:
+    'Customer-facing Build Your Own Hamper configurations. NOT manufacturing BOMs — a BOM is an ' +
+    'internal assembly recipe. Base price is GST-inclusive integer paise.',
+  group: 'Catalogue',
+  module: 'catalogue',
+  name: { singular: 'BuilderTemplate', plural: 'BuilderTemplates' },
+  tag: 'Admin catalogue',
+  table: builderTemplates,
+  primaryKey: builderTemplates.id,
+  columns: {
+    id: builderTemplates.id,
+    handle: builderTemplates.handle,
+    name: builderTemplates.name,
+    basePricePaise: builderTemplates.basePricePaise,
+    maxWeightGrams: builderTemplates.maxWeightGrams,
+    status: builderTemplates.status,
+    createdAt: builderTemplates.createdAt,
+    updatedAt: builderTemplates.updatedAt,
+  },
+  listColumns: ['id', 'name', 'handle', 'basePricePaise', 'maxWeightGrams', 'status', 'updatedAt'],
+  fields: [
+    { key: 'handle', label: 'Handle', kind: 'text', required: true, max: 120, help: 'Lowercase, hyphenated. Unique among live templates.' },
+    { key: 'name', label: 'Template', kind: 'text', required: true, max: 160 },
+    { key: 'basePricePaise', label: 'Base price', kind: 'money', required: false, unit: 'paise', help: 'Before any item the customer adds.' },
+    { key: 'maxWeightGrams', label: 'Max weight (g)', kind: 'number', required: false, help: 'Courier ceiling for the finished hamper. Null means unlimited.' },
+    { key: 'status', label: 'Status', kind: 'enum', required: true, options: ['live', 'draft', 'archived'] },
+    { key: 'createdAt', label: 'Created', kind: 'datetime', required: false, readOnly: true },
+    { key: 'updatedAt', label: 'Updated', kind: 'datetime', required: false, readOnly: true },
+  ],
+  searchable: ['name', 'handle'],
+  filterable: [enumFilter('status', 'Status', builderTemplates.status, ['live', 'draft', 'archived'])],
+  sortable: ['name', 'handle', 'basePricePaise', 'status', 'createdAt', 'updatedAt'],
+  defaultSort: { field: 'name', direction: 'asc' },
+  softDeleteColumn: builderTemplates.deletedAt,
+  bulkActions: [
+    { action: 'publish', label: 'Publish', requires: 'edit', set: { status: 'live' } },
+    { action: 'archive', label: 'Archive', requires: 'delete', set: { status: 'archived' }, destructive: true },
+  ],
+});
+
 export const RESOURCES: readonly ResourceDescriptor[] = [
   productsResource,
   productVariantsResource,
@@ -1090,6 +1149,7 @@ export const RESOURCES: readonly ResourceDescriptor[] = [
   hamperItemsResource,
   addOnsResource,
   personalisationResource,
+  builderTemplatesResource,
 ];
 
 const BY_SLUG = new Map(RESOURCES.map((r) => [r.slug, r]));

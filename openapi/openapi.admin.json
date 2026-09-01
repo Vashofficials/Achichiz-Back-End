@@ -25755,6 +25755,1284 @@
         ]
       }
     },
+    "/v1/admin/hamper-builder-templates": {
+      "get": {
+        "operationId": "adminListBuilderTemplates",
+        "summary": "List hamper builder templates",
+        "description": "Customer-facing Build Your Own Hamper configurations. NOT manufacturing BOMs — a BOM is an internal assembly recipe. Base price is GST-inclusive integer paise.\n\nServer-paginated, server-filtered, server-sorted. Every knob is an allowlist: `?q=` ORs across the resource’s `searchable` columns, `?sort=` accepts up to three of its `sortable` fields (`-` for descending), `?fields=` projects out of its `columns`, and `?filter[key][op]=value` is matched against its `filterable` entries — key AND operator. An unknown key, operator, sort field or projection field is a 400, not a silent fallback: a list that looks filtered and is not is worse than an error. `perPage` is capped at 100 in two places. Fetch the exact vocabulary from `/schema`.",
+        "tags": [
+          "Admin catalogue"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "1-indexed page number.",
+            "schema": {
+              "default": 1,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "required": false,
+            "description": "Items per page. Maximum 100.",
+            "schema": {
+              "default": 25,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "description": "Up to three comma-separated fields, `-` for descending: `-updatedAt,title`. A field outside the resource’s `sortable` list is a 400, never a silent fallback — an ORDER BY that ignored what you asked for is a list you will misread.",
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Free-text search.",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "dir",
+            "in": "query",
+            "required": false,
+            "description": "Direction for a single-field `sort`, matching the console’s column headers. A `-` prefix wins.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated projection, validated against the resource’s column allowlist.",
+            "schema": {
+              "type": "string",
+              "maxLength": 600
+            }
+          },
+          {
+            "name": "withFilterOptions",
+            "in": "query",
+            "required": false,
+            "description": "Return distinct values for filters that have no static option list, so the console’s dropdowns do not have to compute them from an in-memory array. One extra query per such filter — ask for it on screen mount, not on every keystroke.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows, with `meta` and the filter option lists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result",
+                    "meta"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {},
+                        "description": "One row, projected to the requested `fields`. The primary key is always present."
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "page",
+                        "perPage",
+                        "total",
+                        "totalPages"
+                      ],
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "description": "1-indexed page number."
+                        },
+                        "perPage": {
+                          "type": "integer",
+                          "description": "Items in this page."
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Total items matching the query."
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "description": "Total pages at this `perPage`."
+                        }
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "An unknown filter key, operator, sort field or projection field."
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated, but the staff role lacks `catalogue:view`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminBearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "adminCreateBuilderTemplate",
+        "summary": "Create a buildertemplate",
+        "description": "The body is generated from this resource’s `fields` spec, so required fields are required by name rather than by position, and the schema below is the real one — not `additionalProperties: true`.\n\nStrict: an unrecognised key is a 422. A silently dropped field is how a price update appears to succeed without changing the price. Read-only fields are documented in `/schema` and rejected here. Database CHECK constraints still apply on top — an active product with no HSN code is refused by the database, because there is no invoice without one.",
+        "tags": [
+          "Admin catalogue"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "handle": {
+                    "type": "string",
+                    "maxLength": 120,
+                    "description": "Handle. Lowercase, hyphenated. Unique among live templates."
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 160,
+                    "description": "Template."
+                  },
+                  "basePricePaise": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                        "description": "Base price. Before any item the customer adds. Integer paise — 149900 is ₹1,499.00."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "maxWeightGrams": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647,
+                        "description": "Max weight (g). Courier ceiling for the finished hamper. Null means unlimited."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "live",
+                      "draft",
+                      "archived"
+                    ],
+                    "description": "Status."
+                  }
+                },
+                "required": [
+                  "handle",
+                  "name",
+                  "status"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created row.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {},
+                      "description": "One row, projected to the requested `fields`. The primary key is always present."
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated, but the staff role lacks `catalogue:create`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A unique constraint rejected it — a duplicate handle, SKU or code."
+          },
+          "422": {
+            "description": "Validation failed, or a database constraint refused the row."
+          }
+        },
+        "security": [
+          {
+            "adminBearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/hamper-builder-templates/schema": {
+      "get": {
+        "operationId": "adminGetBuilderTemplateSchema",
+        "summary": "Field spec for hamper builder templates",
+        "description": "The resource descriptor: columns, the explicit `fields` spec, searchable and sortable fields, every filter with its permitted operators, the bulk actions with the RBAC action each needs, and what DELETE actually does.\n\n`fields` is deliberately NOT `columns`. The console currently derives its edit form from `Object.keys(rows[0])` and marks the first two fields required — so a null in the first row makes a field vanish, nested data is invisible, and \"required\" is positional. This endpoint is the fix: `required` is stated per field, `readOnly` is stated, enums carry their options, and references name the resource to fetch a picker from.",
+        "tags": [
+          "Admin catalogue"
+        ],
+        "responses": {
+          "200": {
+            "description": "The descriptor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "slug": {
+                          "type": "string",
+                          "description": "URL segment and registry key."
+                        },
+                        "title": {
+                          "type": "string",
+                          "description": "Screen title."
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "What the resource is."
+                        },
+                        "group": {
+                          "type": "string",
+                          "description": "Nav group."
+                        },
+                        "module": {
+                          "type": "string",
+                          "enum": [
+                            "dashboard",
+                            "orders",
+                            "catalogue",
+                            "inventory",
+                            "customers",
+                            "corporate",
+                            "delivery",
+                            "promotions",
+                            "content",
+                            "reports",
+                            "settings",
+                            "finance"
+                          ],
+                          "description": "The RBAC module gating every route for this resource."
+                        },
+                        "permissions": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "enum": [
+                              "view",
+                              "create",
+                              "edit",
+                              "delete",
+                              "export",
+                              "approve",
+                              "refund",
+                              "cancel",
+                              "manage-settings"
+                            ]
+                          },
+                          "description": "operation → the action required, e.g. `{ \"delete\": \"delete\" }`."
+                        },
+                        "columns": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Every selectable field. The `?fields=` allowlist."
+                        },
+                        "listColumns": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Default table projection."
+                        },
+                        "createUnsupported": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Null when the resource can be created. Otherwise the reason it cannot — some tables have server-computed NOT NULL columns no client can supply, and the console should hide its create button rather than offer a call that always fails."
+                        },
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "description": "JSON key, and the key in a create/update body."
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "Form label."
+                              },
+                              "kind": {
+                                "type": "string",
+                                "enum": [
+                                  "text",
+                                  "long",
+                                  "uuid",
+                                  "number",
+                                  "money",
+                                  "percent",
+                                  "date",
+                                  "datetime",
+                                  "boolean",
+                                  "enum",
+                                  "reference",
+                                  "array",
+                                  "object"
+                                ],
+                                "description": "How to render and validate it."
+                              },
+                              "required": {
+                                "type": "boolean",
+                                "description": "Explicit, per field — not \"the first two\", which is what the console does today."
+                              },
+                              "readOnly": {
+                                "type": "boolean",
+                                "description": "Rendered but not accepted on write. Submitting it is a 422."
+                              },
+                              "options": {
+                                "anyOf": [
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "`kind: enum` — the permitted values."
+                              },
+                              "reference": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "resource": {
+                                        "type": "string",
+                                        "description": "Slug to fetch options from."
+                                      },
+                                      "labelField": {
+                                        "type": "string",
+                                        "description": "Which field to show in the picker."
+                                      }
+                                    },
+                                    "required": [
+                                      "resource",
+                                      "labelField"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "`kind: reference` — where the picker looks."
+                              },
+                              "unit": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "`paise`, `basis_points`, `grams`, `millimetres`, `days`."
+                              },
+                              "help": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Help text under the input."
+                              },
+                              "of": {
+                                "anyOf": [
+                                  {},
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "`kind: array` — the element spec, same shape as this one."
+                              },
+                              "fields": {
+                                "anyOf": [
+                                  {
+                                    "type": "array",
+                                    "items": {}
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "`kind: object` — the nested specs."
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "kind",
+                              "required",
+                              "readOnly",
+                              "options",
+                              "reference",
+                              "unit",
+                              "help",
+                              "of",
+                              "fields"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "description": "The editable spec. This is what the create/edit form renders."
+                        },
+                        "searchable": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Fields `?q=` ORs across."
+                        },
+                        "sortable": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Fields `?sort=` accepts."
+                        },
+                        "defaultSort": {
+                          "type": "object",
+                          "properties": {
+                            "field": {
+                              "type": "string",
+                              "description": "Field name."
+                            },
+                            "direction": {
+                              "type": "string",
+                              "enum": [
+                                "asc",
+                                "desc"
+                              ],
+                              "description": "Direction."
+                            }
+                          },
+                          "required": [
+                            "field",
+                            "direction"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Applied when `sort` is absent."
+                        },
+                        "defaultPerPage": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Suggested page size. Hard-capped at 100."
+                        },
+                        "filters": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "key": {
+                                "type": "string",
+                                "description": "Query key: `?filter[<key>]=<value>`."
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "Dropdown label."
+                              },
+                              "valueKind": {
+                                "type": "string",
+                                "enum": [
+                                  "string",
+                                  "number",
+                                  "boolean",
+                                  "date",
+                                  "uuid"
+                                ],
+                                "description": "How the value is parsed."
+                              },
+                              "operators": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "enum": [
+                                    "eq",
+                                    "ne",
+                                    "in",
+                                    "lt",
+                                    "lte",
+                                    "gt",
+                                    "gte",
+                                    "contains",
+                                    "isNull",
+                                    "notNull"
+                                  ]
+                                },
+                                "description": "Operators this key accepts. Anything else is a 400."
+                              },
+                              "options": {
+                                "anyOf": [
+                                  {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Static option list, when the column is an enum."
+                              }
+                            },
+                            "required": [
+                              "key",
+                              "label",
+                              "valueKind",
+                              "operators",
+                              "options"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "description": "Every filterable key, with its permitted operators."
+                        },
+                        "bulkActions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "action": {
+                                "type": "string",
+                                "description": "Wire value for `POST /{slug}/bulk`."
+                              },
+                              "label": {
+                                "type": "string",
+                                "description": "Button label."
+                              },
+                              "requires": {
+                                "type": "string",
+                                "enum": [
+                                  "view",
+                                  "create",
+                                  "edit",
+                                  "delete",
+                                  "export",
+                                  "approve",
+                                  "refund",
+                                  "cancel",
+                                  "manage-settings"
+                                ],
+                                "description": "The RBAC action needed, on top of the resource’s module."
+                              },
+                              "destructive": {
+                                "type": "boolean",
+                                "description": "Render red and confirm."
+                              },
+                              "description": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "What it does."
+                              }
+                            },
+                            "required": [
+                              "action",
+                              "label",
+                              "requires",
+                              "destructive",
+                              "description"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "description": "Declared bulk actions. The server re-checks `requires` — hiding the button is not the control."
+                        },
+                        "deleteBehaviour": {
+                          "type": "string",
+                          "enum": [
+                            "soft",
+                            "archived",
+                            "hard"
+                          ],
+                          "description": "`soft` stamps `deleted_at`, `archived` flips a status column, `hard` really removes the row."
+                        }
+                      },
+                      "required": [
+                        "slug",
+                        "title",
+                        "description",
+                        "group",
+                        "module",
+                        "permissions",
+                        "columns",
+                        "listColumns",
+                        "createUnsupported",
+                        "fields",
+                        "searchable",
+                        "sortable",
+                        "defaultSort",
+                        "defaultPerPage",
+                        "filters",
+                        "bulkActions",
+                        "deleteBehaviour"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated, but the staff role lacks `catalogue:view`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminBearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/hamper-builder-templates/bulk": {
+      "post": {
+        "operationId": "adminBulkBuilderTemplates",
+        "summary": "Bulk action on hamper builder templates",
+        "description": "Applies one declared action to a selection, in a single UPDATE — a loop of PATCHes would race anything else touching those rows.\n\nThe route declares `edit`, but each action ALSO declares its own `requires`, checked against your grants before anything is written: destructive actions ask for `delete`, which most roles do not hold on most modules. Ids that no longer exist come back in `skipped` rather than failing the batch — rows move while a table is on screen.",
+        "tags": [
+          "Admin catalogue"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 64,
+                    "description": "One of the resource’s declared `bulkActions`. Each declares the RBAC action it needs."
+                  },
+                  "ids": {
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "description": "Row ids. At most 100 — the same ceiling as a page."
+                  }
+                },
+                "required": [
+                  "action",
+                  "ids"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What was matched and changed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "action": {
+                          "type": "string",
+                          "description": "The action that ran."
+                        },
+                        "requested": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Ids sent."
+                        },
+                        "matched": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Ids that exist and are not already archived."
+                        },
+                        "updated": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Rows actually changed, from the single UPDATE statement."
+                        },
+                        "skipped": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "description": "Ids that matched nothing. Not an error — rows move."
+                        }
+                      },
+                      "required": [
+                        "action",
+                        "requested",
+                        "matched",
+                        "updated",
+                        "skipped"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No such bulk action on this resource."
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The action needs an RBAC action your role does not have."
+          },
+          "422": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminBearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/hamper-builder-templates/{id}": {
+      "get": {
+        "operationId": "adminGetBuilderTemplate",
+        "summary": "Get one buildertemplate",
+        "description": "Every column by default; narrow it with `?fields=`. An archived or soft-deleted row is a 404 here, the same as a row that never existed.",
+        "tags": [
+          "Admin catalogue"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Row id.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated projection, from the column allowlist.",
+            "schema": {
+              "type": "string",
+              "maxLength": 600
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The row.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {},
+                      "description": "One row, projected to the requested `fields`. The primary key is always present."
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated, but the staff role lacks `catalogue:view`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such row, or it is archived."
+          },
+          "422": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminBearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "adminUpdateBuilderTemplate",
+        "summary": "Update a buildertemplate",
+        "description": "PATCH rather than PUT, deliberately: the console’s form only ever submits the fields it rendered, so PUT would promise a full replacement the client has never had the data to make. Send at least one field. Unrecognised and read-only keys are rejected, not ignored.",
+        "tags": [
+          "Admin catalogue"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Row id.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "handle": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120,
+                        "description": "Handle. Lowercase, hyphenated. Unique among live templates."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "name": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 160,
+                        "description": "Template."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "basePricePaise": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                        "description": "Base price. Before any item the customer adds. Integer paise — 149900 is ₹1,499.00."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "maxWeightGrams": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647,
+                        "description": "Max weight (g). Courier ceiling for the finished hamper. Null means unlimited."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "live",
+                          "draft",
+                          "archived"
+                        ],
+                        "description": "Status."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated row.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {},
+                      "description": "One row, projected to the requested `fields`. The primary key is always present."
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated, but the staff role lacks `catalogue:edit`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such row, or it is archived."
+          },
+          "409": {
+            "description": "A unique constraint rejected it."
+          },
+          "422": {
+            "description": "Validation failed, or a database constraint refused the change."
+          }
+        },
+        "security": [
+          {
+            "adminBearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "adminDeleteBuilderTemplate",
+        "summary": "Archive a buildertemplate",
+        "description": "Soft delete: `deleted_at` is stamped and every read filters it out. The row, and the audit history pointing at it, survive.\n\nGated on `catalogue:delete`, which is a much narrower grant than `edit` — across the eleven roles, `delete` exists on a module for its owner and for Super Admin, and nobody else.",
+        "tags": [
+          "Admin catalogue"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Row id.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Archived."
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated, but the staff role lacks `catalogue:delete`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such row, or it is already archived."
+          },
+          "422": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminBearerAuth": []
+          }
+        ]
+      }
+    },
     "/v1/admin/inventory/dashboard": {
       "get": {
         "operationId": "adminInventoryDashboard",

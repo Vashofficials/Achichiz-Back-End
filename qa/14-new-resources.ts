@@ -40,6 +40,11 @@ const CASES: { slug: string; create: Record<string, unknown>; patch: Record<stri
     create: { name: `API Demo Engraving ${STAMP}`, method: 'engraving', turnaroundHours: 24, surchargePaise: 15000, status: 'draft' },
     patch: { surchargePaise: 20000 },
   },
+  {
+    slug: 'hamper-builder-templates',
+    create: { handle: `api-demo-byoh-${STAMP}`, name: 'API Demo 4-Slot Premium Hamper', basePricePaise: 149900, status: 'draft' },
+    patch: { basePricePaise: 159900 },
+  },
 ];
 
 for (const c of CASES) {
