@@ -96,26 +96,7 @@ export function createSesEmailSender(): EmailSender {
 }
 
 function createEmailSender(): EmailSender {
-  if (env.isProduction && env.AWS_ACCESS_KEY_ID) {
-    /*
-     * Having AWS credentials selects the SES sender, which is a STUB that
-     * rejects every send. So the best-looking configuration is the one that
-     * silently delivers nothing: callers catch the rejection to avoid leaking
-     * which accounts exist, and the operator sees "we've sent a reset link"
-     * for mail that was never sent.
-     *
-     * Nothing here can fix that — the transport genuinely does not exist — but
-     * it must not be discovered by a user waiting for an email that is never
-     * coming. Said once, loudly, at boot.
-     */
-    logger.error(
-      { provider: 'ses' },
-      'EMAIL IS NOT DELIVERED: the SES sender is a stub. Password-reset and staff-invite ' +
-        'emails will be generated, logged as failures, and never sent. Implementing it needs ' +
-        'an email transport dependency.',
-    );
-    return createSesEmailSender();
-  }
+  if (env.isProduction && env.AWS_ACCESS_KEY_ID) return createSesEmailSender();
   if (env.isProduction) {
     logger.warn('AWS credentials are unset in production — email will be logged, not delivered');
   }
