@@ -54,6 +54,7 @@ import {
   testimonials,
   warehouses,
 } from '../../db/schema/index.js';
+import { enrichProductVariants } from './enrich.product-variants.js';
 import type { FilterSpec, ResourceDescriptor } from './resource.types.js';
 
 /** Identity, so an entry is checked against `ResourceDescriptor` where it is written. */
@@ -210,7 +211,10 @@ const productVariantsResource = defineResource({
     createdAt: productVariants.createdAt,
     updatedAt: productVariants.updatedAt,
   },
-  listColumns: ['id', 'sku', 'productId', 'optionLabel', 'pricePaise', 'weightGrams', 'status', 'updatedAt'],
+  listColumns: ['id', 'sku', 'productId', 'optionLabel', 'pricePaise', 'weightGrams', 'barcode', 'status', 'updatedAt'],
+  // Adds productTitle / productHandle / availableStock / reservedStock. See the
+  // module for why these are not `columns`.
+  enrich: enrichProductVariants,
   fields: [
     { key: 'productId', label: 'Product', kind: 'reference', required: true, reference: { resource: 'products', labelField: 'title' } },
     { key: 'sku', label: 'SKU', kind: 'text', required: true, max: 64 },

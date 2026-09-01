@@ -111,7 +111,8 @@ export async function listRows(
   });
 
   return {
-    items: rows,
+    // One extra query for the whole page, not one per row — see `enrich`.
+    items: descriptor.enrich ? await descriptor.enrich(rows) : rows,
     total,
     page: query.page,
     perPage,
@@ -159,7 +160,9 @@ export async function readRow(
   );
   const row = await repo.findById(descriptor, id, projection);
   if (!row) throw new NotFoundError(descriptor.name.singular, id);
-  return row;
+  // The detail screen needs the same derived fields the list shows, or the
+  // product name would vanish the moment you opened a variant.
+  return descriptor.enrich ? ((await descriptor.enrich([row]))[0] ?? row) : row;
 }
 
 /* -------------------------------------------------------------- create */

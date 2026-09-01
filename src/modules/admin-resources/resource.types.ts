@@ -161,6 +161,21 @@ export type ResourceDescriptor = {
   primaryKey: PgColumn;
   /** Every exposable column, JSON key → column. The `?fields=` allowlist. */
   columns: Record<string, PgColumn>;
+  /**
+   * Adds derived data to a page of rows AFTER the query, in bulk.
+   *
+   * For values that are not columns of this table — a parent's title, a stock
+   * total aggregated from another table. They cannot live in `columns`, which is
+   * `Record<string, PgColumn>` precisely because `filterable` and `sortable`
+   * index into it and hand the result to `eq()` and `orderBy()`; widening it to
+   * accept SQL expressions would let a filter be compiled against something that
+   * is not a column.
+   *
+   * It receives the WHOLE page, so the implementation does one query for all of
+   * it. That is the difference between this and a per-row lookup, and it is the
+   * reason the hook takes an array rather than a row.
+   */
+  enrich?: (rows: Record<string, unknown>[]) => Promise<Record<string, unknown>[]>;
   /** Default projection for the list screen. */
   listColumns: readonly string[];
   /** Default projection for the detail screen. Defaults to every column. */
