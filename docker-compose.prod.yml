@@ -28,6 +28,7 @@ services:
       # `serviceAccountKey.json in the working directory` with no env var set.
       - ./serviceAccountKey.json:/app/serviceAccountKey.json:ro
     environment:
+      NODE_ENV: production
       # Use local dockerized Redis. DATABASE_URL is loaded from .env for AWS RDS
       REDIS_URL: redis://redis:6379
     ports:
@@ -46,6 +47,7 @@ services:
       # Same key, same reasoning. The worker verifies tokens on queued jobs.
       - ./serviceAccountKey.json:/app/serviceAccountKey.json:ro
     environment:
+      NODE_ENV: production
       # Use local dockerized Redis. DATABASE_URL is loaded from .env for AWS RDS
       REDIS_URL: redis://redis:6379
     depends_on:

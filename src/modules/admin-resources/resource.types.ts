@@ -176,6 +176,12 @@ export type ResourceDescriptor = {
    * reason the hook takes an array rather than a row.
    */
   enrich?: (rows: Record<string, unknown>[]) => Promise<Record<string, unknown>[]>;
+  /**
+   * Called after a successful create or update. Use this to handle 1:N relations
+   * (like arrays) that the client passes in the raw JSON body, but which the
+   * generic engine dropped because they aren't table columns.
+   */
+  afterSave?: (id: string, body: Record<string, unknown>) => Promise<void>;
   /** Default projection for the list screen. */
   listColumns: readonly string[];
   /** Default projection for the detail screen. Defaults to every column. */
@@ -199,6 +205,17 @@ export type ResourceDescriptor = {
   softDeleteColumn?: PgColumn;
   /** For tables with no `deleted_at`: DELETE flips a status column instead. */
   archiveStatus?: { column: PgColumn; value: string };
+
+  /**
+   * For polymorphic tables. When present, EVERY query (SELECT, UPDATE, DELETE)
+   * is strictly ANDed with this condition, ensuring isolation.
+   */
+  baseFilter?: import('drizzle-orm').SQL;
+  /**
+   * For polymorphic tables. Fields forced into the payload on INSERT.
+   * e.g. `{ kind: 'occasion' }`
+   */
+  baseSet?: Record<string, unknown>;
 
   /**
    * Why this resource cannot be created through the generic engine.

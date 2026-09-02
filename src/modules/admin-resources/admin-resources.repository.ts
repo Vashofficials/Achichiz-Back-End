@@ -35,9 +35,12 @@ function physical(descriptor: ResourceDescriptor, key: string): string {
 
 const pkName = (descriptor: ResourceDescriptor): string => descriptor.primaryKey.name;
 
-/** The `deleted_at IS NULL` guard, when the resource has one. */
-const aliveGuard = (descriptor: ResourceDescriptor): SQL | undefined =>
-  descriptor.softDeleteColumn ? isNull(descriptor.softDeleteColumn) : undefined;
+const aliveGuard = (descriptor: ResourceDescriptor): SQL | undefined => {
+  const parts: SQL[] = [];
+  if (descriptor.softDeleteColumn) parts.push(isNull(descriptor.softDeleteColumn));
+  if (descriptor.baseFilter) parts.push(descriptor.baseFilter);
+  return parts.length > 0 ? and(...parts) : undefined;
+};
 
 /* ------------------------------------------------------------------ reads */
 

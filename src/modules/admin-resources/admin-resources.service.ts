@@ -80,6 +80,11 @@ function toDbPatch(descriptor: ResourceDescriptor, body: Record<string, unknown>
     if (!writable.has(key) || !descriptor.columns[key]) continue;
     patch[key] = toDbValue(value, fields.get(key));
   }
+  
+  if (descriptor.baseSet) {
+    Object.assign(patch, descriptor.baseSet);
+  }
+
   return patch;
 }
 
@@ -182,6 +187,7 @@ export async function createRow(
     throw new BadRequestError(`Nothing to create — no writable field was supplied.`);
   }
   const id = await repo.insertRow(descriptor, patch);
+  if (descriptor.afterSave) await descriptor.afterSave(id, body);
   return readRow(descriptor, id, undefined);
 }
 
@@ -204,6 +210,7 @@ export async function updateRow(
   }
   const changed = await repo.updateRow(descriptor, id, patch);
   if (!changed) throw new NotFoundError(descriptor.name.singular, id);
+  if (descriptor.afterSave) await descriptor.afterSave(id, body);
   return readRow(descriptor, id, undefined);
 }
 

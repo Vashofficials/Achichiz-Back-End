@@ -15,16 +15,19 @@ import { leadsRouter } from './modules/leads/leads.routes.js';
 import { adminAuthRouter } from './modules/admin-auth/admin-auth.routes.js';
 import { rbacRouter } from './modules/rbac/rbac.routes.js';
 import { adminStaffRouter } from './modules/admin-staff/admin-staff.routes.js';
+import { adminApiKeysRouter } from './modules/admin-api-keys/admin-api-keys.routes.js';
 import { adminResourceRouter } from './modules/admin-resources/admin-resources.routes.js';
 import { adminInventoryRouter } from './modules/admin-inventory/admin-inventory.routes.js';
 import { adminWarehousingRouter } from './modules/admin-warehousing/admin-warehousing.routes.js';
 import { adminPurchasingRouter } from './modules/admin-purchasing/admin-purchasing.routes.js';
 import { adminBundlesRouter } from './modules/admin-bundles/admin-bundles.routes.js';
 import { adminProductionRouter } from './modules/admin-production/admin-production.routes.js';
+import { adminBuilderRouter } from './modules/admin-builder/admin-builder.routes.js';
 import { adminStockCountsRouter } from './modules/admin-stock-counts/admin-stock-counts.routes.js';
 import { adminBarcodesRouter } from './modules/admin-barcodes/admin-barcodes.routes.js';
 import { adminBulkOrdersRouter } from './modules/admin-bulk-orders/admin-bulk-orders.routes.js';
 import { adminOrdersRouter } from './modules/admin-orders/admin-orders.routes.js';
+import { adminSettingsRouter } from './modules/admin-settings/admin-settings.routes.js';
 import { mediaRouter } from './modules/media/media.routes.js';
 
 /**
@@ -69,6 +72,7 @@ import { adminReportsRouter } from './modules/admin-reports/admin-reports.routes
 apiRouter.use(adminAuthRouter);
 apiRouter.use(rbacRouter);
 apiRouter.use(adminStaffRouter);
+apiRouter.use(adminApiKeysRouter); // Must come before adminResourceRouter to intercept POST /v1/admin/api-keys
 apiRouter.use(adminResourceRouter);
 apiRouter.use(adminOrdersRouter);
 apiRouter.use(adminInventoryRouter);
@@ -79,7 +83,9 @@ apiRouter.use(adminProductionRouter);
 apiRouter.use(adminStockCountsRouter);
 apiRouter.use(adminBarcodesRouter);
 apiRouter.use(adminBulkOrdersRouter);
+apiRouter.use(adminBuilderRouter);
 apiRouter.use(adminReportsRouter);   // phase 7 — the 10 report aggregates
+apiRouter.use(adminSettingsRouter);
 apiRouter.use(mediaRouter);
 
 // ── webhooks (raw body, signature verified) ──────────────────────────────

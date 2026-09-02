@@ -243,12 +243,11 @@ export const adjustmentBody = z.object({
     .enum(ADJUSTMENT_MOVEMENT_TYPES)
     .default('adjustment')
     .describe('Why the stock moved, in the ledger’s vocabulary. Transfer, production and stock-count types are not adjustable by hand — each writes two coordinated rows or requires an approval.'),
-  reason: z
-    .string()
-    .trim()
-    .min(3)
-    .max(400)
-    .describe('Required. Goes on the movement as `note` and into the activity log. An adjustment with no stated reason is indistinguishable from an error.'),
+  reason: z.union([
+    z.enum(['shrinkage', 'damage', 'expired', 'correction', 'return', 'found']),
+    z.string().trim().min(3).max(400)
+  ]).describe('Required. Goes on the movement as `note` and into the activity log. An adjustment with no stated reason is indistinguishable from an error.'),
+  unitCostPaise: z.number().int().nonnegative().optional().describe('Integer paise. Used to update the item cost when bringing stock in.'),
   referenceType: z.enum(REFERENCE_TYPES).optional().describe('The kind of document this adjustment answers to, if any.'),
   referenceId: z.uuid().optional().describe('That document’s id.'),
   referenceLabel: z
@@ -369,20 +368,41 @@ export const inventoryLevelSummary = z.object({
   lastMovementAt: z.iso.datetime().nullable().describe('When stock last moved here.'),
 });
 
+export const flatInventoryLevel = z.object({
+  id: z.string().describe('`inventory_levels` row id.'),
+  variantId: z.string().nullable().describe('Variant ID if applicable.'),
+  sku: z.string().describe('The SKU.'),
+  productTitle: z.string().describe('Product title.'),
+  warehouseId: z.string().describe('Warehouse id.'),
+  warehouseName: z.string().describe('Warehouse name.'),
+  warehouseCode: z.string().describe('Warehouse code.'),
+  onHandQty: z.number().int().describe('Physically present.'),
+  reservedQty: z.number().int().describe('Held stock.'),
+  availableQty: z.number().int().describe('Sellable.'),
+  reorderPoint: z.number().int().describe('Reorder point.'),
+  unitCostPaise: z.number().int().nullable().describe('Cost per unit.'),
+  stockValuePaise: z.number().int().describe('Total value.'),
+  status: z.enum(['in_stock', 'low_stock', 'out_of_stock']).describe('Stock status mapped from state.'),
+  updatedAt: z.iso.datetime().nullable().describe('Last updated time.'),
+});
+
 export const stockMovementResponse = z.object({
   id: z.string().describe('BIGINT identity as a decimal string.'),
   inventoryLevelId: z.uuid().describe('The level this movement applied to.'),
   item: stockableRef,
   warehouseId: z.uuid().describe('Warehouse id.'),
   warehouseCode: z.string().describe('Warehouse code.'),
+  warehouseName: z.string().describe('Warehouse name.'),
   movementType: z.enum(MOVEMENT_TYPES).describe('What kind of movement this was.'),
   quantityDelta: z.number().int().describe('Signed change to on-hand. Never zero.'),
   balanceAfter: z.number().int().describe('On-hand balance immediately after this movement. The ledger reconstructs any historical position from this column alone.'),
   referenceType: z.enum(REFERENCE_TYPES).nullable().describe('The kind of document behind it.'),
   referenceId: z.uuid().nullable().describe('That document’s id.'),
-  referenceLabel: z.string().nullable().describe('That document’s human-readable number.'),
+  referenceLabel: z.string().nullable().describe('That document’s raw reference label.'),
+  referenceNo: z.string().nullable().describe('That document’s human-readable number.'),
   note: z.string().nullable().describe('Free text recorded with the movement.'),
   actorId: z.uuid().nullable().describe('Staff member who caused it. Null for system movements.'),
+  actorName: z.string().nullable().describe('Name of staff member who caused it.'),
   occurredAt: z.iso.datetime().describe('When it happened.'),
 });
 
@@ -599,6 +619,7 @@ export const inventoryNotification = z.object({
 
 export type StockableRef = z.infer<typeof stockableRef>;
 export type InventoryLevelSummary = z.infer<typeof inventoryLevelSummary>;
+export type FlatInventoryLevel = z.infer<typeof flatInventoryLevel>;
 export type StockMovementResponse = z.infer<typeof stockMovementResponse>;
 export type AvailabilityResponse = z.infer<typeof availabilityResponse>;
 export type InventoryDetail = z.infer<typeof inventoryDetail>;

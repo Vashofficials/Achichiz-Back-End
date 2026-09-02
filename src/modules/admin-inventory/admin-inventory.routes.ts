@@ -12,6 +12,7 @@ import {
   bulkAdjustBody,
   bulkAdjustResult,
   dashboardQuery,
+  flatInventoryLevel,
   inventoryAuditEvent,
   inventoryAuditQuery,
   inventoryDashboard,
@@ -114,12 +115,29 @@ defineRoute(adminInventoryRouter, {
   permission: { module: 'inventory', action: 'view' },
   request: { query: inventoryListQuery },
   responses: {
-    200: { description: 'A page of stock levels.', schema: z.array(inventoryLevelSummary) },
+    200: { description: 'A page of stock levels.', schema: z.array(flatInventoryLevel) },
     400: { description: 'An unrecognised filter value.' },
   },
   handler: async ({ query }) => {
     const { items, total } = await inventory.listInventory(query);
-    return paginated(items, pageMeta(total, query.page, query.perPage));
+    const flatItems = items.map(item => ({
+      id: item.id,
+      variantId: item.item.kind === 'variant' ? item.item.id : null,
+      sku: item.item.sku,
+      productTitle: item.item.name,
+      warehouseId: item.warehouseId,
+      warehouseName: item.warehouseName,
+      warehouseCode: item.warehouseCode,
+      onHandQty: item.onHandQty,
+      reservedQty: item.reservedQty,
+      availableQty: item.availableQty,
+      reorderPoint: item.reorderPoint,
+      unitCostPaise: item.unitCostPaise,
+      stockValuePaise: item.stockValuePaise,
+      status: item.state === 'in' ? 'in_stock' : item.state === 'low' ? 'low_stock' : 'out_of_stock',
+      updatedAt: item.lastMovementAt,
+    }));
+    return paginated(flatItems, pageMeta(total, query.page, query.perPage));
   },
 });
 

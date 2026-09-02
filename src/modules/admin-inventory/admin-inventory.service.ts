@@ -181,14 +181,17 @@ function toMovement(row: repo.MovementRow): StockMovementResponse {
     item: toItemRef(row),
     warehouseId: row.warehouseId,
     warehouseCode: row.warehouseCode,
+    warehouseName: row.warehouseName,
     movementType: row.movementType as StockMovementResponse['movementType'],
     quantityDelta: row.quantityDelta,
     balanceAfter: row.balanceAfter,
     referenceType: row.referenceType as StockMovementResponse['referenceType'],
     referenceId: row.referenceId,
     referenceLabel: row.referenceLabel,
+    referenceNo: row.referenceNo,
     note: row.note,
     actorId: row.actorId,
+    actorName: row.actorName,
     occurredAt: row.occurredAt.toISOString(),
   };
 }
@@ -581,6 +584,32 @@ export async function adjust(
     if (!before) throw new NotFoundError('Inventory level', levelId);
 
     const at = new Date();
+    let mappedMovementType = body.movementType;
+    if (mappedMovementType === 'adjustment') {
+      switch (body.reason) {
+        case 'shrinkage':
+        case 'expired':
+          mappedMovementType = 'loss';
+          break;
+        case 'damage':
+          mappedMovementType = 'damage';
+          break;
+        case 'return':
+          mappedMovementType = 'return_in';
+          break;
+        case 'found':
+          mappedMovementType = 'found';
+          break;
+        case 'correction':
+          mappedMovementType = 'adjustment';
+          break;
+      }
+    }
+
+    if (body.unitCostPaise !== undefined) {
+      await repo.updateItemCost(item, body.unitCostPaise, tx);
+    }
+
     const result = await writeAdjustment(tx, {
       levelId,
       before,
@@ -588,7 +617,7 @@ export async function adjust(
       warehouseId: body.warehouseId,
       warehouseCode: warehouse.code,
       quantityDelta: body.quantityDelta,
-      movementType: body.movementType,
+      movementType: mappedMovementType,
       note: body.reason,
       referenceType: body.referenceType,
       referenceId: body.referenceId,

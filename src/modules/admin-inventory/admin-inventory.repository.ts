@@ -30,17 +30,17 @@ import {
   hamperItems,
   inventoryLevels,
   inventoryReservations,
-  notifications,
   packagingMaterials,
-  productVariants,
   products,
-  purchaseOrderLines,
-  purchaseOrders,
+  productVariants,
   stockMovements,
-  supplierProducts,
-  suppliers,
   warehouses,
-  type StockMovementType,
+  staffUsers,
+  purchaseOrders,
+  purchaseOrderLines,
+  suppliers,
+  notifications,
+  supplierProducts,
 } from '../../db/schema/index.js';
 import type { ReferenceType, StockableKind } from './admin-inventory.schemas.js';
 
@@ -268,6 +268,16 @@ export async function resolveSku(sku: string, exec: Executor = db): Promise<Reso
   return null;
 }
 
+export async function updateItemCost(item: ResolvedItem, costPaise: number, tx: Tx): Promise<void> {
+  if (item.kind === 'variant') {
+    await tx.update(productVariants).set({ costPaise }).where(eq(productVariants.id, item.id));
+  } else if (item.kind === 'hamper_item') {
+    await tx.update(hamperItems).set({ costPaise }).where(eq(hamperItems.id, item.id));
+  } else if (item.kind === 'packaging') {
+    await tx.update(packagingMaterials).set({ costPaise }).where(eq(packagingMaterials.id, item.id));
+  }
+}
+
 /**
  * Batch SKU resolution for bulk operations.
  *
@@ -395,14 +405,17 @@ const movementSelection = {
   name: itemNameExpr,
   warehouseId: inventoryLevels.warehouseId,
   warehouseCode: warehouses.code,
+  warehouseName: warehouses.name,
   movementType: stockMovements.movementType,
   quantityDelta: stockMovements.quantityDelta,
   balanceAfter: stockMovements.balanceAfter,
   referenceType: stockMovements.referenceType,
   referenceId: stockMovements.referenceId,
   referenceLabel: stockMovements.referenceLabel,
+  referenceNo: stockMovements.referenceLabel, // Mapping referenceLabel to referenceNo for legacy compatibility
   note: stockMovements.note,
   actorId: stockMovements.actorId,
+  actorName: staffUsers.fullName,
   occurredAt: stockMovements.occurredAt,
 } as const;
 
@@ -415,14 +428,17 @@ export type MovementRow = {
   name: string;
   warehouseId: string;
   warehouseCode: string;
+  warehouseName: string;
   movementType: string;
   quantityDelta: number;
   balanceAfter: number;
   referenceType: string | null;
   referenceId: string | null;
   referenceLabel: string | null;
+  referenceNo: string | null;
   note: string | null;
   actorId: string | null;
+  actorName: string | null;
   occurredAt: Date;
 };
 
@@ -451,6 +467,7 @@ export async function listMovements(
     .leftJoin(products, eq(products.id, productVariants.productId))
     .leftJoin(hamperItems, eq(hamperItems.id, inventoryLevels.hamperItemId))
     .leftJoin(packagingMaterials, eq(packagingMaterials.id, inventoryLevels.packagingId))
+    .leftJoin(staffUsers, eq(staffUsers.id, stockMovements.actorId))
     .where(where)
     .orderBy(...orderBy)
     .limit(limit)
@@ -582,7 +599,7 @@ export async function insertMovement(tx: Tx, values: NewMovement): Promise<{ id:
     .insert(stockMovements)
     .values({
       inventoryLevelId: values.inventoryLevelId,
-      movementType: values.movementType as StockMovementType,
+      movementType: values.movementType as any,
       quantityDelta: values.quantityDelta,
       balanceAfter: values.balanceAfter,
       referenceType: (values.referenceType ?? null),

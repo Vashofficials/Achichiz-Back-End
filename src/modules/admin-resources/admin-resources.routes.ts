@@ -135,9 +135,11 @@ function registerResource(descriptor: ResourceDescriptor): void {
       'The route declares `edit`, but each action ALSO declares its own `requires`, checked against ' +
       'your grants before anything is written: destructive actions ask for `delete`, which most roles ' +
       'do not hold on most modules. Ids that no longer exist come back in `skipped` rather than ' +
-      'failing the batch — rows move while a table is on screen.',
+      'failing the batch — rows move while a table is on screen.\n\n' +
+      'Requires an `Idempotency-Key` header to safely retry timeouts.',
     tags: [tag],
     auth: 'staff',
+    idempotent: true,
     permission: { module, action: resources.OPERATION_ACTIONS.bulk },
     request: { body: bulkBody },
     responses: {
@@ -162,9 +164,11 @@ function registerResource(descriptor: ResourceDescriptor): void {
       'Strict: an unrecognised key is a 422. A silently dropped field is how a price update appears to ' +
       'succeed without changing the price. Read-only fields are documented in `/schema` and rejected ' +
       'here. Database CHECK constraints still apply on top — an active product with no HSN code is ' +
-      'refused by the database, because there is no invoice without one.',
+      'refused by the database, because there is no invoice without one.\n\n' +
+      'Requires an `Idempotency-Key` header to safely retry timeouts.',
     tags: [tag],
     auth: 'staff',
+    idempotent: true,
     permission: { module, action: resources.OPERATION_ACTIONS.create },
     request: { body: createBody, bodyContentType },
     responses: {

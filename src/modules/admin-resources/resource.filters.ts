@@ -191,6 +191,7 @@ export function compileWhere(
     ...compileFilters(descriptor, raw),
     compileSearch(descriptor, q),
     descriptor.softDeleteColumn ? isNull(descriptor.softDeleteColumn) : undefined,
+    descriptor.baseFilter,
     ...extra,
   ];
   const present = conditions.filter((c): c is SQL => Boolean(c));

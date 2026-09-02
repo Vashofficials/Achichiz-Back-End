@@ -12,11 +12,11 @@
   "servers": [
     {
       "url": "https://api.achichiz.com",
-      "description": "Production"
+      "description": "Local"
     },
     {
-      "url": "http://localhost:4000",
-      "description": "Local"
+      "url": "https://api.achichiz.com",
+      "description": "Production"
     }
   ],
   "tags": [
