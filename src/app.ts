@@ -19,6 +19,26 @@ type HelmetCallable = (
 ) => (req: IncomingMessage, res: ServerResponse, next: (err?: unknown) => void) => void;
 
 /**
+ * Every request header a browser client is allowed to send cross-origin.
+ *
+ * Exported so it can be asserted against the client's own list in a test. A
+ * header missing here does not get stripped — the browser refuses to send the
+ * request at all, and only in a browser, so curl and the server-side tests all
+ * keep passing while the site is broken for every real user. `X-Cart-Token`
+ * went missing exactly that way and took the entire guest basket with it.
+ */
+export const CORS_ALLOWED_HEADERS = [
+  'Content-Type',
+  'Authorization',
+  'Idempotency-Key',
+  'X-Request-Id',
+  'X-Cart-Token',
+] as const;
+
+/** Response headers a browser client is allowed to READ. */
+export const CORS_EXPOSED_HEADERS = ['X-Request-Id', 'Idempotent-Replay', 'RateLimit'] as const;
+
+/**
  * Assembles the app. Deliberately does NOT call listen() — that lives in
  * server.ts, so tests can import this and drive it with supertest without
  * binding a port.
@@ -86,8 +106,10 @@ export function createApp(): Express {
       },
       credentials: true,
       methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Request-Id'],
-      exposedHeaders: ['X-Request-Id', 'Idempotent-Replay', 'RateLimit'],
+      // See CORS_ALLOWED_HEADERS above — anything the client may SEND goes
+      // there, anything it must READ BACK goes in the exposed list.
+      allowedHeaders: [...CORS_ALLOWED_HEADERS],
+      exposedHeaders: [...CORS_EXPOSED_HEADERS],
       maxAge: 86_400,
     }),
   );
