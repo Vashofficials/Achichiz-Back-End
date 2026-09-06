@@ -10,6 +10,11 @@ import {
   productIdParam,
   updateProfileBody,
   wishlistItem,
+  orderIdParam,
+  returnRequest,
+  returnResponse,
+  exchangeRequest,
+  exchangeResponse,
 } from './account.schemas.js';
 
 /**
@@ -152,3 +157,103 @@ defineRoute(accountRouter, {
     return noContent();
   },
 });
+
+/* ------------------------------------------------------------- returns & exchanges */
+
+defineRoute(accountRouter, {
+  method: 'post',
+  path: '/v1/account/orders/:orderId/returns',
+  surface: 'storefront',
+  operationId: 'createReturn',
+  summary: 'Request a return',
+  description: 'Submit a return request for an order.',
+  tags: ['Account Returns'],
+  auth: 'customer',
+  request: { params: orderIdParam, body: returnRequest },
+  responses: {
+    201: { description: 'Return created.', schema: returnResponse },
+  },
+  handler: async ({ params, body, auth }) => {
+    const res = await account.createReturn(auth.customerId, params.orderId, body);
+    return created(res);
+  },
+});
+
+defineRoute(accountRouter, {
+  method: 'get',
+  path: '/v1/account/returns',
+  surface: 'storefront',
+  operationId: 'listReturns',
+  summary: 'List my returns',
+  description: 'List all returns requested by the customer.',
+  tags: ['Account Returns'],
+  auth: 'customer',
+  responses: {
+    200: { description: 'Customer returns.', schema: z.array(returnResponse) },
+  },
+  handler: async ({ auth }) => {
+    const items = await account.listReturns(auth.customerId);
+    return ok(items);
+  },
+});
+
+defineRoute(accountRouter, {
+  method: 'post',
+  path: '/v1/account/orders/:orderId/exchanges',
+  surface: 'storefront',
+  operationId: 'createExchange',
+  summary: 'Request an exchange',
+  description: 'Submit an exchange request for an order.',
+  tags: ['Account Returns'],
+  auth: 'customer',
+  request: { params: orderIdParam, body: exchangeRequest },
+  responses: {
+    201: { description: 'Exchange created.', schema: exchangeResponse },
+  },
+  handler: async ({ params, body, auth }) => {
+    const res = await account.createExchange(auth.customerId, params.orderId, body);
+    return created(res);
+  },
+});
+
+defineRoute(accountRouter, {
+  method: 'get',
+  path: '/v1/account/exchanges',
+  surface: 'storefront',
+  operationId: 'listExchanges',
+  summary: 'List my exchanges',
+  description: 'List all exchanges requested by the customer.',
+  tags: ['Account Returns'],
+  auth: 'customer',
+  responses: {
+    200: { description: 'Customer exchanges.', schema: z.array(exchangeResponse) },
+  },
+  handler: async ({ auth }) => {
+    const items = await account.listExchanges(auth.customerId);
+    return ok(items);
+  },
+});
+
+/* ------------------------------------------------------------- invoices */
+
+defineRoute(accountRouter, {
+  method: 'get',
+  path: '/v1/account/orders/:orderId/invoice',
+  surface: 'storefront',
+  operationId: 'getOrderInvoice',
+  summary: 'Download tax invoice',
+  description: 'Returns the PDF media URL for the tax invoice of this order, if issued.',
+  tags: ['Account Returns'],
+  auth: 'customer',
+  request: { params: orderIdParam },
+  responses: {
+    200: { description: 'Invoice URL.', schema: z.object({ url: z.string().url() }) },
+  },
+  handler: async ({ res }) => {
+    // To implement the actual query: SELECT media_assets.url FROM invoices ...
+    // For now, return a mock URL.
+    return ok({ url: 'https://achichiz-media.s3.ap-south-1.amazonaws.com/mock-invoice.pdf' });
+  },
+});
+
+

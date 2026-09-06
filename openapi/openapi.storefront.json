@@ -24,6 +24,9 @@
       "name": "Account"
     },
     {
+      "name": "Account Returns"
+    },
+    {
       "name": "Add-ons"
     },
     {
@@ -13107,6 +13110,1114 @@
         ]
       }
     },
+    "/v1/cart/contact": {
+      "patch": {
+        "operationId": "contactCart",
+        "summary": "Capture guest cart contact info",
+        "description": "Used to capture guest shopper email, mobile, and address before the payment step is completed so that abandoned checkout recovery is possible. Triggers stage change to \"address\" and sets the abandoned_at timestamp. Identify the cart with the `X-Cart-Token` header (preferred) or the `cartToken` field. The header wins if both are sent.",
+        "tags": [
+          "Cart"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cartToken": {
+                    "description": "Opaque cart handle, or send `X-Cart-Token`.",
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 255
+                  },
+                  "email": {
+                    "description": "Shopper email for guest checkout.",
+                    "type": "string",
+                    "format": "email",
+                    "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+                  },
+                  "mobile": {
+                    "description": "Shopper mobile for guest checkout.",
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 15
+                  },
+                  "address": {
+                    "description": "Opaque address blob for calculating shipping."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The cart with updated contact information.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Cart id, or null when no cart exists yet."
+                        },
+                        "token": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Opaque cart handle. Store it and send it back as `X-Cart-Token`. Null when no cart exists yet."
+                        },
+                        "stage": {
+                          "type": "string",
+                          "enum": [
+                            "cart",
+                            "address",
+                            "payment",
+                            "converted"
+                          ],
+                          "description": "How far through checkout this cart got. Drives abandonment recovery."
+                        },
+                        "couponCode": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Applied coupon code, or null."
+                        },
+                        "lines": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                "description": "Cart line id. Use it for PATCH/DELETE."
+                              },
+                              "lineKey": {
+                                "type": "string",
+                                "description": "Deterministic dedupe key over variant + add-ons + personalisation. Two identical configurations collapse."
+                              },
+                              "variantId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                "description": "Variant id."
+                              },
+                              "productId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                "description": "Product id."
+                              },
+                              "productHandle": {
+                                "type": "string",
+                                "description": "Product URL slug, for linking back to the PDP."
+                              },
+                              "title": {
+                                "type": "string",
+                                "description": "Product title."
+                              },
+                              "variantLabel": {
+                                "type": "string",
+                                "description": "Variant option label, e.g. `Signature`."
+                              },
+                              "sku": {
+                                "type": "string",
+                                "description": "Variant SKU."
+                              },
+                              "imageUrl": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Primary image URL, or null."
+                              },
+                              "quantity": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Units on this line."
+                              },
+                              "unitPricePaise": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "LIVE variant price, GST-inclusive, in paise. Re-read on every request."
+                              },
+                              "addOns": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "addOnId": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                      "description": "Add-on id."
+                                    },
+                                    "code": {
+                                      "type": "string",
+                                      "description": "Stable add-on code, e.g. `gift-wrap`."
+                                    },
+                                    "name": {
+                                      "type": "string",
+                                      "description": "Display name."
+                                    },
+                                    "pricePaise": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                      "description": "LIVE add-on price per unit, GST-inclusive, in integer paise."
+                                    },
+                                    "inputText": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "The text the shopper supplied, or null."
+                                    }
+                                  },
+                                  "required": [
+                                    "addOnId",
+                                    "code",
+                                    "name",
+                                    "pricePaise",
+                                    "inputText"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "description": "Add-ons on this line."
+                              },
+                              "addOnsPaise": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Sum of add-on prices PER UNIT, in paise."
+                              },
+                              "personalisation": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Personalisation inputs, or null."
+                              },
+                              "lineTotalPaise": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "`quantity × (unitPrice + addOns)` before discount, in paise."
+                              },
+                              "availableQty": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Live available units (on-hand minus reserved) across all warehouses."
+                              },
+                              "inStock": {
+                                "type": "boolean",
+                                "description": "False when `availableQty` is below `quantity` — the line blocks checkout."
+                              },
+                              "priceChanged": {
+                                "type": "boolean",
+                                "description": "True when the live price differs from the price snapshotted at add-to-cart. Show it before payment."
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "lineKey",
+                              "variantId",
+                              "productId",
+                              "productHandle",
+                              "title",
+                              "variantLabel",
+                              "sku",
+                              "imageUrl",
+                              "quantity",
+                              "unitPricePaise",
+                              "addOns",
+                              "addOnsPaise",
+                              "personalisation",
+                              "lineTotalPaise",
+                              "availableQty",
+                              "inStock",
+                              "priceChanged"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "description": "Lines in add order."
+                        },
+                        "totals": {
+                          "type": "object",
+                          "properties": {
+                            "lines": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "lineId": {
+                                    "type": "string",
+                                    "description": "`cart_lines.id` while quoting; `order_lines.id` once the order exists."
+                                  },
+                                  "variantId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                    "description": "The stock-bearing variant this line sells."
+                                  },
+                                  "quantity": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "Units of the variant on this line."
+                                  },
+                                  "unitPricePaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "LIVE `product_variants.price_paise`, GST-inclusive, in integer paise. Re-read at every quote."
+                                  },
+                                  "addOnsPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "Sum of this line’s add-on prices PER UNIT, in integer paise."
+                                  },
+                                  "lineTotalPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "`quantity × (unitPrice + addOns)` before any discount. The strike-through display figure."
+                                  },
+                                  "allocatedOrderDiscountPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "This line’s share of the order-level coupon, largest-remainder allocated. The parts sum EXACTLY to `couponDiscountPaise` — the deferred `check_order_totals()` trigger rejects a transaction where they differ by one paisa."
+                                  },
+                                  "grossPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "`order_lines.gross_paise` — net of every discount. `subtotalPaise` is the sum of these."
+                                  },
+                                  "gstRateBp": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "GST rate in basis points resolved from the product HSN on the supply date. 1800 = 18%."
+                                  },
+                                  "taxablePaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "Value net of tax, back-computed from the GST-inclusive gross."
+                                  },
+                                  "cgstPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "Central GST in paise. Zero on an interstate supply."
+                                  },
+                                  "sgstPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "State GST in paise. Always equal to `cgstPaise` — that is a CHECK."
+                                  },
+                                  "igstPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "Integrated GST in paise. Zero on an intrastate supply."
+                                  },
+                                  "cessPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "Compensation cess in paise."
+                                  }
+                                },
+                                "required": [
+                                  "lineId",
+                                  "variantId",
+                                  "quantity",
+                                  "unitPricePaise",
+                                  "addOnsPaise",
+                                  "lineTotalPaise",
+                                  "allocatedOrderDiscountPaise",
+                                  "grossPaise",
+                                  "gstRateBp",
+                                  "taxablePaise",
+                                  "cgstPaise",
+                                  "sgstPaise",
+                                  "igstPaise",
+                                  "cessPaise"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "description": "Per-line money, in cart order."
+                            },
+                            "itemCount": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Total units across all lines, not the number of lines."
+                            },
+                            "merchandisePaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Pre-discount merchandise value in paise. What the cart page labels “Subtotal”."
+                            },
+                            "couponCode": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "The coupon actually applied, or null."
+                            },
+                            "couponDiscountPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Coupon value in paise. Never exceeds the eligible value."
+                            },
+                            "subtotalPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "`orders.subtotal_paise` = Σ `grossPaise`. Already net of the coupon — do not subtract it again."
+                            },
+                            "shippingPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Shipping in paise: the zone/flat fee (waived above the free-shipping threshold, measured AFTER discount) plus the delivery-method surcharge. A free-shipping coupon waives the base fee but not a delivery upgrade."
+                            },
+                            "codFeePaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Cash-on-delivery handling fee in paise. Currently always 0."
+                            },
+                            "taxablePaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Order-level taxable value in paise. Σ of the line values."
+                            },
+                            "cgstPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Order-level CGST in paise."
+                            },
+                            "sgstPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Order-level SGST in paise."
+                            },
+                            "igstPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Order-level IGST in paise."
+                            },
+                            "cessPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Order-level cess in paise."
+                            },
+                            "roundOffPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Rounds the grand total to the nearest rupee. Bounded ±50 paise by a CHECK."
+                            },
+                            "totalPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "`orders.total_paise` = subtotal + shipping + codFee + roundOff. The amount actually charged."
+                            },
+                            "isInterstate": {
+                              "type": "boolean",
+                              "description": "True when the place of supply differs from the supplier state, which makes the tax IGST."
+                            }
+                          },
+                          "required": [
+                            "lines",
+                            "itemCount",
+                            "merchandisePaise",
+                            "couponCode",
+                            "couponDiscountPaise",
+                            "subtotalPaise",
+                            "shippingPaise",
+                            "codFeePaise",
+                            "taxablePaise",
+                            "cgstPaise",
+                            "sgstPaise",
+                            "igstPaise",
+                            "cessPaise",
+                            "roundOffPaise",
+                            "totalPaise",
+                            "isInterstate"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Server-computed money. Standard delivery, prepaid, before an address is known."
+                        },
+                        "itemCount": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Total units, not the number of lines."
+                        },
+                        "hasUnavailableLines": {
+                          "type": "boolean",
+                          "description": "True when any line exceeds available stock. Checkout will reject."
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "description": "ISO-8601 timestamp of the last change."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "token",
+                        "stage",
+                        "couponCode",
+                        "lines",
+                        "totals",
+                        "itemCount",
+                        "hasUnavailableLines",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such cart."
+          },
+          "422": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/v1/cart/restore/{token}": {
+      "get": {
+        "operationId": "restoreCart",
+        "summary": "Restore an abandoned cart via recovery link",
+        "description": "Takes the recovery token passed via WhatsApp or Email, restores the cart, clears its abandonment status, and returns the full cart so the client can resume checkout.",
+        "tags": [
+          "Cart"
+        ],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "description": "The opaque cart token recovered from a recovery link.",
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 255
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The restored cart.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Cart id, or null when no cart exists yet."
+                        },
+                        "token": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Opaque cart handle. Store it and send it back as `X-Cart-Token`. Null when no cart exists yet."
+                        },
+                        "stage": {
+                          "type": "string",
+                          "enum": [
+                            "cart",
+                            "address",
+                            "payment",
+                            "converted"
+                          ],
+                          "description": "How far through checkout this cart got. Drives abandonment recovery."
+                        },
+                        "couponCode": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Applied coupon code, or null."
+                        },
+                        "lines": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                "description": "Cart line id. Use it for PATCH/DELETE."
+                              },
+                              "lineKey": {
+                                "type": "string",
+                                "description": "Deterministic dedupe key over variant + add-ons + personalisation. Two identical configurations collapse."
+                              },
+                              "variantId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                "description": "Variant id."
+                              },
+                              "productId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                "description": "Product id."
+                              },
+                              "productHandle": {
+                                "type": "string",
+                                "description": "Product URL slug, for linking back to the PDP."
+                              },
+                              "title": {
+                                "type": "string",
+                                "description": "Product title."
+                              },
+                              "variantLabel": {
+                                "type": "string",
+                                "description": "Variant option label, e.g. `Signature`."
+                              },
+                              "sku": {
+                                "type": "string",
+                                "description": "Variant SKU."
+                              },
+                              "imageUrl": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Primary image URL, or null."
+                              },
+                              "quantity": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Units on this line."
+                              },
+                              "unitPricePaise": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "LIVE variant price, GST-inclusive, in paise. Re-read on every request."
+                              },
+                              "addOns": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "addOnId": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                      "description": "Add-on id."
+                                    },
+                                    "code": {
+                                      "type": "string",
+                                      "description": "Stable add-on code, e.g. `gift-wrap`."
+                                    },
+                                    "name": {
+                                      "type": "string",
+                                      "description": "Display name."
+                                    },
+                                    "pricePaise": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                      "description": "LIVE add-on price per unit, GST-inclusive, in integer paise."
+                                    },
+                                    "inputText": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "The text the shopper supplied, or null."
+                                    }
+                                  },
+                                  "required": [
+                                    "addOnId",
+                                    "code",
+                                    "name",
+                                    "pricePaise",
+                                    "inputText"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                "description": "Add-ons on this line."
+                              },
+                              "addOnsPaise": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Sum of add-on prices PER UNIT, in paise."
+                              },
+                              "personalisation": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Personalisation inputs, or null."
+                              },
+                              "lineTotalPaise": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "`quantity × (unitPrice + addOns)` before discount, in paise."
+                              },
+                              "availableQty": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Live available units (on-hand minus reserved) across all warehouses."
+                              },
+                              "inStock": {
+                                "type": "boolean",
+                                "description": "False when `availableQty` is below `quantity` — the line blocks checkout."
+                              },
+                              "priceChanged": {
+                                "type": "boolean",
+                                "description": "True when the live price differs from the price snapshotted at add-to-cart. Show it before payment."
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "lineKey",
+                              "variantId",
+                              "productId",
+                              "productHandle",
+                              "title",
+                              "variantLabel",
+                              "sku",
+                              "imageUrl",
+                              "quantity",
+                              "unitPricePaise",
+                              "addOns",
+                              "addOnsPaise",
+                              "personalisation",
+                              "lineTotalPaise",
+                              "availableQty",
+                              "inStock",
+                              "priceChanged"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "description": "Lines in add order."
+                        },
+                        "totals": {
+                          "type": "object",
+                          "properties": {
+                            "lines": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "lineId": {
+                                    "type": "string",
+                                    "description": "`cart_lines.id` while quoting; `order_lines.id` once the order exists."
+                                  },
+                                  "variantId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                    "description": "The stock-bearing variant this line sells."
+                                  },
+                                  "quantity": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "Units of the variant on this line."
+                                  },
+                                  "unitPricePaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "LIVE `product_variants.price_paise`, GST-inclusive, in integer paise. Re-read at every quote."
+                                  },
+                                  "addOnsPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "Sum of this line’s add-on prices PER UNIT, in integer paise."
+                                  },
+                                  "lineTotalPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "`quantity × (unitPrice + addOns)` before any discount. The strike-through display figure."
+                                  },
+                                  "allocatedOrderDiscountPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "This line’s share of the order-level coupon, largest-remainder allocated. The parts sum EXACTLY to `couponDiscountPaise` — the deferred `check_order_totals()` trigger rejects a transaction where they differ by one paisa."
+                                  },
+                                  "grossPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "`order_lines.gross_paise` — net of every discount. `subtotalPaise` is the sum of these."
+                                  },
+                                  "gstRateBp": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "GST rate in basis points resolved from the product HSN on the supply date. 1800 = 18%."
+                                  },
+                                  "taxablePaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "Value net of tax, back-computed from the GST-inclusive gross."
+                                  },
+                                  "cgstPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "Central GST in paise. Zero on an interstate supply."
+                                  },
+                                  "sgstPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "State GST in paise. Always equal to `cgstPaise` — that is a CHECK."
+                                  },
+                                  "igstPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "Integrated GST in paise. Zero on an intrastate supply."
+                                  },
+                                  "cessPaise": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "description": "Compensation cess in paise."
+                                  }
+                                },
+                                "required": [
+                                  "lineId",
+                                  "variantId",
+                                  "quantity",
+                                  "unitPricePaise",
+                                  "addOnsPaise",
+                                  "lineTotalPaise",
+                                  "allocatedOrderDiscountPaise",
+                                  "grossPaise",
+                                  "gstRateBp",
+                                  "taxablePaise",
+                                  "cgstPaise",
+                                  "sgstPaise",
+                                  "igstPaise",
+                                  "cessPaise"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "description": "Per-line money, in cart order."
+                            },
+                            "itemCount": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Total units across all lines, not the number of lines."
+                            },
+                            "merchandisePaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Pre-discount merchandise value in paise. What the cart page labels “Subtotal”."
+                            },
+                            "couponCode": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "The coupon actually applied, or null."
+                            },
+                            "couponDiscountPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Coupon value in paise. Never exceeds the eligible value."
+                            },
+                            "subtotalPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "`orders.subtotal_paise` = Σ `grossPaise`. Already net of the coupon — do not subtract it again."
+                            },
+                            "shippingPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Shipping in paise: the zone/flat fee (waived above the free-shipping threshold, measured AFTER discount) plus the delivery-method surcharge. A free-shipping coupon waives the base fee but not a delivery upgrade."
+                            },
+                            "codFeePaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Cash-on-delivery handling fee in paise. Currently always 0."
+                            },
+                            "taxablePaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Order-level taxable value in paise. Σ of the line values."
+                            },
+                            "cgstPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Order-level CGST in paise."
+                            },
+                            "sgstPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Order-level SGST in paise."
+                            },
+                            "igstPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Order-level IGST in paise."
+                            },
+                            "cessPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Order-level cess in paise."
+                            },
+                            "roundOffPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Rounds the grand total to the nearest rupee. Bounded ±50 paise by a CHECK."
+                            },
+                            "totalPaise": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "`orders.total_paise` = subtotal + shipping + codFee + roundOff. The amount actually charged."
+                            },
+                            "isInterstate": {
+                              "type": "boolean",
+                              "description": "True when the place of supply differs from the supplier state, which makes the tax IGST."
+                            }
+                          },
+                          "required": [
+                            "lines",
+                            "itemCount",
+                            "merchandisePaise",
+                            "couponCode",
+                            "couponDiscountPaise",
+                            "subtotalPaise",
+                            "shippingPaise",
+                            "codFeePaise",
+                            "taxablePaise",
+                            "cgstPaise",
+                            "sgstPaise",
+                            "igstPaise",
+                            "cessPaise",
+                            "roundOffPaise",
+                            "totalPaise",
+                            "isInterstate"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Server-computed money. Standard delivery, prepaid, before an address is known."
+                        },
+                        "itemCount": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Total units, not the number of lines."
+                        },
+                        "hasUnavailableLines": {
+                          "type": "boolean",
+                          "description": "True when any line exceeds available stock. Checkout will reject."
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "description": "ISO-8601 timestamp of the last change."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "token",
+                        "stage",
+                        "couponCode",
+                        "lines",
+                        "totals",
+                        "itemCount",
+                        "hasUnavailableLines",
+                        "updatedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such cart or token."
+          },
+          "422": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
     "/v1/checkout/quote": {
       "post": {
         "operationId": "createCheckoutQuote",
@@ -18659,6 +19770,664 @@
           },
           "404": {
             "description": "That product is not on your wishlist."
+          },
+          "422": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/account/orders/{orderId}/returns": {
+      "post": {
+        "operationId": "createReturn",
+        "summary": "Request a return",
+        "description": "Submit a return request for an order.",
+        "tags": [
+          "Account Returns"
+        ],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "description": "`orders.id`.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "lines": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "orderLineId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "description": "The ID of the order line being returned."
+                        },
+                        "quantity": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "description": "Quantity to return."
+                        },
+                        "condition": {
+                          "type": "string",
+                          "enum": [
+                            "sellable",
+                            "damaged",
+                            "opened",
+                            "missing_parts"
+                          ],
+                          "description": "Condition of the item."
+                        }
+                      },
+                      "required": [
+                        "orderLineId",
+                        "quantity",
+                        "condition"
+                      ]
+                    },
+                    "description": "Items being returned."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "enum": [
+                      "damaged_in_transit",
+                      "wrong_item",
+                      "late_delivery",
+                      "quality_not_as_expected",
+                      "changed_mind",
+                      "personalisation_error",
+                      "other"
+                    ],
+                    "description": "Reason for the return."
+                  },
+                  "reasonNote": {
+                    "description": "Optional explanation.",
+                    "type": "string"
+                  },
+                  "refundMode": {
+                    "type": "string",
+                    "enum": [
+                      "original",
+                      "store_credit"
+                    ],
+                    "description": "Preferred refund method."
+                  },
+                  "photoMediaIds": {
+                    "description": "Uploaded proof photos from `/v1/media/upload`.",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    }
+                  }
+                },
+                "required": [
+                  "lines",
+                  "reason",
+                  "refundMode"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Return created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "returnNo": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "reason": {
+                          "type": "string"
+                        },
+                        "refundMode": {
+                          "type": "string"
+                        },
+                        "refundPaise": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "requestedAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "returnNo",
+                        "status",
+                        "reason",
+                        "refundMode",
+                        "refundPaise",
+                        "requestedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/account/returns": {
+      "get": {
+        "operationId": "listReturns",
+        "summary": "List my returns",
+        "description": "List all returns requested by the customer.",
+        "tags": [
+          "Account Returns"
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer returns.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result",
+                    "meta"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "returnNo": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "reason": {
+                            "type": "string"
+                          },
+                          "refundMode": {
+                            "type": "string"
+                          },
+                          "refundPaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "requestedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "returnNo",
+                          "status",
+                          "reason",
+                          "refundMode",
+                          "refundPaise",
+                          "requestedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "page",
+                        "perPage",
+                        "total",
+                        "totalPages"
+                      ],
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "description": "1-indexed page number."
+                        },
+                        "perPage": {
+                          "type": "integer",
+                          "description": "Items in this page."
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Total items matching the query."
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "description": "Total pages at this `perPage`."
+                        }
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/account/orders/{orderId}/exchanges": {
+      "post": {
+        "operationId": "createExchange",
+        "summary": "Request an exchange",
+        "description": "Submit an exchange request for an order.",
+        "tags": [
+          "Account Returns"
+        ],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "description": "`orders.id`.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orderLineId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "description": "The ID of the order line being exchanged."
+                  },
+                  "fromVariantId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "description": "Original variant."
+                  },
+                  "toVariantId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "description": "Requested variant."
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991,
+                    "description": "Quantity to exchange."
+                  }
+                },
+                "required": [
+                  "orderLineId",
+                  "fromVariantId",
+                  "toVariantId",
+                  "quantity"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Exchange created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "exchangeNo": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "priceDiffPaise": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "requestedAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "exchangeNo",
+                        "status",
+                        "priceDiffPaise",
+                        "requestedAt"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/account/exchanges": {
+      "get": {
+        "operationId": "listExchanges",
+        "summary": "List my exchanges",
+        "description": "List all exchanges requested by the customer.",
+        "tags": [
+          "Account Returns"
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer exchanges.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result",
+                    "meta"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "exchangeNo": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "priceDiffPaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "requestedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "exchangeNo",
+                          "status",
+                          "priceDiffPaise",
+                          "requestedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "required": [
+                        "page",
+                        "perPage",
+                        "total",
+                        "totalPages"
+                      ],
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "description": "1-indexed page number."
+                        },
+                        "perPage": {
+                          "type": "integer",
+                          "description": "Items in this page."
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Total items matching the query."
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "description": "Total pages at this `perPage`."
+                        }
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/account/orders/{orderId}/invoice": {
+      "get": {
+        "operationId": "getOrderInvoice",
+        "summary": "Download tax invoice",
+        "description": "Returns the PDF media URL for the tax invoice of this order, if issued.",
+        "tags": [
+          "Account Returns"
+        ],
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "description": "`orders.id`.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invoice URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "format": "uri"
+                        }
+                      },
+                      "required": [
+                        "url"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation failed.",

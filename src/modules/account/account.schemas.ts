@@ -10,7 +10,7 @@
  */
 
 import { z } from 'zod';
-import { CUSTOMER_GENDERS } from '../../db/schema/index.js';
+import { CUSTOMER_GENDERS, RETURN_REASONS, RETURN_LINE_CONDITIONS } from '../../db/schema/index.js';
 
 const MOBILE_IN = /^[6-9][0-9]{9}$/;
 
@@ -106,6 +106,55 @@ export const productIdParam = z.object({
   productId: z.uuid().describe('`products.id` as returned by `GET /v1/account/wishlist`.'),
 });
 
+/* --------------------------------------------------------------- returns & exchanges */
+
+export const orderIdParam = z.object({
+  orderId: z.uuid().describe('`orders.id`.'),
+});
+
+export const returnLineInput = z.object({
+  orderLineId: z.uuid().describe('The ID of the order line being returned.'),
+  quantity: z.number().int().min(1).describe('Quantity to return.'),
+  condition: z.enum(RETURN_LINE_CONDITIONS).describe('Condition of the item.'),
+});
+
+export const returnRequest = z.object({
+  lines: z.array(returnLineInput).min(1).describe('Items being returned.'),
+  reason: z.enum(RETURN_REASONS).describe('Reason for the return.'),
+  reasonNote: z.string().optional().describe('Optional explanation.'),
+  refundMode: z.enum(['original', 'store_credit']).describe('Preferred refund method.'),
+  photoMediaIds: z.array(z.uuid()).optional().describe('Uploaded proof photos from `/v1/media/upload`.'),
+});
+
+export const exchangeRequest = z.object({
+  orderLineId: z.uuid().describe('The ID of the order line being exchanged.'),
+  fromVariantId: z.uuid().describe('Original variant.'),
+  toVariantId: z.uuid().describe('Requested variant.'),
+  quantity: z.number().int().min(1).describe('Quantity to exchange.'),
+});
+
+export const returnResponse = z.object({
+  id: z.uuid(),
+  returnNo: z.string(),
+  status: z.string(),
+  reason: z.string(),
+  refundMode: z.string(),
+  refundPaise: z.number().int(),
+  requestedAt: z.string(),
+});
+
+export const exchangeResponse = z.object({
+  id: z.uuid(),
+  exchangeNo: z.string(),
+  status: z.string(),
+  priceDiffPaise: z.number().int(),
+  requestedAt: z.string(),
+});
+
 export type CustomerProfileResponse = z.infer<typeof customerProfile>;
 export type UpdateProfileBody = z.infer<typeof updateProfileBody>;
 export type WishlistItemResponse = z.infer<typeof wishlistItem>;
+export type ReturnRequest = z.infer<typeof returnRequest>;
+export type ExchangeRequest = z.infer<typeof exchangeRequest>;
+export type ReturnResponse = z.infer<typeof returnResponse>;
+export type ExchangeResponse = z.infer<typeof exchangeResponse>;

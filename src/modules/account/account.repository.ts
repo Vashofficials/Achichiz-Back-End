@@ -15,7 +15,12 @@ import {
   mediaAssets,
   productMedia,
   products,
+  productVariants,
   wishlistItems,
+  returns,
+  returnLines,
+  exchanges,
+  orders,
 } from '../../db/schema/index.js';
 
 export type CustomerRow = typeof customers.$inferSelect;
@@ -204,4 +209,74 @@ export async function deleteWishlistItem(
     .where(and(eq(wishlistItems.customerId, customerId), eq(wishlistItems.productId, productId)))
     .returning({ productId: wishlistItems.productId });
   return rows.length;
+}
+
+/* ----------------------------------------------------------------- returns & exchanges */
+
+export async function createReturn(
+  values: {
+    returnNo: string;
+    orderId: string;
+    customerId: string;
+    reason: any;
+    reasonNote?: string;
+    refundMode: any;
+  },
+  lines: { orderLineId: string; quantity: number; condition: any }[],
+  exec: Executor = db,
+) {
+  const result = await exec.insert(returns).values(values).returning({ id: returns.id });
+  const id = result[0]?.id as string;
+  
+  if (lines.length > 0) {
+    const returnLinesData = lines.map(l => ({ ...l, returnId: id }));
+    await exec.insert(returnLines).values(returnLinesData);
+  }
+  
+  return id;
+}
+
+export async function createExchange(
+  values: {
+    exchangeNo: string;
+    orderId: string;
+    customerId: string;
+    orderLineId: string;
+    fromVariantId: string;
+    toVariantId: string;
+    quantity: number;
+    priceDiffPaise: number;
+  },
+  exec: Executor = db,
+) {
+  const result = await exec.insert(exchanges).values(values).returning({ id: exchanges.id });
+  return result[0]?.id as string;
+}
+
+export async function listCustomerReturns(customerId: string, exec: Executor = db) {
+  return exec
+    .select()
+    .from(returns)
+    .where(eq(returns.customerId, customerId))
+    .orderBy(desc(returns.requestedAt));
+}
+
+export async function listCustomerExchanges(customerId: string, exec: Executor = db) {
+  return exec
+    .select({
+      id: exchanges.id,
+      exchangeNo: exchanges.exchangeNo,
+      orderId: exchanges.orderId,
+      orderLineId: exchanges.orderLineId,
+      fromVariantId: exchanges.fromVariantId,
+      toVariantId: exchanges.toVariantId,
+      quantity: exchanges.quantity,
+      priceDiffPaise: exchanges.priceDiffPaise,
+      status: exchanges.status,
+      requestedAt: exchanges.requestedAt,
+    })
+    .from(exchanges)
+    .innerJoin(orders, eq(exchanges.orderId, orders.id))
+    .where(eq(orders.customerId, customerId))
+    .orderBy(desc(exchanges.requestedAt));
 }

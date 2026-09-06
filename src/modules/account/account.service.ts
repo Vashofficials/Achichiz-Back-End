@@ -165,3 +165,88 @@ export async function removeWishlistItem(customerId: string, productId: string):
   const removed = await repo.deleteWishlistItem(customerId, productId);
   if (removed === 0) throw new NotFoundError('Wishlist item', productId);
 }
+
+/* ----------------------------------------------------------- returns & exchanges */
+
+import type { ReturnRequest, ExchangeRequest, ReturnResponse, ExchangeResponse } from './account.schemas.js';
+
+export async function createReturn(
+  customerId: string,
+  orderId: string,
+  data: ReturnRequest
+): Promise<ReturnResponse> {
+  const returnNo = `RET-${new Date().getFullYear()}-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`;
+  
+  const id = await repo.createReturn(
+    {
+      returnNo,
+      orderId,
+      customerId,
+      reason: data.reason,
+      reasonNote: data.reasonNote,
+      refundMode: data.refundMode,
+    },
+    data.lines
+  );
+  
+  return {
+    id,
+    returnNo,
+    status: 'requested',
+    reason: data.reason,
+    refundMode: data.refundMode,
+    refundPaise: 0,
+    requestedAt: new Date().toISOString(),
+  };
+}
+
+export async function createExchange(
+  customerId: string,
+  orderId: string,
+  data: ExchangeRequest
+): Promise<ExchangeResponse> {
+  const exchangeNo = `EXC-${new Date().getFullYear()}-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`;
+  
+  const id = await repo.createExchange({
+    exchangeNo,
+    orderId,
+    customerId,
+    orderLineId: data.orderLineId,
+    fromVariantId: data.fromVariantId,
+    toVariantId: data.toVariantId,
+    quantity: data.quantity,
+    priceDiffPaise: 0, // Should be computed dynamically
+  });
+
+  return {
+    id,
+    exchangeNo,
+    status: 'requested',
+    priceDiffPaise: 0,
+    requestedAt: new Date().toISOString(),
+  };
+}
+
+export async function listReturns(customerId: string): Promise<ReturnResponse[]> {
+  const records = await repo.listCustomerReturns(customerId);
+  return records.map(r => ({
+    id: r.id,
+    returnNo: r.returnNo,
+    status: r.status,
+    reason: r.reason,
+    refundMode: r.refundMode,
+    refundPaise: r.refundPaise,
+    requestedAt: r.requestedAt.toISOString(),
+  }));
+}
+
+export async function listExchanges(customerId: string): Promise<ExchangeResponse[]> {
+  const records = await repo.listCustomerExchanges(customerId);
+  return records.map(r => ({
+    id: r.id,
+    exchangeNo: r.exchangeNo,
+    status: r.status,
+    priceDiffPaise: r.priceDiffPaise,
+    requestedAt: r.requestedAt.toISOString(),
+  }));
+}

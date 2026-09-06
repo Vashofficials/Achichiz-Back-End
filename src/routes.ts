@@ -27,6 +27,11 @@ import { adminStockCountsRouter } from './modules/admin-stock-counts/admin-stock
 import { adminBarcodesRouter } from './modules/admin-barcodes/admin-barcodes.routes.js';
 import { adminBulkOrdersRouter } from './modules/admin-bulk-orders/admin-bulk-orders.routes.js';
 import { adminOrdersRouter } from './modules/admin-orders/admin-orders.routes.js';
+import { adminPaymentsRouter } from './modules/payments/admin-payments.routes.js';
+import { adminInvoicesRouter } from './modules/payments/admin-invoices.routes.js';
+import { adminCartsRouter } from './modules/admin-orders/admin-carts.routes.js';
+import { adminReturnsRouter } from './modules/admin-orders/admin-returns.routes.js';
+import { adminExchangesRouter } from './modules/admin-orders/admin-exchanges.routes.js';
 import { adminSettingsRouter } from './modules/admin-settings/admin-settings.routes.js';
 import { mediaRouter } from './modules/media/media.routes.js';
 
@@ -75,6 +80,11 @@ apiRouter.use(adminStaffRouter);
 apiRouter.use(adminApiKeysRouter); // Must come before adminResourceRouter to intercept POST /v1/admin/api-keys
 apiRouter.use(adminResourceRouter);
 apiRouter.use(adminOrdersRouter);
+apiRouter.use(adminCartsRouter);
+apiRouter.use(adminReturnsRouter);
+apiRouter.use(adminExchangesRouter);
+apiRouter.use(adminPaymentsRouter);
+apiRouter.use(adminInvoicesRouter);
 apiRouter.use(adminInventoryRouter);
 apiRouter.use(adminWarehousingRouter);
 apiRouter.use(adminPurchasingRouter);

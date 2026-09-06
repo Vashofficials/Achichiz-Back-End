@@ -8,7 +8,9 @@ import {
   cart,
   cartLineIdParam,
   cartTokenQuery,
+  contactCartBody,
   mergeCartBody,
+  restoreCartParam,
   updateCartLineBody,
 } from './cart.schemas.js';
 
@@ -232,4 +234,50 @@ defineRoute(cartRouter, {
   },
   handler: async ({ body, auth, req }) =>
     ok(await cartService.mergeCart(auth.customerId, cartTokenOf(req, body.cartToken))),
+});
+
+defineRoute(cartRouter, {
+  method: 'patch',
+  path: '/v1/cart/contact',
+  surface: 'storefront',
+  operationId: 'contactCart',
+  summary: 'Capture guest cart contact info',
+  description:
+    'Used to capture guest shopper email, mobile, and address before the payment step is completed ' +
+    'so that abandoned checkout recovery is possible. Triggers stage change to "address" and ' +
+    'sets the abandoned_at timestamp. ' +
+    TOKEN_NOTE,
+  tags: ['Cart'],
+  auth: 'public',
+  request: { body: contactCartBody },
+  responses: {
+    200: { description: 'The cart with updated contact information.', schema: cart },
+    404: { description: 'No such cart.' },
+  },
+  handler: async ({ body, req }) =>
+    ok(
+      await cartService.updateContact(cartTokenOf(req, body.cartToken), {
+        email: body.email,
+        mobile: body.mobile,
+      })
+    ),
+});
+
+defineRoute(cartRouter, {
+  method: 'get',
+  path: '/v1/cart/restore/:token',
+  surface: 'storefront',
+  operationId: 'restoreCart',
+  summary: 'Restore an abandoned cart via recovery link',
+  description:
+    'Takes the recovery token passed via WhatsApp or Email, restores the cart, clears its ' +
+    'abandonment status, and returns the full cart so the client can resume checkout.',
+  tags: ['Cart'],
+  auth: 'public',
+  request: { params: restoreCartParam },
+  responses: {
+    200: { description: 'The restored cart.', schema: cart },
+    404: { description: 'No such cart or token.' },
+  },
+  handler: async ({ params }) => ok(await cartService.restoreCart(params.token)),
 });

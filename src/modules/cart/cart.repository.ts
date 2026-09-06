@@ -206,6 +206,8 @@ export async function updateCart(
     convertedOrderId: string | null;
     email: string | null;
     mobile: string | null;
+    abandonedAt: Date | null;
+    recoveryState: 'not_sent' | 'email_sent' | 'whatsapp_sent' | 'recovered';
   }>,
   exec: Executor = db,
 ): Promise<void> {

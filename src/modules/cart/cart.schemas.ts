@@ -100,6 +100,17 @@ export const mergeCartBody = z.object({
     ),
 });
 
+export const contactCartBody = z.object({
+  cartToken: z.string().min(8).max(255).optional().describe('Opaque cart handle, or send `X-Cart-Token`.'),
+  email: z.string().email().optional().describe('Shopper email for guest checkout.'),
+  mobile: z.string().min(10).max(15).optional().describe('Shopper mobile for guest checkout.'),
+  address: z.any().optional().describe('Opaque address blob for calculating shipping.'),
+});
+
+export const restoreCartParam = z.object({
+  token: z.string().min(8).max(255).describe('The opaque cart token recovered from a recovery link.'),
+});
+
 export const cartTokenQuery = z.object({
   cartToken: z
     .string()
