@@ -1,6 +1,7 @@
 import { z, type ZodType } from 'zod';
 import { env } from '../../config/env.js';
 import { registry, type RegisteredRoute, type Surface } from './registry.js';
+import { RESOURCES } from '../../modules/admin-resources/resource.registry.js';
 
 /**
  * OpenAPI 3.1 documents, generated from the same zod schemas that validate
@@ -294,7 +295,14 @@ export function buildDocument(surface: Surface): Record<string, unknown> {
     tags,
     paths,
     components: {
-      schemas: { ProblemDetails: PROBLEM_DETAILS },
+      schemas: {
+        ProblemDetails: PROBLEM_DETAILS,
+        ResourceSlug: {
+          type: 'string',
+          enum: RESOURCES.map((r) => r.slug),
+          description: 'Auto-generated list of all valid admin resource slugs.',
+        },
+      },
       securitySchemes: {
         bearerAuth: {
           type: 'http',

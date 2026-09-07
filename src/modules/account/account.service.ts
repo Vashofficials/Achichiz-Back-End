@@ -19,6 +19,7 @@
 import { ConflictError, NotFoundError, UnauthenticatedError } from '../../lib/errors.js';
 import { pageMeta, type PageMeta } from '../../lib/http.js';
 import { offsetOf } from '../../lib/pagination.js';
+import { db } from '../../config/db.js';
 import * as leadsService from '../leads/leads.service.js';
 import * as repo from './account.repository.js';
 import type { CustomerProfileResponse, UpdateProfileBody, WishlistItemResponse } from './account.schemas.js';
@@ -175,29 +176,36 @@ export async function createReturn(
   orderId: string,
   data: ReturnRequest
 ): Promise<ReturnResponse> {
-  const returnNo = `RET-${new Date().getFullYear()}-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`;
-  
-  const id = await repo.createReturn(
-    {
+  // Ownership check — prevents IDOR against another customer's order.
+  const owned = await repo.verifyOrderOwnership(customerId, orderId);
+  if (!owned) throw new NotFoundError('Order', orderId);
+
+  return db.transaction(async (tx) => {
+    const returnNo = await repo.nextReturnNumber(tx);
+
+    const id = await repo.createReturn(
+      {
+        returnNo,
+        orderId,
+        customerId,
+        reason: data.reason,
+        reasonNote: data.reasonNote,
+        refundMode: data.refundMode,
+      },
+      data.lines,
+      tx,
+    );
+
+    return {
+      id,
       returnNo,
-      orderId,
-      customerId,
+      status: 'requested' as const,
       reason: data.reason,
-      reasonNote: data.reasonNote,
       refundMode: data.refundMode,
-    },
-    data.lines
-  );
-  
-  return {
-    id,
-    returnNo,
-    status: 'requested',
-    reason: data.reason,
-    refundMode: data.refundMode,
-    refundPaise: 0,
-    requestedAt: new Date().toISOString(),
-  };
+      refundPaise: 0,
+      requestedAt: new Date().toISOString(),
+    };
+  });
 }
 
 export async function createExchange(
@@ -205,26 +213,46 @@ export async function createExchange(
   orderId: string,
   data: ExchangeRequest
 ): Promise<ExchangeResponse> {
-  const exchangeNo = `EXC-${new Date().getFullYear()}-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`;
-  
-  const id = await repo.createExchange({
-    exchangeNo,
-    orderId,
-    customerId,
-    orderLineId: data.orderLineId,
-    fromVariantId: data.fromVariantId,
-    toVariantId: data.toVariantId,
-    quantity: data.quantity,
-    priceDiffPaise: 0, // Should be computed dynamically
-  });
+  // Ownership check — prevents IDOR against another customer's order.
+  const owned = await repo.verifyOrderOwnership(customerId, orderId);
+  if (!owned) throw new NotFoundError('Order', orderId);
 
-  return {
-    id,
-    exchangeNo,
-    status: 'requested',
-    priceDiffPaise: 0,
-    requestedAt: new Date().toISOString(),
-  };
+  return db.transaction(async (tx) => {
+    const exchangeNo = await repo.nextExchangeNumber(tx);
+
+    const id = await repo.createExchange(
+      {
+        exchangeNo,
+        orderId,
+        customerId,
+        orderLineId: data.orderLineId,
+        fromVariantId: data.fromVariantId,
+        toVariantId: data.toVariantId,
+        quantity: data.quantity,
+        priceDiffPaise: 0, // Should be computed dynamically
+      },
+      tx,
+    );
+
+    return {
+      id,
+      exchangeNo,
+      status: 'requested' as const,
+      priceDiffPaise: 0,
+      requestedAt: new Date().toISOString(),
+    };
+  });
+}
+
+/* ------------------------------------------------------------ invoice URL */
+
+export async function getInvoiceUrl(
+  customerId: string,
+  orderId: string,
+): Promise<string> {
+  const url = await repo.findInvoiceUrl(customerId, orderId);
+  if (!url) throw new NotFoundError('Invoice for order', orderId);
+  return url;
 }
 
 export async function listReturns(customerId: string): Promise<ReturnResponse[]> {

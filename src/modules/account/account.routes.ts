@@ -249,10 +249,9 @@ defineRoute(accountRouter, {
   responses: {
     200: { description: 'Invoice URL.', schema: z.object({ url: z.string().url() }) },
   },
-  handler: async ({ res }) => {
-    // To implement the actual query: SELECT media_assets.url FROM invoices ...
-    // For now, return a mock URL.
-    return ok({ url: 'https://achichiz-media.s3.ap-south-1.amazonaws.com/mock-invoice.pdf' });
+  handler: async ({ params, auth }) => {
+    const url = await account.getInvoiceUrl(auth.customerId, params.orderId);
+    return ok({ url });
   },
 });
 

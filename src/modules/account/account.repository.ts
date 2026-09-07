@@ -9,7 +9,7 @@
  */
 
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
-import { db, type Executor } from '../../config/db.js';
+import { db, type Executor, type Tx } from '../../config/db.js';
 import {
   customers,
   mediaAssets,
@@ -21,6 +21,7 @@ import {
   returnLines,
   exchanges,
   orders,
+  invoices,
 } from '../../db/schema/index.js';
 
 export type CustomerRow = typeof customers.$inferSelect;
@@ -279,4 +280,93 @@ export async function listCustomerExchanges(customerId: string, exec: Executor =
     .innerJoin(orders, eq(exchanges.orderId, orders.id))
     .where(eq(orders.customerId, customerId))
     .orderBy(desc(exchanges.requestedAt));
+}
+
+/* --------------------------------------------------------- ownership check */
+
+/**
+ * Verify that the order belongs to this customer.
+ *
+ * Without this check, any authenticated customer could file a return or exchange
+ * against any order by supplying someone else's order ID. The route already
+ * scopes to `auth.customerId`, but the order ID comes from the URL path and
+ * must be validated.
+ */
+export async function verifyOrderOwnership(
+  customerId: string,
+  orderId: string,
+  exec: Executor = db,
+): Promise<{ id: string } | null> {
+  const rows = await exec
+    .select({ id: orders.id })
+    .from(orders)
+    .where(and(eq(orders.id, orderId), eq(orders.customerId, customerId)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/* ------------------------------------------------------- document numbers */
+
+/**
+ * Gapless return number from `document_number_series`, following the same
+ * pattern as `leads.repository.nextLeadNumber` and
+ * `checkout.repository.nextOrderNumber`.
+ *
+ * The series row is created on first use with `ON CONFLICT DO NOTHING`.
+ */
+export async function nextReturnNumber(tx: Tx): Promise<string> {
+  await tx.execute(sql`
+    INSERT INTO document_number_series (doc_type, scope_key, prefix, suffix, pad_width, next_value)
+    VALUES ('return', '', 'RET-', '', 5, 1)
+    ON CONFLICT (doc_type, scope_key) DO NOTHING`);
+
+  const result = await tx.execute<{ return_no: string }>(
+    sql`SELECT next_document_number('return', '') AS return_no`,
+  );
+  const returnNo = result.rows[0]?.return_no;
+  if (!returnNo) throw new Error('next_document_number returned no return number');
+  return returnNo;
+}
+
+export async function nextExchangeNumber(tx: Tx): Promise<string> {
+  await tx.execute(sql`
+    INSERT INTO document_number_series (doc_type, scope_key, prefix, suffix, pad_width, next_value)
+    VALUES ('exchange', '', 'EXC-', '', 5, 1)
+    ON CONFLICT (doc_type, scope_key) DO NOTHING`);
+
+  const result = await tx.execute<{ exchange_no: string }>(
+    sql`SELECT next_document_number('exchange', '') AS exchange_no`,
+  );
+  const exchangeNo = result.rows[0]?.exchange_no;
+  if (!exchangeNo) throw new Error('next_document_number returned no exchange number');
+  return exchangeNo;
+}
+
+/* ----------------------------------------------------------- invoice URL */
+
+/**
+ * Resolve the actual PDF URL for an order's tax invoice.
+ *
+ * Joins `invoices` → `media_assets` to get the real S3 URL, replacing the
+ * hardcoded mock URL. Returns null when no invoice has been issued yet.
+ */
+export async function findInvoiceUrl(
+  customerId: string,
+  orderId: string,
+  exec: Executor = db,
+): Promise<string | null> {
+  const rows = await exec
+    .select({ url: mediaAssets.url })
+    .from(invoices)
+    .innerJoin(orders, eq(invoices.orderId, orders.id))
+    .leftJoin(mediaAssets, eq(invoices.pdfMediaId, mediaAssets.id))
+    .where(
+      and(
+        eq(invoices.orderId, orderId),
+        eq(orders.customerId, customerId),
+        eq(invoices.status, 'issued'),
+      ),
+    )
+    .limit(1);
+  return rows[0]?.url ?? null;
 }

@@ -11,7 +11,7 @@
   },
   "servers": [
     {
-      "url": "https://api.achichiz.com",
+      "url": "http://localhost:4000",
       "description": "Local"
     },
     {
@@ -111647,6 +111647,57 @@
             }
           }
         }
+      },
+      "ResourceSlug": {
+        "type": "string",
+        "enum": [
+          "products",
+          "product-variants",
+          "collections",
+          "designers",
+          "customers",
+          "coupons",
+          "gift-cards",
+          "banners",
+          "faqs",
+          "testimonials",
+          "suppliers",
+          "warehouses",
+          "hamper-items",
+          "add-ons",
+          "personalisation",
+          "hamper-builder-templates",
+          "segments",
+          "reviews",
+          "recipients",
+          "addresses",
+          "leads",
+          "corporate-accounts",
+          "quotations",
+          "approvals",
+          "delivery-zones",
+          "shipping-rules",
+          "couriers",
+          "shipments",
+          "exceptions",
+          "packaging",
+          "discounts",
+          "upsell",
+          "loyalty",
+          "referrals",
+          "homepage-cms",
+          "occasions",
+          "seo",
+          "blogs",
+          "menus",
+          "media",
+          "integrations",
+          "webhooks",
+          "api-keys",
+          "activity-logs",
+          "import-jobs"
+        ],
+        "description": "Auto-generated list of all valid admin resource slugs."
       }
     },
     "securitySchemes": {
