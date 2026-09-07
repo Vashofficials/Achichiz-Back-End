@@ -26,10 +26,18 @@ const TTL_SECONDS = Math.ceil(refreshTokenTtlMs / 1000);
 
 /** Called on every rotation, with the hash of the token just handed in. */
 export async function rememberSpentToken(tokenHash: string, sessionId: string): Promise<void> {
-  await cache.set(key(tokenHash), sessionId, 'EX', TTL_SECONDS);
+  try {
+    await cache.set(key(tokenHash), sessionId, 'EX', TTL_SECONDS);
+  } catch (err) {
+    // Fail open if Redis is down
+  }
 }
 
 /** The session a spent token belonged to, or null if this hash was never seen. */
 export async function findSpentToken(tokenHash: string): Promise<string | null> {
-  return cache.get(key(tokenHash));
+  try {
+    return await cache.get(key(tokenHash));
+  } catch (err) {
+    return null; // Fail open
+  }
 }
