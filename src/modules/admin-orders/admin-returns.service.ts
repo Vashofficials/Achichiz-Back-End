@@ -133,7 +133,50 @@ export async function refundReturn(returnId: string, refundPaise: number) {
     );
   }
 
-  // 3. Call the payment gateway through the payments service.
+  // 3. Amount cap guard — validate refundPaise against the sum of returned lines' paid value.
+  const lines = await db
+    .select({
+      id: returnLines.id,
+      quantity: returnLines.quantity,
+      orderLineQuantity: orderLines.quantity,
+      orderLineGrossPaise: orderLines.grossPaise,
+    })
+    .from(returnLines)
+    .innerJoin(orderLines, eq(returnLines.orderLineId, orderLines.id))
+    .where(eq(returnLines.returnId, returnId));
+
+  if (lines.length > 0) {
+    const maxRefundablePaise = lines.reduce((sum, line) => {
+      const linePaidValue =
+        line.orderLineQuantity > 0
+          ? Math.floor((line.orderLineGrossPaise * line.quantity) / line.orderLineQuantity)
+          : 0;
+      return sum + linePaidValue;
+    }, 0);
+
+    if (refundPaise > maxRefundablePaise) {
+      throw new UnprocessableError(
+        `Refund amount ${refundPaise} paise exceeds the maximum allowable refund of ${maxRefundablePaise} paise for the returned items.`,
+        'refund_exceeds_max',
+      );
+    }
+  } else {
+    // If no line items attached, validate against order's paid/total amount
+    const [order] = await db
+      .select({ totalPaise: orders.totalPaise, amountPaidPaise: orders.amountPaidPaise })
+      .from(orders)
+      .where(eq(orders.id, existing.orderId))
+      .limit(1);
+    const maxRefundable = order ? Math.max(order.amountPaidPaise, order.totalPaise) : 0;
+    if (maxRefundable > 0 && refundPaise > maxRefundable) {
+      throw new UnprocessableError(
+        `Refund amount ${refundPaise} paise exceeds the order total of ${maxRefundable} paise.`,
+        'refund_exceeds_max',
+      );
+    }
+  }
+
+  // 4. Call the payment gateway through the payments service.
   const gatewayResult = await payments.refundOrder({
     orderId: existing.orderId,
     amountPaise: refundPaise,
@@ -141,7 +184,7 @@ export async function refundReturn(returnId: string, refundPaise: number) {
     idempotencyKey: `return-refund-${returnId}`,
   });
 
-  // 4. Mark the return as refunded with the actual refund amount.
+  // 5. Mark the return as refunded with the actual refund amount.
   const [ret] = await db.update(returns).set({
     status: 'refunded',
     refundPaise,
