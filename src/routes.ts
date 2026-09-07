@@ -27,6 +27,7 @@ import { adminStockCountsRouter } from './modules/admin-stock-counts/admin-stock
 import { adminBarcodesRouter } from './modules/admin-barcodes/admin-barcodes.routes.js';
 import { adminBulkOrdersRouter } from './modules/admin-bulk-orders/admin-bulk-orders.routes.js';
 import { adminOrdersRouter } from './modules/admin-orders/admin-orders.routes.js';
+import { productMediaRouter } from './modules/admin-catalogue/product-media.routes.js';
 import { adminPaymentsRouter } from './modules/payments/admin-payments.routes.js';
 import { adminInvoicesRouter } from './modules/payments/admin-invoices.routes.js';
 import { adminCartsRouter } from './modules/admin-orders/admin-carts.routes.js';
@@ -78,6 +79,7 @@ apiRouter.use(adminAuthRouter);
 apiRouter.use(rbacRouter);
 apiRouter.use(adminStaffRouter);
 apiRouter.use(adminApiKeysRouter); // Must come before adminResourceRouter to intercept POST /v1/admin/api-keys
+apiRouter.use(productMediaRouter); // Before adminResourceRouter: /products/:id/media must not be swallowed by the generic engine.
 apiRouter.use(adminResourceRouter);
 apiRouter.use(adminOrdersRouter);
 apiRouter.use(adminCartsRouter);
