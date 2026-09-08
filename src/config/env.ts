@@ -65,6 +65,18 @@ const schema = z.object({
   FIREBASE_SERVICE_ACCOUNT_PATH: z.string().optional(),
   FIREBASE_API_KEY: z.string().optional(),
 
+  /**
+   * Server-side Google Geocoding key, for turning a browser's coordinates into an address.
+   *
+   * Deliberately not the key the storefront ships as `VITE_GOOGLE_MAPS_API_KEY`: that one is
+   * public by design and should be HTTP-referrer restricted, which makes it useless from a
+   * server. This one wants an IP restriction to the API host instead.
+   *
+   * Optional. Without it reverse geocoding answers 503 with a clear reason rather than blocking
+   * boot — typing an address by hand has to keep working regardless.
+   */
+  GOOGLE_MAPS_API_KEY: z.string().optional(),
+
   AWS_REGION: z.string().default('ap-south-1'),
   AWS_ACCESS_KEY_ID: z.string().default(''),
   AWS_SECRET_ACCESS_KEY: z.string().default(''),

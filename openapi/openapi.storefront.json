@@ -57,6 +57,9 @@
       "name": "FAQ"
     },
     {
+      "name": "Geo"
+    },
+    {
       "name": "Hamper builder"
     },
     {
@@ -21976,6 +21979,156 @@
             "bearerAuth": []
           }
         ]
+      }
+    },
+    "/v1/geo/reverse": {
+      "get": {
+        "operationId": "reverseGeocode",
+        "summary": "Turn coordinates into an address",
+        "description": "Converts a browser latitude/longitude into address fields ready for the address form, including the GST `stateCode` that `POST /v1/account/addresses` requires — a name like \"Uttar Pradesh\" is not accepted there, only `09`. Returns serviceability for the resolved PIN code in the same response.\n\nFails soft: a 502 means location lookup is unavailable and the customer should type the address instead. Never block address entry on this endpoint.",
+        "tags": [
+          "Geo"
+        ],
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "description": "Latitude from the browser Geolocation API.",
+            "schema": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "description": "Longitude from the browser Geolocation API.",
+            "schema": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resolved address.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "line1": {
+                          "type": "string",
+                          "description": "House / street portion. The customer will usually refine it."
+                        },
+                        "area": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Locality or sub-locality."
+                        },
+                        "city": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "stateCode": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Two-digit GST state code — the value `addresses.stateCode` requires."
+                        },
+                        "stateName": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Human-readable state, for display only."
+                        },
+                        "pincode": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "formattedAddress": {
+                          "type": "string",
+                          "description": "Google's single-line rendering, for a confirmation line."
+                        },
+                        "serviceability": {
+                          "anyOf": [
+                            {},
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "The `GET /v1/serviceability` payload for the resolved PIN code, or null when no PIN code could be resolved. Saves a second round trip before the UI can show anything."
+                        }
+                      },
+                      "required": [
+                        "line1",
+                        "area",
+                        "city",
+                        "stateCode",
+                        "stateName",
+                        "pincode",
+                        "formattedAddress",
+                        "serviceability"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "No address exists at those coordinates."
+          },
+          "502": {
+            "description": "Location lookup is unavailable or not configured."
+          }
+        },
+        "security": []
       }
     }
   },

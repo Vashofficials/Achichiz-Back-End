@@ -35,6 +35,7 @@ import { adminReturnsRouter } from './modules/admin-orders/admin-returns.routes.
 import { adminExchangesRouter } from './modules/admin-orders/admin-exchanges.routes.js';
 import { adminSettingsRouter } from './modules/admin-settings/admin-settings.routes.js';
 import { mediaRouter } from './modules/media/media.routes.js';
+import { geoRouter } from './modules/geo/geo.routes.js';
 
 /**
  * The single mount point.
@@ -99,6 +100,7 @@ apiRouter.use(adminBuilderRouter);
 apiRouter.use(adminReportsRouter);   // phase 7 — the 10 report aggregates
 apiRouter.use(adminSettingsRouter);
 apiRouter.use(mediaRouter);
+apiRouter.use(geoRouter);
 
 // ── webhooks (raw body, signature verified) ──────────────────────────────
 // Mounted last: app.ts installs the raw-body parser on /v1/webhooks before the
