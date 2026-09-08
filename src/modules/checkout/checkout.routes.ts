@@ -1,8 +1,17 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { defineRoute } from '../../lib/openapi/define-route.js';
 import { created, ok } from '../../lib/http.js';
 import * as checkout from './checkout.service.js';
 import { checkoutQuote, checkoutQuoteBody, createOrderBody, orderCreated } from './checkout.schemas.js';
+
+const TOKEN_HEADER = 'x-cart-token';
+
+/** Header first, then the body fallback. */
+function cartTokenOf(req: Request, fallback?: string): string | undefined {
+  const header = req.headers[TOKEN_HEADER];
+  const fromHeader = Array.isArray(header) ? header[0] : header;
+  return fromHeader?.trim() || fallback || undefined;
+}
 
 /**
  * Checkout. Two endpoints, one rule: the server decides what things cost.
@@ -42,7 +51,8 @@ defineRoute(checkoutRouter, {
     404: { description: 'No such cart, or the address does not belong to the caller.' },
     422: { description: 'The cart is empty, or the coupon/address is invalid.' },
   },
-  handler: async ({ body, auth }) => ok(await checkout.quote(auth.customerId, body)),
+  handler: async ({ body, auth, req }) =>
+    ok(await checkout.quote(auth.customerId, { ...body, cartToken: cartTokenOf(req, body.cartToken) })),
 });
 
 defineRoute(checkoutRouter, {
@@ -85,5 +95,6 @@ defineRoute(checkoutRouter, {
         'unserviceable, or COD is not allowed there.',
     },
   },
-  handler: async ({ body, auth }) => created(await checkout.createOrder(auth.customerId, body)),
+  handler: async ({ body, auth, req }) =>
+    created(await checkout.createOrder(auth.customerId, { ...body, cartToken: cartTokenOf(req, body.cartToken) })),
 });

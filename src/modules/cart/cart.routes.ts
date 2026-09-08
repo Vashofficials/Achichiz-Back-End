@@ -1,6 +1,7 @@
 import { Router, type Request } from 'express';
 import { defineRoute } from '../../lib/openapi/define-route.js';
 import { ok } from '../../lib/http.js';
+import { tryAuthenticateCustomer } from '../../middleware/authenticate.js';
 import * as cartService from './cart.service.js';
 import {
   addCartLineBody,
@@ -64,7 +65,10 @@ defineRoute(cartRouter, {
   responses: {
     200: { description: 'The cart. Empty when no cart exists yet.', schema: cart },
   },
-  handler: async ({ query, req }) => ok(await cartService.getCart(cartTokenOf(req, query.cartToken))),
+  handler: async ({ query, req }) => {
+    const customerId = await tryAuthenticateCustomer(req);
+    return ok(await cartService.getCart(cartTokenOf(req, query.cartToken), customerId));
+  },
 });
 
 defineRoute(cartRouter, {

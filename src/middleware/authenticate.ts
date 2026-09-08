@@ -65,3 +65,24 @@ export function authenticate(kind: 'customer' | 'staff'): RequestHandler {
     }
   };
 }
+
+/**
+ * Opportunistically inspects the Authorization header for a valid customer Bearer token.
+ * Returns the customerId if valid, or null if absent, invalid, or expired without throwing.
+ */
+export async function tryAuthenticateCustomer(req: Request): Promise<string | null> {
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith('Bearer ')) return null;
+  const token = header.slice(7).trim();
+  if (!token) return null;
+  try {
+    const claims = await verifyCustomerToken(token);
+    if (await isSessionRevoked(claims.sessionId)) {
+      return null;
+    }
+    return claims.customerId;
+  } catch {
+    return null;
+  }
+}
+
