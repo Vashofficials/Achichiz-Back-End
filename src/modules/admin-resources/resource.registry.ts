@@ -1587,7 +1587,7 @@ const deliveryZonesResource = defineResource({
     { key: 'code', label: 'Code', kind: 'text', required: true, max: 120 },
     { key: 'name', label: 'Name', kind: 'text', required: true, max: 120 },
     { key: 'city', label: 'City', kind: 'text', required: false, max: 120 },
-    { key: 'stateCode', label: 'State', kind: 'text', required: false, max: 2 },
+    { key: 'stateCode', label: 'State', kind: 'text', required: false, max: 20 },
     { key: 'tier', label: 'Tier', kind: 'enum', required: false, options: ['metro', 'tier_1', 'tier_2', 'tier_3', 'remote', 'international'] },
     { key: 'baseFeePaise', label: 'Fee', kind: 'money', required: false, unit: 'paise' },
     { key: 'supportsSameDay', label: 'Same Day', kind: 'boolean', required: false },
@@ -1596,6 +1596,14 @@ const deliveryZonesResource = defineResource({
     { key: 'sameDayCutoff', label: 'Cut Off', kind: 'text', required: false },
     { key: 'standardTatDays', label: 'TAT Days', kind: 'number', required: false },
     { key: 'status', label: 'Status', kind: 'enum', required: true, options: ['active', 'paused'] },
+    {
+      key: 'pincodes',
+      label: 'Pincodes',
+      kind: 'array',
+      of: { key: 'pincode', label: 'PIN Code', kind: 'text', required: true },
+      required: false,
+      help: 'Comma-separated 6-digit PIN codes serviceable in this zone',
+    },
   ],
   searchable: ['name', 'code', 'city'],
   filterable: [

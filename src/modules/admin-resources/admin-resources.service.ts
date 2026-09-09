@@ -54,6 +54,52 @@ export type ResourceListQuery = ListQuery & {
 const fieldMap = (descriptor: ResourceDescriptor): Map<string, FieldSpec> =>
   new Map(descriptor.fields.map((f) => [f.key, f]));
 
+const STATE_CODE_MAP: Record<string, string> = {
+  UP: '09',
+  'UTTAR PRADESH': '09',
+  DL: '07',
+  DELHI: '07',
+  MH: '27',
+  MAHARASHTRA: '27',
+  KA: '29',
+  KARNATAKA: '29',
+  TN: '33',
+  'TAMIL NADU': '33',
+  HR: '06',
+  HARYANA: '06',
+  RJ: '08',
+  RAJASTHAN: '08',
+  UK: '05',
+  UTTARAKHAND: '05',
+  MP: '23',
+  'MADHYA PRADESH': '23',
+  GJ: '24',
+  GUJARAT: '24',
+  WB: '19',
+  'WEST BENGAL': '19',
+  BR: '10',
+  BIHAR: '10',
+  PB: '03',
+  PUNJAB: '03',
+  CH: '04',
+  CHANDIGARH: '04',
+  TS: '36',
+  TELANGANA: '36',
+  AP: '37',
+  'ANDHRA PRADESH': '37',
+  KL: '32',
+  KERALA: '32',
+};
+
+function normalizeStateCode(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (/^\d{2}$/.test(trimmed)) return trimmed;
+  const upper = trimmed.toUpperCase();
+  return STATE_CODE_MAP[upper] ?? trimmed;
+}
+
 /**
  * JSON → a value the driver can bind.
  *
@@ -65,6 +111,8 @@ const fieldMap = (descriptor: ResourceDescriptor): Map<string, FieldSpec> =>
  */
 function toDbValue(value: unknown, field: FieldSpec | undefined): unknown {
   if (value === null || value === undefined) return null;
+  if (typeof value === 'string' && value.trim() === '') return null;
+  if (field?.key === 'stateCode') return normalizeStateCode(value);
   if (field?.kind === 'datetime' && typeof value === 'string') return new Date(value);
   return value;
 }
