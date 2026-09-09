@@ -95,16 +95,22 @@ defineRoute(cartRouter, {
     404: { description: 'No such cart token, or no such purchasable variant.' },
     422: { description: 'Out of stock, personalisation too long, or a builder line was sent.' },
   },
-  handler: async ({ body, req }) =>
-    ok(
-      await cartService.addLine(cartTokenOf(req, body.cartToken), {
-        variantId: body.variantId,
-        quantity: body.quantity,
-        addOns: body.addOns,
-        personalisation: body.personalisation,
-        builderTemplateId: body.builderTemplateId,
-      }),
-    ),
+  handler: async ({ body, req }) => {
+    const customerId = await tryAuthenticateCustomer(req);
+    return ok(
+      await cartService.addLine(
+        cartTokenOf(req, body.cartToken),
+        {
+          variantId: body.variantId,
+          quantity: body.quantity,
+          addOns: body.addOns,
+          personalisation: body.personalisation,
+          builderTemplateId: body.builderTemplateId,
+        },
+        customerId,
+      ),
+    );
+  },
 });
 
 defineRoute(cartRouter, {
@@ -170,7 +176,10 @@ defineRoute(cartRouter, {
     200: { description: 'The now-empty cart.', schema: cart },
     404: { description: 'No such cart token.' },
   },
-  handler: async ({ query, req }) => ok(await cartService.clearCart(cartTokenOf(req, query.cartToken))),
+  handler: async ({ query, req }) => {
+    const customerId = await tryAuthenticateCustomer(req);
+    return ok(await cartService.clearCart(cartTokenOf(req, query.cartToken), customerId));
+  },
 });
 
 defineRoute(cartRouter, {
