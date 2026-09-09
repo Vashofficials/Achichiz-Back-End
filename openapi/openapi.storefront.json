@@ -19189,30 +19189,30 @@
                     "description": "Display name, as it should appear on a parcel."
                   },
                   "email": {
+                    "description": "New email address. Changing it clears `emailVerified` — the new address has not been proven. An address already in use returns 409.",
                     "type": "string",
                     "maxLength": 255,
                     "format": "email",
-                    "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
-                    "description": "New email address. Changing it clears `emailVerified` — the new address has not been proven. An address already in use returns 409."
+                    "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
                   },
                   "mobile": {
+                    "description": "New ten-digit mobile. Changing it clears `mobileVerified`; verify the new number with an OTP. A number already in use returns 409.",
                     "type": "string",
-                    "pattern": "^[6-9][0-9]{9}$",
-                    "description": "New ten-digit mobile. Changing it clears `mobileVerified`; verify the new number with an OTP. A number already in use returns 409."
+                    "pattern": "^[6-9][0-9]{9}$"
                   },
                   "birthday": {
+                    "description": "`YYYY-MM-DD`, or null to clear. Drives birthday gifting reminders.",
                     "anyOf": [
                       {
-                        "type": "string",
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                        "type": "string"
                       },
                       {
                         "type": "null"
                       }
-                    ],
-                    "description": "`YYYY-MM-DD`, or null to clear. Drives birthday gifting reminders."
+                    ]
                   },
                   "gender": {
+                    "description": "Or null to clear.",
                     "anyOf": [
                       {
                         "type": "string",
@@ -19226,16 +19226,15 @@
                       {
                         "type": "null"
                       }
-                    ],
-                    "description": "Or null to clear."
+                    ]
                   },
                   "marketingOptIn": {
-                    "type": "boolean",
-                    "description": "Turn marketing email/SMS on or off. Both directions are recorded in the append-only consent log with a timestamp and a source — the boolean alone cannot evidence consent."
+                    "description": "Turn marketing email/SMS on or off. Both directions are recorded in the append-only consent log with a timestamp and a source — the boolean alone cannot evidence consent.",
+                    "type": "boolean"
                   },
                   "whatsappOptIn": {
-                    "type": "boolean",
-                    "description": "Turn WhatsApp messaging on or off."
+                    "description": "Turn WhatsApp messaging on or off.",
+                    "type": "boolean"
                   },
                   "file": {
                     "type": "string",

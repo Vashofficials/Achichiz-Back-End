@@ -33,6 +33,53 @@ export const customerProfile = z.object({
   createdAt: z.string().describe('ISO-8601 timestamp of account creation.'),
 });
 
+const booleanField = z.preprocess((v) => {
+  if (typeof v === 'string') {
+    const lower = v.trim().toLowerCase();
+    if (lower === 'true' || lower === '1') return true;
+    if (lower === 'false' || lower === '0') return false;
+  }
+  return v;
+}, z.boolean());
+
+const birthdayField = z.preprocess((val) => {
+  if (val === undefined) return undefined;
+  if (val === '' || val === null) return null;
+  return val;
+}, z
+  .string()
+  .refine((s) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+    const parts = s.split('-').map(Number);
+    const y = parts[0];
+    const m = parts[1];
+    const d = parts[2];
+    if (y === undefined || m === undefined || d === undefined) return false;
+    if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+    const date = new Date(Date.UTC(y, m - 1, d));
+    return (
+      date.getUTCFullYear() === y &&
+      date.getUTCMonth() === m - 1 &&
+      date.getUTCDate() === d
+    );
+  }, { message: 'Use a valid calendar date in YYYY-MM-DD or DD-MM-YYYY format.' })
+  .nullable());
+
+const genderField = z.preprocess(
+  (val) => (typeof val === 'string' && !val.trim() ? null : val),
+  z.enum(CUSTOMER_GENDERS).nullable(),
+);
+
+const optionalEmail = z.preprocess(
+  (val) => (typeof val === 'string' && !val.trim() ? undefined : val),
+  z.email().max(255).optional(),
+);
+
+const optionalMobile = z.preprocess(
+  (val) => (typeof val === 'string' && !val.trim() ? undefined : val),
+  z.string().regex(MOBILE_IN, 'An Indian mobile number is ten digits starting 6-9.').optional(),
+);
+
 /**
  * Every field optional — this is a PATCH, and `undefined` means "leave it".
  *
@@ -45,33 +92,21 @@ export const customerProfile = z.object({
 export const updateProfileBody = z
   .object({
     fullName: z.string().trim().min(2).max(120).describe('Display name, as it should appear on a parcel.'),
-    email: z
-      .email()
-      .max(255)
-      .describe(
-        'New email address. Changing it clears `emailVerified` — the new address has not been proven. ' +
-          'An address already in use returns 409.',
-      ),
-    mobile: z
-      .string()
-      .regex(MOBILE_IN, 'An Indian mobile number is ten digits starting 6-9.')
-      .describe(
-        'New ten-digit mobile. Changing it clears `mobileVerified`; verify the new number with an OTP. ' +
-          'A number already in use returns 409.',
-      ),
-    birthday: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD.')
-      .nullable()
-      .describe('`YYYY-MM-DD`, or null to clear. Drives birthday gifting reminders.'),
-    gender: z.enum(CUSTOMER_GENDERS).nullable().describe('Or null to clear.'),
-    marketingOptIn: z
-      .boolean()
-      .describe(
-        'Turn marketing email/SMS on or off. Both directions are recorded in the append-only consent ' +
-          'log with a timestamp and a source — the boolean alone cannot evidence consent.',
-      ),
-    whatsappOptIn: z.boolean().describe('Turn WhatsApp messaging on or off.'),
+    email: optionalEmail.describe(
+      'New email address. Changing it clears `emailVerified` — the new address has not been proven. ' +
+        'An address already in use returns 409.',
+    ),
+    mobile: optionalMobile.describe(
+      'New ten-digit mobile. Changing it clears `mobileVerified`; verify the new number with an OTP. ' +
+        'A number already in use returns 409.',
+    ),
+    birthday: birthdayField.describe('`YYYY-MM-DD`, or null to clear. Drives birthday gifting reminders.'),
+    gender: genderField.describe('Or null to clear.'),
+    marketingOptIn: booleanField.describe(
+      'Turn marketing email/SMS on or off. Both directions are recorded in the append-only consent ' +
+        'log with a timestamp and a source — the boolean alone cannot evidence consent.',
+    ),
+    whatsappOptIn: booleanField.describe('Turn WhatsApp messaging on or off.'),
   })
   .partial()
   .describe('Only the fields present are changed. Send `{}` and nothing happens.');
