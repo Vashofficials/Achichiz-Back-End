@@ -147,9 +147,9 @@ function assertDeliveryDateSane(requested: string | undefined, now: Date): void 
   }
 }
 
-type DeliveryAvailability = { available: boolean; reason: string | null; eta: string | null };
+export type DeliveryAvailability = { available: boolean; reason: string | null; eta: string | null };
 
-function availabilityFor(
+export function availabilityFor(
   type: DeliveryType,
   destination: repo.DestinationRow | null,
   now: Date,
@@ -190,7 +190,7 @@ function availabilityFor(
   }
 }
 
-const codEligible = (destination: repo.DestinationRow | null): boolean =>
+export const codEligible = (destination: repo.DestinationRow | null): boolean =>
   Boolean(destination?.serviceable && destination.zoneStatus === 'active' && destination.supportsCod && destination.codAllowed);
 
 /* ------------------------------------------------------------------ quote */
