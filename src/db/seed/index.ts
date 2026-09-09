@@ -3,6 +3,7 @@ import { closeDb } from '../../config/db.js';
 import { seedRoles } from './roles.js';
 import { seedGstStates } from './gst-states.js';
 import { seedHsnCodes } from './hsn-codes.js';
+import { seedPolicies } from './policies.js';
 
 /**
  * Seeds reference data the application cannot function without.
@@ -32,6 +33,9 @@ async function main(): Promise<void> {
     },
     'roles and permissions seeded from lib/rbac-matrix.ts',
   );
+
+  const policies = await seedPolicies();
+  logger.info({ count: policies.upserted }, 'policies seeded into content_pages');
 
   logger.info('seed complete');
   await closeDb();

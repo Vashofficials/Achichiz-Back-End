@@ -85,7 +85,7 @@ defineRoute(leadsRouter, {
   tags: ['Leads'],
   auth: 'public',
   rateLimit: 'lead',
-  request: { body: corporateBriefBody },
+  request: { body: corporateBriefBody, bodyContentType: 'multipart/form-data' },
   responses: {
     201: { description: 'The brief is saved.', schema: leadReceived },
     422: { description: 'Below the 25-unit minimum, or a field failed validation.' },

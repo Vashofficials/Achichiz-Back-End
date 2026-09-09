@@ -93,6 +93,7 @@ import {
   enrichOccasionPages,
   enrichSeoEntries, enrichBlogs, enrichMenus, enrichMediaLibrary,
 } from './enrich.content.js';
+import { enrichLeads } from './enrich.leads.js';
 import { syncDeliveryZonePincodes } from './hooks.delivery-zones.js';
 import { eq } from 'drizzle-orm';
 import type { FilterSpec, ResourceDescriptor } from './resource.types.js';
@@ -1378,36 +1379,48 @@ const leadsResource = defineResource({
   primaryKey: corporateLeads.id,
   columns: {
     id: corporateLeads.id,
+    leadNo: corporateLeads.leadNo,
     companyName: corporateLeads.companyName,
     contactName: corporateLeads.contactName,
     email: corporateLeads.email,
     mobile: corporateLeads.mobile,
-    source: corporateLeads.source,
+    city: corporateLeads.city,
+    employeeCount: corporateLeads.employeeCount,
+    quantityNeeded: corporateLeads.quantityNeeded,
     budgetPaise: corporateLeads.budgetPaise,
+    occasion: corporateLeads.occasion,
+    brief: corporateLeads.brief,
+    source: corporateLeads.source,
     stage: corporateLeads.stage,
     nextFollowUpOn: corporateLeads.nextFollowUpOn,
     createdAt: corporateLeads.createdAt,
     updatedAt: corporateLeads.updatedAt,
   },
-  listColumns: ['id', 'companyName', 'contactName', 'stage', 'budgetPaise', 'nextFollowUpOn'],
+  listColumns: ['id', 'leadNo', 'companyName', 'contactName', 'email', 'mobile', 'city', 'quantityNeeded', 'brief', 'stage', 'budgetPaise', 'nextFollowUpOn'],
   fields: [
     { key: 'companyName', label: 'Company', kind: 'text', required: true, max: 120 },
     { key: 'contactName', label: 'Contact Name', kind: 'text', required: true, max: 120 },
     { key: 'email', label: 'Email', kind: 'text', required: true, max: 255 },
     { key: 'mobile', label: 'Mobile', kind: 'text', required: false, max: 20 },
+    { key: 'city', label: 'City', kind: 'text', required: false, max: 80 },
+    { key: 'quantityNeeded', label: 'Quantity Needed', kind: 'number', required: false },
+    { key: 'employeeCount', label: 'Employee Count', kind: 'number', required: false },
+    { key: 'occasion', label: 'Occasion', kind: 'text', required: false, max: 120 },
+    { key: 'brief', label: 'Brief', kind: 'text', required: false, max: 4000 },
     { key: 'source', label: 'Source', kind: 'text', required: false, max: 120 },
     { key: 'budgetPaise', label: 'Value', kind: 'money', required: false, unit: 'paise' },
     { key: 'stage', label: 'Stage', kind: 'enum', required: true, options: ['new', 'qualified', 'proposal_sent', 'negotiation', 'won', 'lost'] },
     { key: 'nextFollowUpOn', label: 'Next Follow Up', kind: 'date', required: false },
   ],
-  searchable: ['companyName', 'contactName', 'email', 'mobile'],
+  searchable: ['companyName', 'contactName', 'email', 'mobile', 'leadNo', 'city', 'brief'],
   filterable: [
     enumFilter('stage', 'Stage', corporateLeads.stage, ['new', 'qualified', 'proposal_sent', 'negotiation', 'won', 'lost']),
   ],
-  sortable: ['companyName', 'budgetPaise', 'nextFollowUpOn', 'createdAt'],
+  sortable: ['companyName', 'quantityNeeded', 'budgetPaise', 'nextFollowUpOn', 'createdAt'],
   defaultSort: { field: 'createdAt', direction: 'desc' },
   softDeleteColumn: corporateLeads.deletedAt,
   bulkActions: [],
+  enrich: enrichLeads,
 });
 
 const corporateAccountsResource = defineResource({

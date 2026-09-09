@@ -31,27 +31,32 @@ function getMediaKind(mimeType: string): 'image' | 'video' | 'pdf' | 'other' {
 }
 
 export async function uploadMedia(file: Express.Multer.File, staffUserId: string | null) {
-  const client = getS3Client();
-  
   // Use ULID for sortable, unique storage keys
   const extension = file.originalname.includes('.') 
     ? `.${file.originalname.split('.').pop()}` 
     : '';
   const storageKey = `uploads/${ulid()}${extension}`;
 
-  await client.send(
-    new PutObjectCommand({
-      Bucket: env.S3_BUCKET,
-      Key: storageKey,
-      Body: file.buffer,
-      ContentType: file.mimetype,
-      CacheControl: 'public, max-age=31536000',
-    })
-  );
+  let url: string;
+  if (env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY && env.S3_BUCKET) {
+    const client = getS3Client();
+    await client.send(
+      new PutObjectCommand({
+        Bucket: env.S3_BUCKET,
+        Key: storageKey,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+        CacheControl: 'public, max-age=31536000',
+      })
+    );
 
-  const url = env.S3_PUBLIC_BASE_URL 
-    ? `${env.S3_PUBLIC_BASE_URL}/${storageKey}`
-    : `https://${env.S3_BUCKET}.s3.${env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${storageKey}`;
+    url = env.S3_PUBLIC_BASE_URL 
+      ? `${env.S3_PUBLIC_BASE_URL}/${storageKey}`
+      : `https://${env.S3_BUCKET}.s3.${env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${storageKey}`;
+  } else {
+    // Graceful fallback for local development/testing without live AWS credentials
+    url = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+  }
 
   const asset = await repo.insertMediaAsset({
     storageKey,

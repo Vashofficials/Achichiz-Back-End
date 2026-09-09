@@ -10,18 +10,18 @@ import {
 import { addressBody, updateAddressBody, addressIdParam } from '../src/modules/addresses/addresses.schemas.js';
 
 describe('User Dashboard - Profile Management (Create, Read, Update)', () => {
-  it('successfully processes the screenshot payload (frontend date normalization + backend multipart booleans)', () => {
-    // 1. Raw values from the user's dashboard screenshot:
-    const rawUiValues = {
-      fullName: 'Sonu',
+  it('successfully processes the screenshot payload for Rahul Singh (both JSON boolean and multipart string)', () => {
+    // 1. Raw values from the user's latest dashboard screenshot:
+    const rahulUiValues = {
+      fullName: 'Rahul Singh',
       email: 'vashtechnical@gmail.com',
       mobile: '9369016664',
-      birthday: '01-09-2026', // As displayed in Indian UI
+      birthday: '01-09-2026', // As displayed in Indian UI (DD-MM-YYYY)
       marketingOptIn: true,
     };
 
     // 2. Front-end normalization logic (as in account.profile.tsx):
-    let normalizedBirthday: string | null = rawUiValues.birthday ? rawUiValues.birthday.trim() : null;
+    let normalizedBirthday: string | null = rahulUiValues.birthday ? rahulUiValues.birthday.trim() : null;
     if (normalizedBirthday) {
       const ddmmyyyy = normalizedBirthday.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
       if (ddmmyyyy) {
@@ -29,25 +29,34 @@ describe('User Dashboard - Profile Management (Create, Read, Update)', () => {
       }
     }
 
-    // 3. Serialized multipart payload received at the Back-End:
+    // A. Native JSON payload sent by the updated front-end (when no file attachment):
+    const jsonPayload = {
+      fullName: rahulUiValues.fullName,
+      email: rahulUiValues.email,
+      mobile: rahulUiValues.mobile,
+      birthday: normalizedBirthday,
+      marketingOptIn: rahulUiValues.marketingOptIn, // Native boolean true
+    };
+    const parsedJson = updateProfileBody.parse(jsonPayload);
+    expect(parsedJson.fullName).toBe('Rahul Singh');
+    expect(parsedJson.email).toBe('vashtechnical@gmail.com');
+    expect(parsedJson.mobile).toBe('9369016664');
+    expect(parsedJson.birthday).toBe('2026-09-01');
+    expect(parsedJson.marketingOptIn).toBe(true);
+
+    // B. Multipart/form-data payload received if avatar file is attached (multer strings):
     const multipartPayload = {
-      fullName: rawUiValues.fullName,
-      email: rawUiValues.email,
-      mobile: rawUiValues.mobile,
+      fullName: rahulUiValues.fullName,
+      email: rahulUiValues.email,
+      mobile: rahulUiValues.mobile,
       birthday: normalizedBirthday,
       marketingOptIn: 'true', // Multer string serialization
       whatsappOptIn: 'false',
     };
-
-    const parsed = updateProfileBody.parse(multipartPayload);
-
-    expect(parsed.fullName).toBe('Sonu');
-    expect(parsed.email).toBe('vashtechnical@gmail.com');
-    expect(parsed.mobile).toBe('9369016664');
-    expect(parsed.birthday).toBe('2026-09-01');
-    // Multipart string booleans must be coerced to real booleans
-    expect(parsed.marketingOptIn).toBe(true);
-    expect(parsed.whatsappOptIn).toBe(false);
+    const parsedMultipart = updateProfileBody.parse(multipartPayload);
+    expect(parsedMultipart.fullName).toBe('Rahul Singh');
+    expect(parsedMultipart.marketingOptIn).toBe(true);
+    expect(parsedMultipart.whatsappOptIn).toBe(false);
   });
 
   it('coerces various boolean representations from forms', () => {

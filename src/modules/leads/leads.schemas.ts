@@ -48,45 +48,97 @@ export const contactEnquiryBody = z.object({
     .describe('Optional. Supplied, the enquiry is filed against the company; otherwise against the person.'),
 });
 
-export const corporateBriefBody = z.object({
-  name: z.string().trim().min(2).max(120).describe('The buyer’s name.'),
-  company: z.string().trim().min(2).max(160).describe('Company the gifting programme is for.'),
-  workEmail: z.email().max(255).describe('Work email address. Proposals and quotations go here.'),
-  quantity: z
-    .number()
-    .int()
-    .min(25, 'Corporate gifting starts at 25 units.')
-    .max(1_000_000)
-    .describe(
-      'Units needed. The 25-unit minimum is enforced **here**, server-side — the storefront’s ' +
-        '`min={25}` is an HTML attribute and a direct API call ignores it.',
-    ),
-  brief: z
-    .string()
-    .trim()
-    .min(10)
-    .max(4000)
-    .describe('Free-text brief: occasion, budget, branding, timelines.'),
-  mobile: z
-    .string()
-    .regex(MOBILE_IN, 'An Indian mobile number is ten digits starting 6-9.')
-    .optional()
-    .describe('Optional direct line. Corporate leads convert far faster on a call than on email.'),
-  occasion: z
-    .string()
-    .trim()
-    .max(120)
-    .optional()
-    .describe('Diwali, onboarding kits, client appreciation, …'),
-  employeeCount: z
-    .number()
-    .int()
-    .positive()
-    .max(10_000_000)
-    .optional()
-    .describe('Headcount, when known. Drives programme sizing.'),
-  city: z.string().trim().max(80).optional().describe('Delivery city, when known.'),
-});
+export const corporateBriefBody = z.preprocess(
+  (raw: unknown) => {
+    if (!raw || typeof raw !== 'object') return raw;
+    const obj = raw as Record<string, unknown>;
+    const quantityRaw = obj.quantity ?? obj.quantityNeeded;
+    const quantity =
+      quantityRaw !== undefined && quantityRaw !== null && String(quantityRaw).trim() !== ''
+        ? Number(quantityRaw)
+        : undefined;
+
+    const empCountRaw = obj.employeeCount;
+    const employeeCount =
+      empCountRaw !== undefined && empCountRaw !== null && String(empCountRaw).trim() !== ''
+        ? Number(empCountRaw)
+        : undefined;
+
+    return {
+      ...obj,
+      name: obj.name !== undefined ? String(obj.name).trim() : undefined,
+      company:
+        (obj.company as string | undefined)?.trim() ??
+        (obj.companyName as string | undefined)?.trim(),
+      workEmail:
+        (obj.workEmail as string | undefined)?.trim() ??
+        (obj.email as string | undefined)?.trim(),
+      quantity,
+      brief:
+        (obj.brief as string | undefined)?.trim() ??
+        (obj.message as string | undefined)?.trim(),
+      mobile:
+        obj.mobile !== undefined && String(obj.mobile).trim() !== ''
+          ? String(obj.mobile).trim()
+          : obj.phone !== undefined && String(obj.phone).trim() !== ''
+            ? String(obj.phone).trim()
+            : undefined,
+      occasion:
+        obj.occasion !== undefined && String(obj.occasion).trim() !== ''
+          ? String(obj.occasion).trim()
+          : undefined,
+      city:
+        obj.city !== undefined && String(obj.city).trim() !== ''
+          ? String(obj.city).trim()
+          : undefined,
+      employeeCount,
+      imageUrl:
+        (obj.imageUrl as string | undefined)?.trim() ??
+        (obj.attachmentUrl as string | undefined)?.trim() ??
+        (typeof obj.image === 'string' ? obj.image.trim() : undefined),
+    };
+  },
+  z.object({
+    name: z.string().trim().min(2).max(120).describe('The buyer’s name.'),
+    company: z.string().trim().min(2).max(160).describe('Company the gifting programme is for.'),
+    workEmail: z.string().email().max(255).describe('Work email address. Proposals and quotations go here.'),
+    quantity: z
+      .number()
+      .int()
+      .min(25, 'Corporate gifting starts at 25 units.')
+      .max(1_000_000)
+      .describe(
+        'Units needed. The 25-unit minimum is enforced **here**, server-side — the storefront’s ' +
+          '`min={25}` is an HTML attribute and a direct API call ignores it.',
+      ),
+    brief: z
+      .string()
+      .trim()
+      .min(10)
+      .max(4000)
+      .describe('Free-text brief: occasion, budget, branding, timelines.'),
+    mobile: z
+      .string()
+      .regex(MOBILE_IN, 'An Indian mobile number is ten digits starting 6-9.')
+      .optional()
+      .describe('Optional direct line. Corporate leads convert far faster on a call than on email.'),
+    occasion: z
+      .string()
+      .trim()
+      .max(120)
+      .optional()
+      .describe('Diwali, onboarding kits, client appreciation, …'),
+    employeeCount: z
+      .number()
+      .int()
+      .positive()
+      .max(10_000_000)
+      .optional()
+      .describe('Headcount, when known. Drives programme sizing.'),
+    city: z.string().trim().max(80).optional().describe('Delivery city, when known.'),
+    imageUrl: z.string().trim().max(2048).optional().describe('Uploaded brand logo, reference design, or brief attachment URL.'),
+  }),
+);
 
 export const newsletterBody = z.object({
   email: z.email().max(255).describe('The address to subscribe. Case-insensitive — stored CITEXT.'),

@@ -48,6 +48,10 @@ export const fileInterceptor = async (req: Request, res: Response, next: NextFun
             // The field keeps its name; only the value changes from a file to
             // the id the route's schema actually validates.
             body[file.fieldname] = asset.id;
+            if (['image', 'attachment', 'logo', 'file'].includes(file.fieldname)) {
+              body.imageUrl = asset.url;
+              body.attachmentUrl = asset.url;
+            }
           }
 
           req.body = body;

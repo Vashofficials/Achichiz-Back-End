@@ -203,6 +203,10 @@ export async function submitContactEnquiry(
 export async function submitCorporateBrief(
   input: CorporateBriefBody,
 ): Promise<{ status: 'received'; reference: string }> {
+  const briefWithAttachment = input.imageUrl
+    ? `${input.brief}\n\n[Attachment]: ${input.imageUrl}`
+    : input.brief;
+
   const lead = await createLead({
     companyName: input.company,
     contactName: input.name,
@@ -212,7 +216,7 @@ export async function submitCorporateBrief(
     employeeCount: input.employeeCount ?? null,
     quantityNeeded: input.quantity,
     occasion: input.occasion ?? null,
-    brief: input.brief,
+    brief: briefWithAttachment,
     source: repo.LEAD_SOURCES.corporate,
   });
 
@@ -226,7 +230,7 @@ export async function submitCorporateBrief(
     reference: lead.leadNo,
     contactName: input.name,
     email: input.workEmail,
-    summary: input.brief,
+    summary: briefWithAttachment,
     details: {
       Name: input.name,
       Company: input.company,
@@ -236,6 +240,7 @@ export async function submitCorporateBrief(
       Occasion: input.occasion ?? '—',
       'Employee count': input.employeeCount === undefined ? '—' : String(input.employeeCount),
       City: input.city ?? '—',
+      ...(input.imageUrl ? { Attachment: input.imageUrl } : {}),
     },
   });
 

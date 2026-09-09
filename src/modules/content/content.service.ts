@@ -43,6 +43,7 @@ import {
   type TestimonialListQuery,
   type TestimonialResponse,
 } from './content.schemas.js';
+import { CANONICAL_POLICIES, normalizePolicySlug } from './policies.data.js';
 
 /* ----------------------------------------------------------------- cache */
 
@@ -226,13 +227,60 @@ export async function getContentPageBySlug(slug: string): Promise<ContentPageDet
   return cached(cacheKey('page', { slug }), DETAIL_TTL_SECONDS, () => loadPage(slug, undefined, 'Page'));
 }
 
+async function loadPolicy(slug: string): Promise<ContentPageDetail> {
+  const normalizedSlug = normalizePolicySlug(slug);
+  const targetSlug = normalizedSlug ?? slug;
+  const fallback = normalizedSlug ? CANONICAL_POLICIES[normalizedSlug] : null;
+
+  let row: repo.ContentPageRow | null = null;
+  try {
+    row =
+      (await repo.findContentPageBySlug(targetSlug, 'policy')) ??
+      (targetSlug !== slug ? await repo.findContentPageBySlug(slug, 'policy') : null);
+  } catch (err) {
+    logger.warn({ err, slug }, 'database lookup failed for policy; falling back to canonical dataset');
+  }
+
+  if (row) {
+    try {
+      const seo = await repo.findSeoForEntity('content_page', row.id);
+      const body = asBlocks(row.body);
+      if (body.length > 0) {
+        return {
+          ...toPageSummary(row),
+          body,
+          seo: toSeoBlock(seo) ?? (fallback ? fallback.seo : null),
+        } satisfies ContentPageDetail;
+      }
+    } catch (err) {
+      logger.warn({ err, slug }, 'database lookup failed for policy seo; falling back to canonical dataset');
+    }
+  }
+
+  // Gracefully fallback to rich canonical policy content if available
+  if (fallback) {
+    return fallback;
+  }
+
+  if (row) {
+    return {
+      ...toPageSummary(row),
+      body: asBlocks(row.body),
+      seo: null,
+    } satisfies ContentPageDetail;
+  }
+
+  throw new NotFoundError('Policy', slug);
+}
+
 /**
  * Policies are content pages with `kind='policy'`. The separate route exists
  * because `/policies/:slug` is a published, linkable URL and because it must not
  * be possible to reach an occasion landing page through it.
  */
 export async function getPolicyBySlug(slug: string): Promise<ContentPageDetail> {
-  return cached(cacheKey('policy', { slug }), DETAIL_TTL_SECONDS, () => loadPage(slug, 'policy', 'Policy'));
+  const normalized = normalizePolicySlug(slug) ?? slug;
+  return cached(cacheKey('policy', { slug: normalized }), DETAIL_TTL_SECONDS, () => loadPolicy(slug));
 }
 
 /* --------------------------------------------------------- faqs & quotes */
