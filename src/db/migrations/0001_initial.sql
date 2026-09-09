@@ -2655,9 +2655,20 @@ FOR EACH ROW EXECUTE FUNCTION ensure_default_address();
 -- DEFERRABLE INITIALLY DEFERRED: the header is inserted before its lines.
 CREATE OR REPLACE FUNCTION check_order_totals() RETURNS TRIGGER
 LANGUAGE plpgsql AS $fn$
-DECLARE o RECORD; s RECORD;
+DECLARE
+  o RECORD;
+  s RECORD;
+  target_id UUID;
+  row_data JSONB;
 BEGIN
-  SELECT * INTO o FROM orders WHERE id = coalesce(NEW.order_id, NEW.id);
+  row_data := to_jsonb(COALESCE(NEW, OLD));
+  IF row_data ? 'order_id' THEN
+    target_id := (row_data->>'order_id')::uuid;
+  ELSE
+    target_id := (row_data->>'id')::uuid;
+  END IF;
+
+  SELECT * INTO o FROM orders WHERE id = target_id;
   IF NOT FOUND THEN RETURN NULL; END IF;   -- order deleted in this txn
 
   SELECT coalesce(sum(gross_paise),0)                    AS gross,

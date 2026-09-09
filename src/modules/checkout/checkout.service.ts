@@ -49,6 +49,34 @@ import type {
 
 /* ------------------------------------------------------------ destination */
 
+const STATE_CODE_MAP: Record<string, string> = {
+  UP: '09', 'UTTAR PRADESH': '09',
+  DL: '07', DELHI: '07',
+  MH: '27', MAHARASHTRA: '27',
+  KA: '29', KARNATAKA: '29',
+  TN: '33', 'TAMIL NADU': '33',
+  HR: '06', HARYANA: '06',
+  RJ: '08', RAJASTHAN: '08',
+  UK: '05', UTTARAKHAND: '05',
+  MP: '23', 'MADHYA PRADESH': '23',
+  GJ: '24', GUJARAT: '24',
+  WB: '19', 'WEST BENGAL': '19',
+  BR: '10', BIHAR: '10',
+  PB: '03', PUNJAB: '03',
+  CH: '04', CHANDIGARH: '04',
+  TS: '36', TELANGANA: '36',
+  AP: '37', 'ANDHRA PRADESH': '37',
+  KL: '32', KERALA: '32',
+};
+
+function normalizeStateCode(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (/^\d{2}$/.test(trimmed)) return trimmed;
+  const upper = trimmed.toUpperCase();
+  return STATE_CODE_MAP[upper] ?? trimmed;
+}
+
 type Destination = {
   addressId: string | null;
   label: string;
@@ -77,6 +105,13 @@ async function resolveDestination(
   if (body.addressId) {
     const row = await repo.findCustomerAddress(customerId, body.addressId);
     if (!row) throw new NotFoundError('Address', body.addressId);
+    let stateCode = normalizeStateCode(row.stateCode);
+    if (!(await repo.stateCodeExists(stateCode))) {
+      const dest = await repo.findDestination(row.pincode);
+      if (dest?.stateCode && (await repo.stateCodeExists(dest.stateCode))) {
+        stateCode = dest.stateCode;
+      }
+    }
     return {
       addressId: row.id,
       label: row.label,
@@ -86,9 +121,9 @@ async function resolveDestination(
       line2: row.line2,
       area: row.area,
       city: row.city,
-      stateCode: row.stateCode,
+      stateCode,
       pincode: row.pincode,
-      countryCode: row.countryCode,
+      countryCode: row.countryCode ?? 'IN',
       saveToAddressBook: false,
     };
   }
@@ -100,7 +135,15 @@ async function resolveDestination(
     });
   }
 
-  if (!(await repo.stateCodeExists(address.stateCode))) {
+  let stateCode = normalizeStateCode(address.stateCode);
+  if (!(await repo.stateCodeExists(stateCode))) {
+    const dest = await repo.findDestination(address.pincode);
+    if (dest?.stateCode && (await repo.stateCodeExists(dest.stateCode))) {
+      stateCode = dest.stateCode;
+    }
+  }
+
+  if (!(await repo.stateCodeExists(stateCode))) {
     throw new ValidationError('Unknown GST state code.', {
       issues: [
         {
@@ -121,10 +164,10 @@ async function resolveDestination(
     line2: address.line2 ?? null,
     area: address.area ?? null,
     city: address.city,
-    stateCode: address.stateCode,
+    stateCode,
     pincode: address.pincode,
-    countryCode: address.countryCode,
-    saveToAddressBook: address.saveToAddressBook,
+    countryCode: address.countryCode ?? 'IN',
+    saveToAddressBook: address.saveToAddressBook ?? false,
   };
 }
 

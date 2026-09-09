@@ -328,7 +328,10 @@ const collectionsResource = defineResource({
     { key: 'heading', label: 'Page heading', kind: 'text', required: false, max: 200 },
     { key: 'subtext', label: 'Subtext', kind: 'long', required: false },
     { key: 'seoDescription', label: 'SEO description', kind: 'long', required: false, max: 500 },
-    { key: 'parentId', label: 'Parent collection', kind: 'reference', required: false, reference: { resource: 'collections', labelField: 'title' } },
+    { key: 'parentId', label: 'Parent collection', kind: 'reference', required: false, reference: { resource: 'collections', labelField: 'title' }, help: 'Set this to make the collection a sub-category of another one.' },
+    // `hero_media_id` has always existed on the table; it was simply never published to the
+    // console, so there was no way to give a category or sub-category its image from the admin.
+    { key: 'heroMediaId', label: 'Image', kind: 'reference', required: false, reference: { resource: 'media', labelField: 'fileName' }, help: 'Tile and banner image for this category.' },
     { key: 'designerId', label: 'Designer', kind: 'reference', required: false, reference: { resource: 'designers', labelField: 'name' }, help: 'Only for `kind: designer`.' },
     { key: 'curator', label: 'Curator', kind: 'text', required: false, max: 120, help: 'Only for `kind: edit`.' },
     { key: 'sortOrder', label: 'Sort order', kind: 'number', required: false, min: 0, max: 10_000 },
