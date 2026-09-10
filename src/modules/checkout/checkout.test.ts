@@ -238,6 +238,22 @@ describe('computeShipping', () => {
     expect(computeShipping(10_000, 'standard', { ...SHIPPING, zoneBaseFeePaise: 9_900 }, false)).toBe(9_900);
   });
 
+  /*
+   * `delivery_zones.base_fee_paise` is NOT NULL DEFAULT 0, so a zone nobody has priced yet is
+   * indistinguishable from a free one. Reading 0 as a real fee undercharged every order to a
+   * known-but-unpriced zone: the storefront quoted the flat fee before an address was entered,
+   * the customer agreed to that total, and the order was then written with no shipping at all.
+   */
+  it('treats an unpriced zone (0) as unset and falls back to the flat fee', () => {
+    expect(computeShipping(9_900, 'standard', { ...SHIPPING, zoneBaseFeePaise: 0 }, false)).toBe(
+      14_900,
+    );
+  });
+
+  it('still ships free above the threshold, unpriced zone or not', () => {
+    expect(computeShipping(99_900, 'standard', { ...SHIPPING, zoneBaseFeePaise: 0 }, false)).toBe(0);
+  });
+
   it('lets a free-shipping coupon waive the base fee but not a delivery upgrade', () => {
     expect(computeShipping(10_000, 'standard', SHIPPING, true)).toBe(0);
     expect(computeShipping(10_000, 'same_day', SHIPPING, true)).toBe(DELIVERY_SURCHARGE_PAISE.same_day);

@@ -113,7 +113,14 @@ export type ShippingConfig = {
   freeThresholdPaise: Paise;
   /** `env.SHIPPING_FEE_PAISE` — ₹149 by published policy. */
   flatFeePaise: Paise;
-  /** `delivery_zones.base_fee_paise` when the pincode resolves to a zone. */
+  /**
+   * `delivery_zones.base_fee_paise` when the pincode resolves to a zone.
+   *
+   * The column is `NOT NULL DEFAULT 0`, so a zone that nobody has priced yet carries 0 — the
+   * same value a genuinely free zone would. Zero therefore cannot mean "free" here; it is read
+   * as "unpriced" and falls back to `flatFeePaise`. A zone that really should ship free is
+   * expressed with `freeThresholdPaise`, not with a 0 base fee.
+   */
   zoneBaseFeePaise: Paise | null;
   /** Dynamic surcharges from app_settings, fallback to DELIVERY_SURCHARGE_PAISE. */
   surcharges?: Partial<Record<DeliveryType, Paise>> | null;
@@ -315,10 +322,18 @@ export function computeShipping(
   config: ShippingConfig,
   freeShippingCoupon: boolean,
 ): Paise {
+  // `??` was wrong here: it only falls through on null/undefined, and the zone column is
+  // NOT NULL DEFAULT 0. So an unpriced zone (0) charged nothing while an UNKNOWN destination
+  // (null) charged the full flat fee — backwards, and it undercharged every Lucknow order by
+  // the shipping amount. The storefront quotes the flat fee before an address is known, so the
+  // customer was shown ₹149, agreed to it, and was billed ₹0 of shipping.
+  const zoneFee = config.zoneBaseFeePaise;
   const base =
     subtotalAfterDiscount >= config.freeThresholdPaise
       ? 0
-      : (config.zoneBaseFeePaise ?? config.flatFeePaise);
+      : zoneFee !== null && zoneFee > 0
+        ? zoneFee
+        : config.flatFeePaise;
 
   // A free-shipping coupon waives the base fee. It does not waive a delivery
   // UPGRADE the customer chose to buy.
