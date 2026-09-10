@@ -322,23 +322,28 @@ export function computeShipping(
   config: ShippingConfig,
   freeShippingCoupon: boolean,
 ): Paise {
-  // `??` was wrong here: it only falls through on null/undefined, and the zone column is
-  // NOT NULL DEFAULT 0. So an unpriced zone (0) charged nothing while an UNKNOWN destination
-  // (null) charged the full flat fee — backwards, and it undercharged every Lucknow order by
-  // the shipping amount. The storefront quotes the flat fee before an address is known, so the
-  // customer was shown ₹149, agreed to it, and was billed ₹0 of shipping.
-  const zoneFee = config.zoneBaseFeePaise;
-  const base =
-    subtotalAfterDiscount >= config.freeThresholdPaise
-      ? 0
-      : zoneFee !== null && zoneFee > 0
-        ? zoneFee
-        : config.flatFeePaise;
+  const isFree = subtotalAfterDiscount >= config.freeThresholdPaise || freeShippingCoupon;
 
-  // A free-shipping coupon waives the base fee. It does not waive a delivery
-  // UPGRADE the customer chose to buy.
-  const surcharge = config.surcharges?.[deliveryType] ?? DELIVERY_SURCHARGE_PAISE[deliveryType] ?? 0;
-  return (freeShippingCoupon ? 0 : base) + surcharge;
+  // Dynamic delivery methods from settings (e.g. standard = 4900, scheduled = 9900, same_day = 14900)
+  const dynamicFee = config.surcharges?.[deliveryType];
+  if (dynamicFee !== undefined && dynamicFee !== null) {
+    if (isFree) {
+      const standardFee = config.surcharges?.['standard'] ?? 0;
+      return Math.max(0, dynamicFee - standardFee);
+    }
+    return dynamicFee;
+  }
+
+  // Fallback to zone base fee or flat fee + static surcharge
+  const zoneFee = config.zoneBaseFeePaise;
+  const base = isFree
+    ? 0
+    : zoneFee !== null && zoneFee > 0
+      ? zoneFee
+      : config.flatFeePaise;
+
+  const surcharge = DELIVERY_SURCHARGE_PAISE[deliveryType] ?? 0;
+  return base + surcharge;
 }
 
 /** `orders.round_off_paise` — reconciles the grand total to the nearest rupee. Bounded ±50. */
