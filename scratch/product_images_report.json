@@ -1,0 +1,380 @@
+[
+  {
+    "index": 1,
+    "name": "BAMBOO BOTTLE",
+    "handle": "bamboo-bottle",
+    "bytes": 15378,
+    "kb": "15.02"
+  },
+  {
+    "index": 2,
+    "name": "BAMBOO TUMBLER WITH HANDLE",
+    "handle": "bamboo-tumbler-with-handle",
+    "bytes": 21452,
+    "kb": "20.95"
+  },
+  {
+    "index": 3,
+    "name": "WHEAT FIBER MUG",
+    "handle": "wheat-fiber-mug",
+    "bytes": 17078,
+    "kb": "16.68"
+  },
+  {
+    "index": 4,
+    "name": "MDF DIARY",
+    "handle": "mdf-diary",
+    "bytes": 22192,
+    "kb": "21.67"
+  },
+  {
+    "index": 5,
+    "name": "CORK DIARY",
+    "handle": "cork-diary",
+    "bytes": 24020,
+    "kb": "23.46"
+  },
+  {
+    "index": 6,
+    "name": "CORK FLAP DIARY",
+    "handle": "cork-flap-diary",
+    "bytes": 24770,
+    "kb": "24.19"
+  },
+  {
+    "index": 7,
+    "name": "BAMBOO DIARY",
+    "handle": "bamboo-diary",
+    "bytes": 26020,
+    "kb": "25.41"
+  },
+  {
+    "index": 8,
+    "name": "BAMBOO KEYCHAIN",
+    "handle": "bamboo-keychain",
+    "bytes": 10590,
+    "kb": "10.34"
+  },
+  {
+    "index": 9,
+    "name": "CORK KEYCHCHAIN",
+    "handle": "cork-keychchain",
+    "bytes": 20978,
+    "kb": "20.49"
+  },
+  {
+    "index": 10,
+    "name": "PREMIUM BAMBOO PEN WITH BOX",
+    "handle": "premium-bamboo-pen-with-box",
+    "bytes": 23126,
+    "kb": "22.58"
+  },
+  {
+    "index": 11,
+    "name": "CORK PEN",
+    "handle": "cork-pen",
+    "bytes": 22362,
+    "kb": "21.84"
+  },
+  {
+    "index": 12,
+    "name": "CORK CARD HOLDER",
+    "handle": "cork-card-holder",
+    "bytes": 16750,
+    "kb": "16.36"
+  },
+  {
+    "index": 13,
+    "name": "COCONUT SHELL CANDLE",
+    "handle": "coconut-shell-candle",
+    "bytes": 20808,
+    "kb": "20.32"
+  },
+  {
+    "index": 14,
+    "name": "CINNAMON STICK CANDLE",
+    "handle": "cinnamon-stick-candle",
+    "bytes": 23010,
+    "kb": "22.47"
+  },
+  {
+    "index": 15,
+    "name": "WOODEN BOAT CANDLE",
+    "handle": "wooden-boat-candle",
+    "bytes": 21750,
+    "kb": "21.24"
+  },
+  {
+    "index": 16,
+    "name": "SOYWAX SACHET HANGING",
+    "handle": "soywax-sachet-hanging",
+    "bytes": 24016,
+    "kb": "23.45"
+  },
+  {
+    "index": 17,
+    "name": "ROSE CANDLE",
+    "handle": "rose-candle",
+    "bytes": 28194,
+    "kb": "27.53"
+  },
+  {
+    "index": 18,
+    "name": "DAISY JAR CANDLE",
+    "handle": "daisy-jar-candle",
+    "bytes": 24624,
+    "kb": "24.05"
+  },
+  {
+    "index": 19,
+    "name": "DAISY CANDLE",
+    "handle": "daisy-candle",
+    "bytes": 25174,
+    "kb": "24.58"
+  },
+  {
+    "index": 20,
+    "name": "TEA LIGHT CANDLE",
+    "handle": "tea-light-candle",
+    "bytes": 11076,
+    "kb": "10.82"
+  },
+  {
+    "index": 21,
+    "name": "circle pendent necklace (black)",
+    "handle": "circle-pendent-necklace-black",
+    "bytes": 29952,
+    "kb": "29.25"
+  },
+  {
+    "index": 22,
+    "name": "hexagonal pendent (golden n black)",
+    "handle": "hexagonal-pendent-golden-n-black",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 23,
+    "name": "kathakkali theme pendent (black base)",
+    "handle": "kathakkali-theme-pendent-black-base",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 24,
+    "name": "bamboo desing pendent (black base)",
+    "handle": "bamboo-desing-pendent-black-base",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 25,
+    "name": "semicircle pendent",
+    "handle": "semicircle-pendent",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 26,
+    "name": "bluish green pendent",
+    "handle": "bluish-green-pendent",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 27,
+    "name": "orange yellow pendent",
+    "handle": "orange-yellow-pendent",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 28,
+    "name": "red rectangle pendent",
+    "handle": "red-rectangle-pendent",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 29,
+    "name": "circle pendent necklace (pink and black)",
+    "handle": "circle-pendent-necklace-pink-and-black",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 30,
+    "name": "grey and golden set",
+    "handle": "grey-and-golden-set",
+    "bytes": 31910,
+    "kb": "31.16"
+  },
+  {
+    "index": 31,
+    "name": "circular bead necklace set (set and golden)",
+    "handle": "circular-bead-necklace-set-set-and-golden",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 32,
+    "name": "hollow circular pendent(lavender)",
+    "handle": "hollow-circular-pendent-lavender",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 33,
+    "name": "circular pendent(lavender)",
+    "handle": "circular-pendent-lavender",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 34,
+    "name": "chain pendent set",
+    "handle": "chain-pendent-set",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 35,
+    "name": "green n blue set",
+    "handle": "green-n-blue-set",
+    "bytes": 29424,
+    "kb": "28.73"
+  },
+  {
+    "index": 36,
+    "name": "tringular bead choker (golden)",
+    "handle": "tringular-bead-choker-golden",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 37,
+    "name": "tringular bead choker (silver)",
+    "handle": "tringular-bead-choker-silver",
+    "bytes": 32550,
+    "kb": "31.79"
+  },
+  {
+    "index": 38,
+    "name": "golden n blue choker",
+    "handle": "golden-n-blue-choker",
+    "bytes": 28820,
+    "kb": "28.14"
+  },
+  {
+    "index": 39,
+    "name": "pink n silver set",
+    "handle": "pink-n-silver-set",
+    "bytes": 31648,
+    "kb": "30.91"
+  },
+  {
+    "index": 40,
+    "name": "beaded necklace set",
+    "handle": "beaded-necklace-set",
+    "bytes": 41078,
+    "kb": "40.12"
+  },
+  {
+    "index": 41,
+    "name": "silver necklace set",
+    "handle": "silver-necklace-set",
+    "bytes": 37566,
+    "kb": "36.69"
+  },
+  {
+    "index": 42,
+    "name": "Temple jewellery set",
+    "handle": "temple-jewellery-set",
+    "bytes": 29168,
+    "kb": "28.48"
+  },
+  {
+    "index": 43,
+    "name": "circular hoop drop earring",
+    "handle": "circular-hoop-drop-earring",
+    "bytes": 27948,
+    "kb": "27.29"
+  },
+  {
+    "index": 44,
+    "name": "Red & Black earring",
+    "handle": "red-black-earring",
+    "bytes": 30422,
+    "kb": "29.71"
+  },
+  {
+    "index": 45,
+    "name": "bird_shaped_jhumka",
+    "handle": "bird-shaped-jhumka",
+    "bytes": 29346,
+    "kb": "28.66"
+  },
+  {
+    "index": 46,
+    "name": "striped jhumka mini (black base)",
+    "handle": "striped-jhumka-mini-black-base",
+    "bytes": 27580,
+    "kb": "26.93"
+  },
+  {
+    "index": 47,
+    "name": "yellow jhumka",
+    "handle": "yellow-jhumka",
+    "bytes": 30706,
+    "kb": "29.99"
+  },
+  {
+    "index": 48,
+    "name": "Blue danglers(black base)",
+    "handle": "blue-danglers-black-base",
+    "bytes": 22732,
+    "kb": "22.20"
+  },
+  {
+    "index": 49,
+    "name": "flower dangler (black and golden)",
+    "handle": "flower-dangler-black-and-golden",
+    "bytes": 22510,
+    "kb": "21.98"
+  },
+  {
+    "index": 50,
+    "name": "dotted danglers",
+    "handle": "dotted-danglers",
+    "bytes": 30422,
+    "kb": "29.71"
+  },
+  {
+    "index": 51,
+    "name": "green silver danglers",
+    "handle": "green-silver-danglers",
+    "bytes": 27948,
+    "kb": "27.29"
+  },
+  {
+    "index": 52,
+    "name": "pink danglers",
+    "handle": "pink-danglers",
+    "bytes": 29346,
+    "kb": "28.66"
+  },
+  {
+    "index": 53,
+    "name": "flower drop dangler(silver)",
+    "handle": "flower-drop-dangler-silver",
+    "bytes": 26360,
+    "kb": "25.74"
+  },
+  {
+    "index": 54,
+    "name": "silver danglers",
+    "handle": "silver-danglers",
+    "bytes": 27896,
+    "kb": "27.24"
+  }
+]
