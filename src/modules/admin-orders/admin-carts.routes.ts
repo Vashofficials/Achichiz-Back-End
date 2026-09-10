@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { defineRoute } from '../../lib/openapi/define-route.js';
 import { ok, paginated, noContent } from '../../lib/http.js';
 import * as service from './admin-carts.service.js';
@@ -23,7 +24,7 @@ defineRoute(adminCartsRouter, {
   permission: { module: 'orders', action: 'view' },
   request: { query: listAbandonedCartsQuery },
   responses: {
-    200: { description: 'Paginated abandoned carts.', schema: adminCart },
+    200: { description: 'Paginated abandoned carts.', schema: z.array(adminCart) },
   },
   handler: async ({ query }) => {
     const { items, meta } = await service.listAbandonedCarts(query);

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { defineRoute } from '../../lib/openapi/define-route.js';
 import { ok, paginated } from '../../lib/http.js';
 import * as service from './admin-returns.service.js';
@@ -31,7 +32,7 @@ defineRoute(adminReturnsRouter, {
   permission: { module: 'orders', action: 'view' },
   request: { query: listReturnsQuery },
   responses: {
-    200: { description: 'Paginated returns.', schema: adminReturnResponse },
+    200: { description: 'Paginated returns.', schema: z.array(adminReturnResponse) },
   },
   handler: async ({ query }) => {
     const { items, meta } = await service.listReturns(query);

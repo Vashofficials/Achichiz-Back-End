@@ -12,11 +12,11 @@
   "servers": [
     {
       "url": "https://api.achichiz.com",
-      "description": "Local"
+      "description": "Production"
     },
     {
-      "url": "https://api.achichiz.com",
-      "description": "Production"
+      "url": "http://localhost:4000",
+      "description": "Local"
     }
   ],
   "tags": [
@@ -106494,7 +106494,8 @@
                   "type": "object",
                   "required": [
                     "type",
-                    "result"
+                    "result",
+                    "meta"
                   ],
                   "properties": {
                     "type": {
@@ -106502,88 +106503,118 @@
                       "example": "success"
                     },
                     "result": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "paymentNo": {
+                            "type": "string"
+                          },
+                          "orderNo": {
+                            "type": "string"
+                          },
+                          "gatewayPaymentId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "gateway": {
+                            "type": "string",
+                            "enum": [
+                              "razorpay",
+                              "payu",
+                              "cashfree",
+                              "gift_card",
+                              "cod",
+                              "manual",
+                              "bank_transfer"
+                            ]
+                          },
+                          "amountPaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "feePaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "taxOnFeePaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "isSettled": {
+                            "type": "boolean"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "created",
+                              "authorised",
+                              "captured",
+                              "failed",
+                              "cancelled",
+                              "refunded"
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "paymentNo",
+                          "orderNo",
+                          "gatewayPaymentId",
+                          "gateway",
+                          "amountPaise",
+                          "feePaise",
+                          "taxOnFeePaise",
+                          "isSettled",
+                          "status",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "meta": {
                       "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "paymentNo": {
-                          "type": "string"
-                        },
-                        "orderNo": {
-                          "type": "string"
-                        },
-                        "gatewayPaymentId": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "gateway": {
-                          "type": "string",
-                          "enum": [
-                            "razorpay",
-                            "payu",
-                            "cashfree",
-                            "gift_card",
-                            "cod",
-                            "manual",
-                            "bank_transfer"
-                          ]
-                        },
-                        "amountPaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "feePaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "taxOnFeePaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "isSettled": {
-                          "type": "boolean"
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "created",
-                            "authorised",
-                            "captured",
-                            "failed",
-                            "cancelled",
-                            "refunded"
-                          ]
-                        },
-                        "createdAt": {
-                          "type": "string"
-                        }
-                      },
                       "required": [
-                        "id",
-                        "paymentNo",
-                        "orderNo",
-                        "gatewayPaymentId",
-                        "gateway",
-                        "amountPaise",
-                        "feePaise",
-                        "taxOnFeePaise",
-                        "isSettled",
-                        "status",
-                        "createdAt"
+                        "page",
+                        "perPage",
+                        "total",
+                        "totalPages"
                       ],
-                      "additionalProperties": false
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "description": "1-indexed page number."
+                        },
+                        "perPage": {
+                          "type": "integer",
+                          "description": "Items in this page."
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Total items matching the query."
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "description": "Total pages at this `perPage`."
+                        }
+                      }
                     }
                   },
                   "additionalProperties": false
@@ -106771,7 +106802,8 @@
                   "type": "object",
                   "required": [
                     "type",
-                    "result"
+                    "result",
+                    "meta"
                   ],
                   "properties": {
                     "type": {
@@ -106779,78 +106811,108 @@
                       "example": "success"
                     },
                     "result": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "invoiceNo": {
+                            "type": "string"
+                          },
+                          "orderNo": {
+                            "type": "string"
+                          },
+                          "buyerName": {
+                            "type": "string"
+                          },
+                          "taxablePaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "cgstPaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "sgstPaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "igstPaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "cessPaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "totalPaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "issued",
+                              "cancelled"
+                            ]
+                          },
+                          "issuedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "invoiceNo",
+                          "orderNo",
+                          "buyerName",
+                          "taxablePaise",
+                          "cgstPaise",
+                          "sgstPaise",
+                          "igstPaise",
+                          "cessPaise",
+                          "totalPaise",
+                          "status",
+                          "issuedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "meta": {
                       "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "invoiceNo": {
-                          "type": "string"
-                        },
-                        "orderNo": {
-                          "type": "string"
-                        },
-                        "buyerName": {
-                          "type": "string"
-                        },
-                        "taxablePaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "cgstPaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "sgstPaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "igstPaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "cessPaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "totalPaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "issued",
-                            "cancelled"
-                          ]
-                        },
-                        "issuedAt": {
-                          "type": "string"
-                        }
-                      },
                       "required": [
-                        "id",
-                        "invoiceNo",
-                        "orderNo",
-                        "buyerName",
-                        "taxablePaise",
-                        "cgstPaise",
-                        "sgstPaise",
-                        "igstPaise",
-                        "cessPaise",
-                        "totalPaise",
-                        "status",
-                        "issuedAt"
+                        "page",
+                        "perPage",
+                        "total",
+                        "totalPages"
                       ],
-                      "additionalProperties": false
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "description": "1-indexed page number."
+                        },
+                        "perPage": {
+                          "type": "integer",
+                          "description": "Items in this page."
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Total items matching the query."
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "description": "Total pages at this `perPage`."
+                        }
+                      }
                     }
                   },
                   "additionalProperties": false
@@ -106972,7 +107034,8 @@
                   "type": "object",
                   "required": [
                     "type",
-                    "result"
+                    "result",
+                    "meta"
                   ],
                   "properties": {
                     "type": {
@@ -106980,136 +107043,166 @@
                       "example": "success"
                     },
                     "result": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "customerName": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "email": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "mobile": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "stage": {
-                          "type": "string",
-                          "enum": [
-                            "cart",
-                            "address",
-                            "payment",
-                            "converted"
-                          ]
-                        },
-                        "abandonedAt": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "recoveryState": {
-                          "type": "string",
-                          "enum": [
-                            "not_sent",
-                            "email_sent",
-                            "whatsapp_sent",
-                            "recovered"
-                          ]
-                        },
-                        "itemCount": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "totalPaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "lines": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "format": "uuid",
-                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                              },
-                              "title": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "customerName": {
+                            "anyOf": [
+                              {
                                 "type": "string"
                               },
-                              "variantLabel": {
-                                "type": "string"
-                              },
-                              "sku": {
-                                "type": "string"
-                              },
-                              "quantity": {
-                                "type": "integer",
-                                "minimum": -9007199254740991,
-                                "maximum": 9007199254740991
-                              },
-                              "unitPricePaise": {
-                                "type": "integer",
-                                "minimum": -9007199254740991,
-                                "maximum": 9007199254740991
+                              {
+                                "type": "null"
                               }
-                            },
-                            "required": [
-                              "id",
-                              "title",
-                              "variantLabel",
-                              "sku",
-                              "quantity",
-                              "unitPricePaise"
-                            ],
-                            "additionalProperties": false
+                            ]
+                          },
+                          "email": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "mobile": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "stage": {
+                            "type": "string",
+                            "enum": [
+                              "cart",
+                              "address",
+                              "payment",
+                              "converted"
+                            ]
+                          },
+                          "abandonedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "recoveryState": {
+                            "type": "string",
+                            "enum": [
+                              "not_sent",
+                              "email_sent",
+                              "whatsapp_sent",
+                              "recovered"
+                            ]
+                          },
+                          "itemCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "totalPaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "lines": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "title": {
+                                  "type": "string"
+                                },
+                                "variantLabel": {
+                                  "type": "string"
+                                },
+                                "sku": {
+                                  "type": "string"
+                                },
+                                "quantity": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "unitPricePaise": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "title",
+                                "variantLabel",
+                                "sku",
+                                "quantity",
+                                "unitPricePaise"
+                              ],
+                              "additionalProperties": false
+                            }
                           }
-                        }
-                      },
+                        },
+                        "required": [
+                          "id",
+                          "customerName",
+                          "email",
+                          "mobile",
+                          "stage",
+                          "abandonedAt",
+                          "recoveryState",
+                          "itemCount",
+                          "totalPaise",
+                          "lines"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
                       "required": [
-                        "id",
-                        "customerName",
-                        "email",
-                        "mobile",
-                        "stage",
-                        "abandonedAt",
-                        "recoveryState",
-                        "itemCount",
-                        "totalPaise",
-                        "lines"
+                        "page",
+                        "perPage",
+                        "total",
+                        "totalPages"
                       ],
-                      "additionalProperties": false
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "description": "1-indexed page number."
+                        },
+                        "perPage": {
+                          "type": "integer",
+                          "description": "Items in this page."
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Total items matching the query."
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "description": "Total pages at this `perPage`."
+                        }
+                      }
                     }
                   },
                   "additionalProperties": false
@@ -107304,7 +107397,8 @@
                   "type": "object",
                   "required": [
                     "type",
-                    "result"
+                    "result",
+                    "meta"
                   ],
                   "properties": {
                     "type": {
@@ -107312,173 +107406,203 @@
                       "example": "success"
                     },
                     "result": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "returnNo": {
-                          "type": "string"
-                        },
-                        "orderNo": {
-                          "type": "string"
-                        },
-                        "customerName": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "reason": {
-                          "type": "string",
-                          "enum": [
-                            "damaged_in_transit",
-                            "wrong_item",
-                            "late_delivery",
-                            "quality_not_as_expected",
-                            "changed_mind",
-                            "personalisation_error",
-                            "other"
-                          ]
-                        },
-                        "reasonNote": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "requested",
-                            "approved",
-                            "picked_up",
-                            "received",
-                            "refunded",
-                            "rejected"
-                          ]
-                        },
-                        "refundMode": {
-                          "type": "string",
-                          "enum": [
-                            "original",
-                            "store_credit",
-                            "bank_transfer"
-                          ]
-                        },
-                        "refundPaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "restock": {
-                          "type": "boolean"
-                        },
-                        "pickupAwb": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "requestedAt": {
-                          "type": "string"
-                        },
-                        "resolvedAt": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "lines": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "format": "uuid",
-                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                              },
-                              "title": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "returnNo": {
+                            "type": "string"
+                          },
+                          "orderNo": {
+                            "type": "string"
+                          },
+                          "customerName": {
+                            "anyOf": [
+                              {
                                 "type": "string"
                               },
-                              "sku": {
-                                "type": "string"
-                              },
-                              "quantity": {
-                                "type": "integer",
-                                "minimum": -9007199254740991,
-                                "maximum": 9007199254740991
-                              },
-                              "condition": {
-                                "anyOf": [
-                                  {
-                                    "type": "string",
-                                    "enum": [
-                                      "sellable",
-                                      "damaged",
-                                      "opened",
-                                      "missing_parts"
-                                    ]
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ]
-                              },
-                              "refundPaise": {
-                                "type": "integer",
-                                "minimum": -9007199254740991,
-                                "maximum": 9007199254740991
+                              {
+                                "type": "null"
                               }
-                            },
-                            "required": [
-                              "id",
-                              "title",
-                              "sku",
-                              "quantity",
-                              "condition",
-                              "refundPaise"
-                            ],
-                            "additionalProperties": false
+                            ]
+                          },
+                          "reason": {
+                            "type": "string",
+                            "enum": [
+                              "damaged_in_transit",
+                              "wrong_item",
+                              "late_delivery",
+                              "quality_not_as_expected",
+                              "changed_mind",
+                              "personalisation_error",
+                              "other"
+                            ]
+                          },
+                          "reasonNote": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "requested",
+                              "approved",
+                              "picked_up",
+                              "received",
+                              "refunded",
+                              "rejected"
+                            ]
+                          },
+                          "refundMode": {
+                            "type": "string",
+                            "enum": [
+                              "original",
+                              "store_credit",
+                              "bank_transfer"
+                            ]
+                          },
+                          "refundPaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "restock": {
+                            "type": "boolean"
+                          },
+                          "pickupAwb": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "requestedAt": {
+                            "type": "string"
+                          },
+                          "resolvedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "lines": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "title": {
+                                  "type": "string"
+                                },
+                                "sku": {
+                                  "type": "string"
+                                },
+                                "quantity": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "condition": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "sellable",
+                                        "damaged",
+                                        "opened",
+                                        "missing_parts"
+                                      ]
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "refundPaise": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "title",
+                                "sku",
+                                "quantity",
+                                "condition",
+                                "refundPaise"
+                              ],
+                              "additionalProperties": false
+                            }
                           }
-                        }
-                      },
+                        },
+                        "required": [
+                          "id",
+                          "returnNo",
+                          "orderNo",
+                          "customerName",
+                          "reason",
+                          "reasonNote",
+                          "status",
+                          "refundMode",
+                          "refundPaise",
+                          "restock",
+                          "pickupAwb",
+                          "requestedAt",
+                          "resolvedAt",
+                          "lines"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
                       "required": [
-                        "id",
-                        "returnNo",
-                        "orderNo",
-                        "customerName",
-                        "reason",
-                        "reasonNote",
-                        "status",
-                        "refundMode",
-                        "refundPaise",
-                        "restock",
-                        "pickupAwb",
-                        "requestedAt",
-                        "resolvedAt",
-                        "lines"
+                        "page",
+                        "perPage",
+                        "total",
+                        "totalPages"
                       ],
-                      "additionalProperties": false
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "description": "1-indexed page number."
+                        },
+                        "perPage": {
+                          "type": "integer",
+                          "description": "Items in this page."
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Total items matching the query."
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "description": "Total pages at this `perPage`."
+                        }
+                      }
                     }
                   },
                   "additionalProperties": false
@@ -108390,7 +108514,8 @@
                   "type": "object",
                   "required": [
                     "type",
-                    "result"
+                    "result",
+                    "meta"
                   ],
                   "properties": {
                     "type": {
@@ -108398,96 +108523,126 @@
                       "example": "success"
                     },
                     "result": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "exchangeNo": {
+                            "type": "string"
+                          },
+                          "orderNo": {
+                            "type": "string"
+                          },
+                          "customerName": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "fromVariantId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "toVariantId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "fromVariantLabel": {
+                            "type": "string"
+                          },
+                          "toVariantLabel": {
+                            "type": "string"
+                          },
+                          "quantity": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "priceDiffPaise": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "requested",
+                              "approved",
+                              "picked_up",
+                              "received",
+                              "refunded",
+                              "rejected"
+                            ]
+                          },
+                          "requestedAt": {
+                            "type": "string"
+                          },
+                          "resolvedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "exchangeNo",
+                          "orderNo",
+                          "customerName",
+                          "fromVariantId",
+                          "toVariantId",
+                          "fromVariantLabel",
+                          "toVariantLabel",
+                          "quantity",
+                          "priceDiffPaise",
+                          "status",
+                          "requestedAt",
+                          "resolvedAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "meta": {
                       "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "exchangeNo": {
-                          "type": "string"
-                        },
-                        "orderNo": {
-                          "type": "string"
-                        },
-                        "customerName": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        },
-                        "fromVariantId": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "toVariantId": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "fromVariantLabel": {
-                          "type": "string"
-                        },
-                        "toVariantLabel": {
-                          "type": "string"
-                        },
-                        "quantity": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "priceDiffPaise": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
-                        },
-                        "status": {
-                          "type": "string",
-                          "enum": [
-                            "requested",
-                            "approved",
-                            "picked_up",
-                            "received",
-                            "refunded",
-                            "rejected"
-                          ]
-                        },
-                        "requestedAt": {
-                          "type": "string"
-                        },
-                        "resolvedAt": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "null"
-                            }
-                          ]
-                        }
-                      },
                       "required": [
-                        "id",
-                        "exchangeNo",
-                        "orderNo",
-                        "customerName",
-                        "fromVariantId",
-                        "toVariantId",
-                        "fromVariantLabel",
-                        "toVariantLabel",
-                        "quantity",
-                        "priceDiffPaise",
-                        "status",
-                        "requestedAt",
-                        "resolvedAt"
+                        "page",
+                        "perPage",
+                        "total",
+                        "totalPages"
                       ],
-                      "additionalProperties": false
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "description": "1-indexed page number."
+                        },
+                        "perPage": {
+                          "type": "integer",
+                          "description": "Items in this page."
+                        },
+                        "total": {
+                          "type": "integer",
+                          "description": "Total items matching the query."
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "description": "Total pages at this `perPage`."
+                        }
+                      }
                     }
                   },
                   "additionalProperties": false

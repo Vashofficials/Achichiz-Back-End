@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { defineRoute } from '../../lib/openapi/define-route.js';
 import { paginated } from '../../lib/http.js';
 import * as service from './admin-invoices.service.js';
@@ -21,7 +22,7 @@ defineRoute(adminInvoicesRouter, {
   permission: { module: 'finance', action: 'view' },
   request: { query: listInvoicesQuery },
   responses: {
-    200: { description: 'Paginated invoices.', schema: adminInvoiceResponse },
+    200: { description: 'Paginated invoices.', schema: z.array(adminInvoiceResponse) },
   },
   handler: async ({ query }) => {
     const { items, meta } = await service.listInvoices(query);

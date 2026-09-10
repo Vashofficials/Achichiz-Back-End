@@ -164,6 +164,9 @@ export async function getDeliverySurchargesMap(): Promise<Record<string, number>
     }
   }
 
+  // Standard fulfillment is always free (0 paise surcharge)
+  map.standard = 0;
+
   return map;
 }
 

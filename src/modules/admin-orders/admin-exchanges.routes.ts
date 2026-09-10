@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { defineRoute } from '../../lib/openapi/define-route.js';
 import { ok, paginated } from '../../lib/http.js';
 import * as service from './admin-exchanges.service.js';
@@ -25,7 +26,7 @@ defineRoute(adminExchangesRouter, {
   permission: { module: 'orders', action: 'view' },
   request: { query: listExchangesQuery },
   responses: {
-    200: { description: 'Paginated exchanges.', schema: adminExchangeResponse },
+    200: { description: 'Paginated exchanges.', schema: z.array(adminExchangeResponse) },
   },
   handler: async ({ query }) => {
     const { items, meta } = await service.listExchanges(query);

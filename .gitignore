@@ -28,3 +28,7 @@ firebase-env.local.txt
 
 # QA harness session cache — holds a short-lived staff token
 .qa-admin-session.json
+
+# Scratch scripts
+scratch/
+

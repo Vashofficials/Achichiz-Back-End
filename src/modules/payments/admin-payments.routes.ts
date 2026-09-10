@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { defineRoute } from '../../lib/openapi/define-route.js';
 import { ok, paginated } from '../../lib/http.js';
 import * as service from './admin-payments.service.js';
@@ -23,7 +24,7 @@ defineRoute(adminPaymentsRouter, {
   permission: { module: 'finance', action: 'view' },
   request: { query: listPaymentsQuery },
   responses: {
-    200: { description: 'Paginated payments.', schema: adminPaymentResponse },
+    200: { description: 'Paginated payments.', schema: z.array(adminPaymentResponse) },
   },
   handler: async ({ query }) => {
     const { items, meta } = await service.listPayments(query);

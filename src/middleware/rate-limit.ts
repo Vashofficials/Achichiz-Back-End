@@ -48,8 +48,8 @@ const RULES: Record<LimiterName, Rule> = {
   otp: { windowMs: 15 * 60_000, limit: 5 },
   checkout: { windowMs: 60_000, limit: 20, byUser: true },
   payment: { windowMs: 60_000, limit: 30, byUser: true },
-  // Public forms. Bot bait without a captcha in front.
-  lead: { windowMs: 60 * 60_000, limit: 10 },
+  // Public forms. Generous limit for enquiries and briefs (60 per hour).
+  lead: { windowMs: 60 * 60_000, limit: 60 },
   search: { windowMs: 60_000, limit: 60 },
   // Exports are expensive; a staff member does not need many per hour.
   export: { windowMs: 60 * 60_000, limit: 20, byUser: true },
