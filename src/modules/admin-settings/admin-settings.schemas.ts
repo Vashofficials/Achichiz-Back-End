@@ -131,3 +131,20 @@ export const securitySettingsSchema = z.object({
 
 export const updateSecuritySettingsBody = securitySettingsSchema;
 export type SecuritySettings = z.infer<typeof securitySettingsSchema>;
+
+/* -------------------------------------------------------- Delivery Methods */
+export const deliveryMethodItemSchema = z.object({
+  id: z.string(),
+  apiValue: z.enum(['standard', 'scheduled', 'same_day', 'midnight']),
+  label: z.string().min(1),
+  eta: z.string().min(1),
+  pricePaise: z.number().int().nonnegative(),
+  price: z.number().nonnegative().optional(),
+  enabled: z.boolean().default(true),
+  sortOrder: z.number().int().default(0),
+});
+
+export const deliveryMethodsSchema = z.array(deliveryMethodItemSchema);
+export const updateDeliveryMethodsBody = deliveryMethodsSchema;
+export type DeliveryMethodItem = z.infer<typeof deliveryMethodItemSchema>;
+export type DeliveryMethods = z.infer<typeof deliveryMethodsSchema>;

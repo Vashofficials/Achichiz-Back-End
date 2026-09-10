@@ -310,6 +310,7 @@ const collectionsResource = defineResource({
     heading: collections.heading,
     subtext: collections.subtext,
     seoDescription: collections.seoDescription,
+    heroMediaId: collections.heroMediaId,
     designerId: collections.designerId,
     curator: collections.curator,
     sortOrder: collections.sortOrder,

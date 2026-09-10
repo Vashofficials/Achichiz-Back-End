@@ -24,6 +24,9 @@ import {
   serviceability,
   serviceabilityQuery,
 } from './catalogue.schemas.js';
+import { getDeliveryMethodsSettings } from '../admin-settings/admin-settings.service.js';
+import { deliveryMethodsSchema } from '../admin-settings/admin-settings.schemas.js';
+
 
 /**
  * Storefront catalogue. Everything here is public, cacheable and read-only.
@@ -322,3 +325,26 @@ defineRoute(catalogueRouter, {
   },
   handler: async ({ query }) => ok(await catalogue.checkServiceability(query.pincode)),
 });
+
+/* ------------------------------------------------------ delivery methods */
+
+defineRoute(catalogueRouter, {
+  method: 'get',
+  path: '/v1/delivery-methods',
+  surface: 'storefront',
+  operationId: 'getDeliveryMethods',
+  summary: 'Get available checkout delivery methods and surcharges',
+  description:
+    'Returns active storefront delivery methods (e.g. Standard, Express, Same-Day) ' +
+    'with their display labels, ETA subtitles, and prices.',
+  tags: ['Delivery'],
+  auth: 'public',
+  responses: {
+    200: {
+      description: 'The active delivery methods.',
+      schema: deliveryMethodsSchema,
+    },
+  },
+  handler: async () => ok(await getDeliveryMethodsSettings(true)),
+});
+

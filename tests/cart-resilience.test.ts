@@ -12,6 +12,8 @@ describe('Cart Token Resilience Tests', () => {
     const staleToken = 'stale-token-from-old-session';
     vi.spyOn(cartRepo, 'findCartByToken').mockResolvedValue(null);
 
+    // Mirrors `carts.$inferSelect`. The contact columns are `email`/`mobile`, not
+    // `contactEmail`/`contactPhone`, and the abandonment columns are not optional.
     const createdCart: cartRepo.CartRow = {
       id: '11111111-1111-1111-1111-111111111111',
       anonToken: 'fresh-new-token-12345',
@@ -19,10 +21,13 @@ describe('Cart Token Resilience Tests', () => {
       stage: 'cart',
       currency: 'INR',
       couponCode: null,
-      contactEmail: null,
-      contactPhone: null,
+      email: null,
+      mobile: null,
       convertedOrderId: null,
-      metadata: null,
+      abandonedAt: null,
+      recoveryState: 'not_sent',
+      recoverySentAt: null,
+      expiresAt: new Date(Date.now() + 86_400_000),
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -33,10 +38,11 @@ describe('Cart Token Resilience Tests', () => {
     vi.spyOn(cartRepo, 'findVariantForAdd').mockResolvedValue({
       variantId: 'var-123',
       productId: 'prod-123',
+      productHandle: 'chain-pendant-set',
       title: 'Chain Pendant Set',
-      productTitle: 'Chain Pendant Set',
+      variantLabel: 'Size',
+      sku: 'CPS-01',
       pricePaise: 39900,
-      compareAtPaise: 49900,
       availableQty: 10,
       sellable: true,
       isPersonalisable: false,
@@ -51,22 +57,25 @@ describe('Cart Token Resilience Tests', () => {
     vi.spyOn(cartRepo, 'findPricingLines').mockResolvedValue([
       {
         id: 'line-1',
+        lineKey: 'var-123::',
         variantId: 'var-123',
         productId: 'prod-123',
+        productHandle: 'chain-pendant-set',
         collectionIds: [],
         quantity: 1,
         unitPricePaise: 39900,
         snapshotUnitPricePaise: 39900,
+        hsnCode: '7117',
         gstRateBp: 1800,
         cessRateBp: 0,
         availableQty: 10,
         sellable: true,
         title: 'Chain Pendant Set',
-        productTitle: 'Chain Pendant Set',
         variantLabel: 'Size',
         sku: 'CPS-01',
         imageUrl: null,
         personalisation: null,
+        createdAt: new Date(),
       },
     ]);
     vi.spyOn(cartRepo, 'findLineAddOns').mockResolvedValue([]);
@@ -81,7 +90,8 @@ describe('Cart Token Resilience Tests', () => {
     expect(res).toBeDefined();
     expect(res.token).toBe('fresh-new-token-12345');
     expect(res.lines).toHaveLength(1);
-    expect(res.lines[0].variantId).toBe('var-123');
+    // `noUncheckedIndexedAccess` is on, so an index read is `T | undefined`.
+    expect(res.lines[0]?.variantId).toBe('var-123');
     expect(res.itemCount).toBe(1);
   });
 

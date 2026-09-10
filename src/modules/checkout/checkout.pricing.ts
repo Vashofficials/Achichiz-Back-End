@@ -115,6 +115,8 @@ export type ShippingConfig = {
   flatFeePaise: Paise;
   /** `delivery_zones.base_fee_paise` when the pincode resolves to a zone. */
   zoneBaseFeePaise: Paise | null;
+  /** Dynamic surcharges from app_settings, fallback to DELIVERY_SURCHARGE_PAISE. */
+  surcharges?: Partial<Record<DeliveryType, Paise>> | null;
 };
 
 export type PricingInput = {
@@ -320,7 +322,8 @@ export function computeShipping(
 
   // A free-shipping coupon waives the base fee. It does not waive a delivery
   // UPGRADE the customer chose to buy.
-  return (freeShippingCoupon ? 0 : base) + DELIVERY_SURCHARGE_PAISE[deliveryType];
+  const surcharge = config.surcharges?.[deliveryType] ?? DELIVERY_SURCHARGE_PAISE[deliveryType] ?? 0;
+  return (freeShippingCoupon ? 0 : base) + surcharge;
 }
 
 /** `orders.round_off_paise` — reconciles the grand total to the nearest rupee. Bounded ±50. */

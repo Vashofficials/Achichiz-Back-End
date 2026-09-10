@@ -31,6 +31,7 @@ import { NotFoundError, UnprocessableError, ValidationError } from '../../lib/er
 import { addWorkingDays, isBeforeCutoff, istDate, istTime } from '../catalogue/catalogue.service.js';
 import * as cartService from '../cart/cart.service.js';
 import * as payments from '../payments/payments.service.js';
+import { getDeliverySurchargesMap } from '../admin-settings/admin-settings.service.js';
 import {
   DELIVERY_SURCHARGE_PAISE,
   DELIVERY_TYPES,
@@ -245,6 +246,7 @@ type QuoteContext = {
   supply: repo.SupplyPointRow | null;
   isInterstate: boolean;
   state: Awaited<ReturnType<typeof cartService.loadCartState>>;
+  surcharges: Record<string, number>;
 };
 
 async function buildContext(
@@ -256,7 +258,11 @@ async function buildContext(
   const destination = await resolveDestination(customerId, body);
   assertDeliveryDateSane(body.requestedDeliveryDate, now);
 
-  const [zone, supply] = await Promise.all([repo.findDestination(destination.pincode), repo.findSupplyPoint()]);
+  const [zone, supply, surchargesMap] = await Promise.all([
+    repo.findDestination(destination.pincode),
+    repo.findSupplyPoint(),
+    getDeliverySurchargesMap(),
+  ]);
 
   // B2C goods (CGST Act s.10(1)(a)): the place of supply is where the movement
   // terminates. With no warehouse configured yet we cannot know the supplier
@@ -269,10 +275,11 @@ async function buildContext(
     paymentMethod: body.paymentMethod,
     isInterstate,
     zoneBaseFeePaise: zone?.baseFeePaise ?? null,
+    surcharges: surchargesMap as Partial<Record<DeliveryType, number>>,
     couponCodeOverride: body.couponCode,
   });
 
-  return { cart, destination, zone, supply, isInterstate, state };
+  return { cart, destination, zone, supply, isInterstate, state, surcharges: surchargesMap };
 }
 
 export async function quote(
@@ -303,7 +310,7 @@ export async function quote(
       return {
         deliveryType: type,
         available: availability.available,
-        surchargePaise: DELIVERY_SURCHARGE_PAISE[type],
+        surchargePaise: ctx.surcharges[type] ?? DELIVERY_SURCHARGE_PAISE[type],
         estimatedDeliveryDate: availability.eta,
         unavailableReason: availability.reason,
       };

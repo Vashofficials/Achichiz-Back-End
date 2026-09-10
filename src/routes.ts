@@ -36,6 +36,7 @@ import { adminExchangesRouter } from './modules/admin-orders/admin-exchanges.rou
 import { adminSettingsRouter } from './modules/admin-settings/admin-settings.routes.js';
 import { mediaRouter } from './modules/media/media.routes.js';
 import { geoRouter } from './modules/geo/geo.routes.js';
+import { reviewsRouter } from './modules/catalogue/reviews.routes.js';
 
 /**
  * The single mount point.
@@ -100,6 +101,7 @@ apiRouter.use(adminBuilderRouter);
 apiRouter.use(adminReportsRouter);   // phase 7 — the 10 report aggregates
 apiRouter.use(adminSettingsRouter);
 apiRouter.use(mediaRouter);
+apiRouter.use(reviewsRouter); // before the catalogue router: /products/:handle/reviews must not be read as a handle
 apiRouter.use(geoRouter);
 
 // ── webhooks (raw body, signature verified) ──────────────────────────────

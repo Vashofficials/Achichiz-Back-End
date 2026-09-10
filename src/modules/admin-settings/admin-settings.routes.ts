@@ -13,6 +13,8 @@ import {
   updateNotificationSettingsBody,
   securitySettingsSchema,
   updateSecuritySettingsBody,
+  deliveryMethodsSchema,
+  updateDeliveryMethodsBody,
   settingsResponse,
 } from './admin-settings.schemas.js';
 
@@ -179,3 +181,36 @@ defineRoute(adminSettingsRouter, {
   },
   handler: async ({ body, auth }) => ok(await service.updateSecuritySettings(body, auth.staffId)),
 });
+
+/* ----------------------------------------------------- Delivery Methods */
+defineRoute(adminSettingsRouter, {
+  method: 'get',
+  path: '/v1/admin/settings/delivery-methods',
+  surface: 'admin',
+  operationId: 'adminGetDeliveryMethodsSettings',
+  summary: 'Get Delivery Methods Settings',
+  tags: [TAG],
+  auth: 'staff',
+  permission: { module: 'settings', action: 'manage-settings' },
+  responses: {
+    200: { description: 'The delivery methods settings', schema: settingsResponse(deliveryMethodsSchema) },
+  },
+  handler: async () => ok(await service.getDeliveryMethodsSettings(false)),
+});
+
+defineRoute(adminSettingsRouter, {
+  method: 'put',
+  path: '/v1/admin/settings/delivery-methods',
+  surface: 'admin',
+  operationId: 'adminUpdateDeliveryMethodsSettings',
+  summary: 'Update Delivery Methods Settings',
+  tags: [TAG],
+  auth: 'staff',
+  permission: { module: 'settings', action: 'manage-settings' },
+  request: { body: updateDeliveryMethodsBody },
+  responses: {
+    200: { description: 'The updated delivery methods settings', schema: settingsResponse(deliveryMethodsSchema) },
+  },
+  handler: async ({ body, auth }) => ok(await service.updateDeliveryMethodsSettings(body, auth.staffId)),
+});
+

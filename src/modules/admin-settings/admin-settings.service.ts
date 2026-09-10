@@ -1,6 +1,6 @@
 import * as repo from './admin-settings.repository.js';
 import { encryptString, decryptString } from '../../lib/encryption.js';
-import type { BusinessSettings, TaxSettings, PaymentSettings, NotificationSettings, SecuritySettings } from './admin-settings.schemas.js';
+import type { BusinessSettings, TaxSettings, PaymentSettings, NotificationSettings, SecuritySettings, DeliveryMethods } from './admin-settings.schemas.js';
 
 export async function getBusinessSettings(): Promise<BusinessSettings> {
   return await repo.getSettingsGroup('business');
@@ -64,3 +64,106 @@ export async function getSecuritySettings(): Promise<SecuritySettings> {
 export async function updateSecuritySettings(payload: SecuritySettings, actorId: string): Promise<SecuritySettings> {
   return (await repo.upsertSettingsGroup('security', payload, actorId)) as SecuritySettings;
 }
+
+/* -------------------------------------------------------- Delivery Methods */
+export const DEFAULT_DELIVERY_METHODS: DeliveryMethods = [
+  {
+    id: 'standard',
+    apiValue: 'standard',
+    label: 'Standard delivery (Lucknow)',
+    eta: '1–3 working days',
+    pricePaise: 0,
+    price: 0,
+    enabled: true,
+    sortOrder: 1,
+  },
+  {
+    id: 'express',
+    apiValue: 'scheduled',
+    label: 'Express delivery (Lucknow)',
+    eta: 'Next working day',
+    pricePaise: 24_900,
+    price: 249,
+    enabled: true,
+    sortOrder: 2,
+  },
+  {
+    id: 'same-day',
+    apiValue: 'same_day',
+    label: 'Same-day (across Lucknow)',
+    eta: 'Today, before 9 PM',
+    pricePaise: 49_900,
+    price: 499,
+    enabled: true,
+    sortOrder: 3,
+  },
+  {
+    id: 'midnight',
+    apiValue: 'midnight',
+    label: 'Midnight delivery (Lucknow)',
+    eta: 'Tonight, 11 PM – 12 AM',
+    pricePaise: 49_900,
+    price: 499,
+    enabled: false,
+    sortOrder: 4,
+  },
+];
+
+export async function getDeliveryMethodsSettings(onlyEnabled = false): Promise<DeliveryMethods> {
+  try {
+    const raw = await repo.getSettingsGroup('storefront.delivery_methods');
+    const list: DeliveryMethods =
+      Array.isArray(raw) && raw.length > 0 ? (raw as DeliveryMethods) : DEFAULT_DELIVERY_METHODS;
+
+    const normalized = list.map((item) => ({
+      ...item,
+      price: item.price !== undefined ? item.price : Math.round(item.pricePaise / 100),
+    }));
+
+    const filtered = onlyEnabled ? normalized.filter((m) => m.enabled) : normalized;
+    return filtered.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  } catch {
+    const filtered = onlyEnabled
+      ? DEFAULT_DELIVERY_METHODS.filter((m) => m.enabled)
+      : DEFAULT_DELIVERY_METHODS;
+    return filtered;
+  }
+}
+
+export async function updateDeliveryMethodsSettings(
+  payload: DeliveryMethods,
+  actorId: string,
+): Promise<DeliveryMethods> {
+  const normalized = payload.map((item, index) => {
+    const pricePaise = item.pricePaise !== undefined ? item.pricePaise : (item.price ?? 0) * 100;
+    return {
+      ...item,
+      pricePaise,
+      price: Math.round(pricePaise / 100),
+      sortOrder: item.sortOrder ?? index + 1,
+    };
+  });
+
+  await repo.upsertSettingsGroup('storefront.delivery_methods', normalized, actorId, true);
+  return normalized;
+}
+
+export async function getDeliverySurchargesMap(): Promise<Record<string, number>> {
+  const methods = await getDeliveryMethodsSettings(false);
+  const map: Record<string, number> = {
+    standard: 0,
+    scheduled: 24_900,
+    same_day: 49_900,
+    midnight: 49_900,
+    international: 0,
+  };
+
+  for (const m of methods) {
+    if (m.apiValue) {
+      map[m.apiValue] = m.pricePaise;
+    }
+  }
+
+  return map;
+}
+

@@ -3,8 +3,11 @@ import { db } from '../src/config/db.js';
 import * as checkoutService from '../src/modules/checkout/checkout.service.js';
 import * as checkoutRepo from '../src/modules/checkout/checkout.repository.js';
 import * as cartService from '../src/modules/cart/cart.service.js';
+import type * as cartRepo from '../src/modules/cart/cart.repository.js';
 import * as payments from '../src/modules/payments/payments.service.js';
 import { UnprocessableError, ValidationError } from '../src/lib/errors.js';
+import { createOrderBody } from '../src/modules/checkout/checkout.schemas.js';
+import type { z } from 'zod';
 
 describe('Order Proceeding Test Cases', () => {
   const mockCustomerId = 'cust-1234-5678';
@@ -12,6 +15,20 @@ describe('Order Proceeding Test Cases', () => {
   const mockCartId = 'cart-1111-2222';
   const mockOrderNumber = 'ACH100001';
   const mockOrderId = 'ord-9999-8888';
+  /** Must be a real UUID — `createOrderBody.addressId` is `z.uuid()`. */
+  const mockSavedAddressId = '11111111-1111-4111-8111-111111111111';
+
+  /**
+   * Place an order the way the route does — through the schema.
+   *
+   * `createOrder` takes `CreateOrderBody`, which is `z.infer` — the PARSED output, where every
+   * defaulted field (`deliveryType`, `paymentMethod`, `countryCode`, `isGift`,
+   * `isAnonymousGift`, …) is non-optional. A hand-written literal therefore has to declare all
+   * of them or fail to compile, which is what broke this file. Parsing here applies the same
+   * defaults the endpoint applies, so each fixture states only what its case is about.
+   */
+  const placeOrder = (body: z.input<typeof createOrderBody>) =>
+    checkoutService.createOrder(mockCustomerId, createOrderBody.parse(body));
 
   const mockDestinationRow: checkoutRepo.DestinationRow = {
     pincode: '226016',
@@ -32,23 +49,26 @@ describe('Order Proceeding Test Cases', () => {
 
   const mockSupplyPoint: checkoutRepo.SupplyPointRow = {
     warehouseId: 'wh-main',
-    warehouseCode: 'DEMO-LKO-01',
-    warehouseName: 'Main Warehouse Lucknow',
     stateCode: '09',
     gstin: '09AAAAA0000A1Z5',
   };
 
-  const mockCart = {
+  // Mirrors `carts.$inferSelect`: the contact columns are `email`/`mobile`, and the
+  // abandonment columns are not optional.
+  const mockCart: cartRepo.CartRow = {
     id: mockCartId,
     anonToken: mockCartToken,
     customerId: mockCustomerId,
     stage: 'cart' as const,
     currency: 'INR',
     couponCode: null,
-    contactEmail: null,
-    contactPhone: null,
+    email: null,
+    mobile: null,
     convertedOrderId: null,
-    metadata: null,
+    abandonedAt: null,
+    recoveryState: 'not_sent',
+    recoverySentAt: null,
+    expiresAt: new Date(Date.now() + 86_400_000),
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -129,17 +149,14 @@ describe('Order Proceeding Test Cases', () => {
     vi.spyOn(checkoutRepo, 'findSupplyPoint').mockResolvedValue(mockSupplyPoint);
     vi.spyOn(cartService, 'loadCartState').mockResolvedValue(mockCartState as any);
     vi.spyOn(checkoutRepo, 'findCustomerProfile').mockResolvedValue({
-      id: mockCustomerId,
       email: 'buyer@test.com',
       mobile: '9876543210',
       fullName: 'Test Buyer',
-      notes: null,
     });
     vi.spyOn(checkoutRepo, 'findInventoryLevels').mockResolvedValue([
       {
         id: 'inv-level-1',
         warehouseId: 'wh-main',
-        warehouseCode: 'DEMO-LKO-01',
         variantId: 'var-1',
         availableQty: 25,
       },
@@ -163,7 +180,7 @@ describe('Order Proceeding Test Cases', () => {
   /* ----------------------------------------------------------- Happy Paths */
 
   it('proceeds order with Cash on Delivery (COD) successfully', async () => {
-    const result = await checkoutService.createOrder(mockCustomerId, {
+    const result = await placeOrder({
       cartToken: mockCartToken,
       address: {
         contactName: 'Test Buyer',
@@ -200,7 +217,7 @@ describe('Order Proceeding Test Cases', () => {
       currency: 'INR',
     });
 
-    const result = await checkoutService.createOrder(mockCustomerId, {
+    const result = await placeOrder({
       cartToken: mockCartToken,
       address: {
         contactName: 'Test Buyer',
@@ -241,7 +258,7 @@ describe('Order Proceeding Test Cases', () => {
       currency: 'INR',
     });
 
-    const result = await checkoutService.createOrder(mockCustomerId, {
+    const result = await placeOrder({
       cartToken: mockCartToken,
       address: {
         contactName: 'Test Buyer',
@@ -274,7 +291,7 @@ describe('Order Proceeding Test Cases', () => {
       currency: 'INR',
     });
 
-    const result = await checkoutService.createOrder(mockCustomerId, {
+    const result = await placeOrder({
       cartToken: mockCartToken,
       address: {
         contactName: 'Test Buyer',
@@ -300,25 +317,50 @@ describe('Order Proceeding Test Cases', () => {
 
   /* ------------------------------------------------- State Code Normalization */
 
-  it('normalizes state name "Uttar Pradesh" or abbreviation "UP" to "09"', async () => {
+  /*
+   * `normalizeStateCode` is reachable from the SAVED-ADDRESS path, not the request path.
+   *
+   * This test used to send `stateCode: 'UP'` in the request body and assert it became '09'.
+   * That can never happen through the API: `createOrderBody` constrains the field to
+   * /^[0-3][0-9]$/, so the route rejects a state name with a 422 long before the service runs.
+   * The old test only passed because it called the service with a hand-built literal and
+   * skipped the schema entirely — it asserted behaviour production cannot produce.
+   *
+   * Where the normalisation genuinely earns its place is `checkout.service.ts:108`, reading a
+   * stored address: an `addresses` row written before the column was disciplined can still hold
+   * 'UP', and an order must not be filed with a bad place of supply. So drive it through
+   * `addressId`, which is the path that actually reaches that code.
+   */
+  it('normalizes a legacy state value stored on a saved address to its GST code', async () => {
     let capturedStateCode: string | undefined;
     vi.spyOn(checkoutRepo, 'insertOrder').mockImplementation(async (_tx, values: any) => {
       capturedStateCode = values.shipStateCode;
       return { id: mockOrderId, orderNo: mockOrderNumber, placedAt: new Date() } as any;
     });
 
-    await checkoutService.createOrder(mockCustomerId, {
+    vi.spyOn(checkoutRepo, 'findCustomerAddress').mockResolvedValue({
+      id: mockSavedAddressId,
+      customerId: mockCustomerId,
+      label: 'Home',
+      contactName: 'Test Buyer',
+      mobile: '9876543210',
+      line1: '123 Main Street',
+      line2: null,
+      area: null,
+      city: 'Lucknow',
+      // The legacy value the normaliser exists to repair.
+      stateCode: 'UP',
+      pincode: '226016',
+      countryCode: 'IN',
+      isDefault: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+    });
+
+    await placeOrder({
       cartToken: mockCartToken,
-      address: {
-        contactName: 'Test Buyer',
-        mobile: '9876543210',
-        line1: '123 Main Street',
-        city: 'Lucknow',
-        stateCode: 'UP',
-        pincode: '226016',
-        countryCode: 'IN',
-        saveToAddressBook: false,
-      },
+      addressId: mockSavedAddressId,
       deliveryType: 'standard',
       paymentMethod: 'cod',
       buyerName: 'Test Buyer',
@@ -330,9 +372,35 @@ describe('Order Proceeding Test Cases', () => {
     expect(capturedStateCode).toBe('09');
   });
 
+  // The schema rejects synchronously, before any promise exists — `.rejects` would never see
+  // it, so this asserts a thrown error rather than a rejected promise.
+  it('rejects a state NAME in the request body — the schema owns that boundary', () => {
+    expect(() =>
+      placeOrder({
+        cartToken: mockCartToken,
+        address: {
+          contactName: 'Test Buyer',
+          mobile: '9876543210',
+          line1: '123 Main Street',
+          city: 'Lucknow',
+          stateCode: 'Uttar Pradesh',
+          pincode: '226016',
+          countryCode: 'IN',
+          saveToAddressBook: false,
+        },
+        deliveryType: 'standard',
+        paymentMethod: 'cod',
+        buyerName: 'Test Buyer',
+        buyerEmail: 'buyer@test.com',
+        buyerMobile: '9876543210',
+        isGift: false,
+      }),
+    ).toThrow();
+  });
+
   it('uses saved address from address book by addressId', async () => {
     vi.spyOn(checkoutRepo, 'findCustomerAddress').mockResolvedValue({
-      id: 'saved-addr-1',
+      id: mockSavedAddressId,
       customerId: mockCustomerId,
       label: 'Home',
       contactName: 'Saved Contact',
@@ -347,11 +415,13 @@ describe('Order Proceeding Test Cases', () => {
       isDefault: true,
       createdAt: new Date(),
       updatedAt: new Date(),
+      // `addresses` is soft-deletable, so the row type carries `deletedAt`.
+      deletedAt: null,
     });
 
-    const result = await checkoutService.createOrder(mockCustomerId, {
+    const result = await placeOrder({
       cartToken: mockCartToken,
-      addressId: 'saved-addr-1',
+      addressId: mockSavedAddressId,
       deliveryType: 'standard',
       paymentMethod: 'cod',
       buyerName: 'Saved Contact',
@@ -373,7 +443,7 @@ describe('Order Proceeding Test Cases', () => {
     });
 
     await expect(
-      checkoutService.createOrder(mockCustomerId, {
+      placeOrder({
         cartToken: mockCartToken,
         address: {
           contactName: 'Test Buyer',
@@ -403,7 +473,7 @@ describe('Order Proceeding Test Cases', () => {
     });
 
     await expect(
-      checkoutService.createOrder(mockCustomerId, {
+      placeOrder({
         cartToken: mockCartToken,
         address: {
           contactName: 'Test Buyer',
@@ -432,7 +502,7 @@ describe('Order Proceeding Test Cases', () => {
     } as any);
 
     await expect(
-      checkoutService.createOrder(mockCustomerId, {
+      placeOrder({
         cartToken: mockCartToken,
         address: {
           contactName: 'Test Buyer',
@@ -467,7 +537,7 @@ describe('Order Proceeding Test Cases', () => {
     } as any);
 
     await expect(
-      checkoutService.createOrder(mockCustomerId, {
+      placeOrder({
         cartToken: mockCartToken,
         address: {
           contactName: 'Test Buyer',
@@ -491,7 +561,7 @@ describe('Order Proceeding Test Cases', () => {
 
   it('rejects international destination with friendly message', async () => {
     await expect(
-      checkoutService.createOrder(mockCustomerId, {
+      placeOrder({
         cartToken: mockCartToken,
         address: {
           contactName: 'Test Buyer',

@@ -21,16 +21,18 @@ export async function getSettingsGroup(key: string, tx: any = db): Promise<Recor
  */
 export async function upsertSettingsGroup(
   key: string,
-  value: Record<string, any>,
+  value: any,
   actorId: string,
+  isPublic?: boolean,
   tx: any = db
-): Promise<Record<string, any>> {
+): Promise<any> {
   const [row] = await tx
     .insert(appSettings)
     .values({
       key,
       value,
       updatedBy: actorId,
+      ...(isPublic !== undefined ? { isPublic } : {}),
     })
     .onConflictDoUpdate({
       target: appSettings.key,
@@ -38,9 +40,11 @@ export async function upsertSettingsGroup(
         value,
         updatedBy: actorId,
         updatedAt: new Date(),
+        ...(isPublic !== undefined ? { isPublic } : {}),
       },
     })
     .returning({ value: appSettings.value });
 
-  return (row?.value as Record<string, any>) || {};
+  return row?.value ?? null;
 }
+

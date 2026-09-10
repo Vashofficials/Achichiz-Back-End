@@ -7558,7 +7558,7 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {
@@ -7626,7 +7626,20 @@
                         "type": "string",
                         "format": "uuid",
                         "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                        "description": "Parent collection."
+                        "description": "Parent collection. Set this to make the collection a sub-category of another one."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "heroMediaId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "description": "Image. Tile and banner image for this category."
                       },
                       {
                         "type": "null"
@@ -7726,6 +7739,10 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
                   }
                 },
                 "required": [
@@ -8560,7 +8577,7 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {
@@ -8649,7 +8666,20 @@
                         "type": "string",
                         "format": "uuid",
                         "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                        "description": "Parent collection."
+                        "description": "Parent collection. Set this to make the collection a sub-category of another one."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "heroMediaId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "description": "Image. Tile and banner image for this category."
                       },
                       {
                         "type": "null"
@@ -8756,6 +8786,10 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
                   }
                 },
                 "additionalProperties": false
@@ -33403,6 +33437,68 @@
                       }
                     ]
                   },
+                  "city": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 80,
+                        "description": "City."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "quantityNeeded": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647,
+                        "description": "Quantity Needed."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "employeeCount": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647,
+                        "description": "Employee Count."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "occasion": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120,
+                        "description": "Occasion."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "brief": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 4000,
+                        "description": "Brief."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "source": {
                     "anyOf": [
                       {
@@ -34331,6 +34427,68 @@
                         "type": "string",
                         "maxLength": 20,
                         "description": "Mobile."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "city": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 80,
+                        "description": "City."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "quantityNeeded": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647,
+                        "description": "Quantity Needed."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "employeeCount": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 2147483647,
+                        "description": "Employee Count."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "occasion": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120,
+                        "description": "Occasion."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "brief": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 4000,
+                        "description": "Brief."
                       },
                       {
                         "type": "null"
@@ -38744,7 +38902,7 @@
                     "anyOf": [
                       {
                         "type": "string",
-                        "maxLength": 2,
+                        "maxLength": 20,
                         "description": "State."
                       },
                       {
@@ -38888,6 +39046,22 @@
                       "paused"
                     ],
                     "description": "Status."
+                  },
+                  "pincodes": {
+                    "anyOf": [
+                      {
+                        "maxItems": 50,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 500
+                        },
+                        "description": "Pincodes. Comma-separated 6-digit PIN codes serviceable in this zone"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -39765,7 +39939,7 @@
                     "anyOf": [
                       {
                         "type": "string",
-                        "maxLength": 2,
+                        "maxLength": 20,
                         "description": "State."
                       },
                       {
@@ -39911,6 +40085,22 @@
                           "paused"
                         ],
                         "description": "Status."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "pincodes": {
+                    "anyOf": [
+                      {
+                        "maxItems": 50,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 500
+                        },
+                        "description": "Pincodes. Comma-separated 6-digit PIN codes serviceable in this zone"
                       },
                       {
                         "type": "null"
@@ -110654,6 +110844,331 @@
                             }
                           },
                           "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "result"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated, but the staff role lacks `settings:manage-settings`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminBearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/settings/delivery-methods": {
+      "get": {
+        "operationId": "adminGetDeliveryMethodsSettings",
+        "summary": "Get Delivery Methods Settings",
+        "tags": [
+          "Admin Settings"
+        ],
+        "responses": {
+          "200": {
+            "description": "The delivery methods settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "success"
+                        },
+                        "result": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "apiValue": {
+                                "type": "string",
+                                "enum": [
+                                  "standard",
+                                  "scheduled",
+                                  "same_day",
+                                  "midnight"
+                                ]
+                              },
+                              "label": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "eta": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "pricePaise": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "price": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "enabled": {
+                                "default": true,
+                                "type": "boolean"
+                              },
+                              "sortOrder": {
+                                "default": 0,
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "apiValue",
+                              "label",
+                              "eta",
+                              "pricePaise",
+                              "enabled",
+                              "sortOrder"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "result"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated, but the staff role lacks `settings:manage-settings`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminBearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "adminUpdateDeliveryMethodsSettings",
+        "summary": "Update Delivery Methods Settings",
+        "tags": [
+          "Admin Settings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "apiValue": {
+                      "type": "string",
+                      "enum": [
+                        "standard",
+                        "scheduled",
+                        "same_day",
+                        "midnight"
+                      ]
+                    },
+                    "label": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "eta": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "pricePaise": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "price": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "enabled": {
+                      "default": true,
+                      "type": "boolean"
+                    },
+                    "sortOrder": {
+                      "default": 0,
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "apiValue",
+                    "label",
+                    "eta",
+                    "pricePaise"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated delivery methods settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "success"
+                        },
+                        "result": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "apiValue": {
+                                "type": "string",
+                                "enum": [
+                                  "standard",
+                                  "scheduled",
+                                  "same_day",
+                                  "midnight"
+                                ]
+                              },
+                              "label": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "eta": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "pricePaise": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "price": {
+                                "type": "number",
+                                "minimum": 0
+                              },
+                              "enabled": {
+                                "default": true,
+                                "type": "boolean"
+                              },
+                              "sortOrder": {
+                                "default": 0,
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "apiValue",
+                              "label",
+                              "eta",
+                              "pricePaise",
+                              "enabled",
+                              "sortOrder"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
