@@ -268,7 +268,7 @@ export async function getProductByHandle(handle: string): Promise<ProductDetail>
     const row = await repo.findProductByHandle(handle);
     if (!row) throw new NotFoundError('Product', handle);
 
-    const [images, contents, variants, pinnedAddOns, templates, relatedHandles, seo] = await Promise.all([
+    const [gallery, contents, variants, pinnedAddOns, templates, relatedHandles, seo] = await Promise.all([
       repo.listProductMedia(row.id),
       repo.listContentItems(row.id),
       repo.listVariants(row.id),
@@ -281,12 +281,22 @@ export async function getProductByHandle(handle: string): Promise<ProductDetail>
     // A product with no pinned add-ons offers the global set, not none at all.
     const addOnRows = pinnedAddOns.length > 0 ? pinnedAddOns : await repo.listDefaultAddOns();
 
+    const images = gallery
+      .filter((m) => m.kind === 'image')
+      .map(({ id, url, altText, position }) => ({ id, url, altText, position }));
+    const videos = gallery
+      .filter((m) => m.kind === 'video')
+      .map(({ id, url, mimeType, altText, position }) => ({ id, url, mimeType, altText, position }));
+
     return {
       ...toProductSummary(row),
       description: row.description,
+      careNote: row.careNote,
+      deliveryNote: row.deliveryNote,
       isPerishable: row.isPerishable,
       isFragile: row.isFragile,
       images,
+      videos,
       contents,
       variants: variants.map(toVariant),
       addOns: addOnRows.map(toAddOn),

@@ -5,7 +5,13 @@
 
 import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db, type Executor } from '../../config/db.js';
-import { mediaAssets, productMedia, products, productVariants } from '../../db/schema/index.js';
+import {
+  mediaAssets,
+  productContentItems,
+  productMedia,
+  products,
+  productVariants,
+} from '../../db/schema/index.js';
 
 export async function productExists(productId: string, exec: Executor = db): Promise<boolean> {
   const rows = await exec
@@ -112,6 +118,27 @@ export async function detach(productId: string, linkId: string, exec: Executor =
     .where(and(eq(productMedia.id, linkId), eq(productMedia.productId, productId)))
     .returning({ id: productMedia.id });
   return rows.length;
+}
+
+export async function listContents(productId: string, exec: Executor = db): Promise<string[]> {
+  const rows = await exec
+    .select({ body: productContentItems.body })
+    .from(productContentItems)
+    .where(eq(productContentItems.productId, productId))
+    .orderBy(asc(productContentItems.position), asc(productContentItems.id));
+  return rows.map((r) => r.body);
+}
+
+/** Replace the whole "what's inside" list atomically — a failed insert keeps the old list. */
+export async function replaceContents(productId: string, items: string[]): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.delete(productContentItems).where(eq(productContentItems.productId, productId));
+    if (items.length > 0) {
+      await tx
+        .insert(productContentItems)
+        .values(items.map((body, position) => ({ productId, body, position })));
+    }
+  });
 }
 
 /** Rewrite positions from an ordered list of link ids, inside one transaction. */

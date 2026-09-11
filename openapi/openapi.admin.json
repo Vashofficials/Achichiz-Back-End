@@ -4324,6 +4324,30 @@
                       }
                     ]
                   },
+                  "careNote": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 1000,
+                        "description": "Packaging / care note. Shown under the description on the product page. Leave empty to use the site default (\"Every gift leaves the studio checked twice…\")."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "deliveryNote": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "description": "Delivery note. Delivery tab text on the product page. Leave empty to use the site default."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "kind": {
                     "type": "string",
                     "enum": [
@@ -5415,6 +5439,30 @@
                         "type": "string",
                         "maxLength": 20000,
                         "description": "Description."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "careNote": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 1000,
+                        "description": "Packaging / care note. Shown under the description on the product page. Leave empty to use the site default (\"Every gift leaves the studio checked twice…\")."
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "deliveryNote": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2000,
+                        "description": "Delivery note. Delivery tab text on the product page. Leave empty to use the site default."
                       },
                       {
                         "type": "null"
@@ -105698,8 +105746,8 @@
     "/v1/admin/products/{productId}/media/upload": {
       "post": {
         "operationId": "uploadProductMedia",
-        "summary": "Upload images and attach them to a product",
-        "description": "Multipart upload of up to 10 files (field name `files`, 5MB each). Each file is stored in S3, recorded as a media asset, and appended to the product gallery in one call. Returns the complete gallery with resolved URLs — no second request needed to render the result.",
+        "summary": "Upload images or short videos and attach them to a product",
+        "description": "Multipart upload of up to 10 files (field name `files`). Images up to 5 MB (JPG, PNG, WEBP, GIF, AVIF), short videos up to 50 MB (MP4, WEBM, MOV). The whole batch is validated before anything is stored. Each file is stored in S3, recorded as a media asset, and appended to the product gallery in one call. Returns the complete gallery with resolved URLs — no second request needed to render the result.",
         "tags": [
           "Admin / Catalogue"
         ],
@@ -106381,6 +106429,229 @@
           },
           "404": {
             "description": "No such product or gallery entry."
+          },
+          "422": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminBearerAuth": []
+          }
+        ]
+      }
+    },
+    "/v1/admin/products/{productId}/contents": {
+      "get": {
+        "operationId": "getProductContents",
+        "summary": "Read the \"What's inside\" list",
+        "description": "The bullets the product page shows under \"What's inside\", in display order.",
+        "tags": [
+          "Admin / Catalogue"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "description": "`products.id`.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Bullets in display order."
+                        }
+                      },
+                      "required": [
+                        "items"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated, but the staff role lacks `catalogue:view`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such product."
+          },
+          "422": {
+            "description": "Validation failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "adminBearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "replaceProductContents",
+        "summary": "Replace the \"What's inside\" list",
+        "description": "Replaces every bullet with the supplied list, atomically — a failure leaves the old list intact. Send `[]` to clear it. The storefront picks the change up within two minutes (catalogue cache TTL).",
+        "tags": [
+          "Admin / Catalogue"
+        ],
+        "parameters": [
+          {
+            "name": "productId",
+            "in": "path",
+            "required": true,
+            "description": "`products.id`.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "description": "Bullets in display order. An empty array clears the list."
+                  }
+                },
+                "required": [
+                  "items"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The list as saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "result"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "example": "success"
+                    },
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Bullets in display order."
+                        }
+                      },
+                      "required": [
+                        "items"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, malformed or expired token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Authenticated, but the staff role lacks `catalogue:edit`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such product."
           },
           "422": {
             "description": "Validation failed.",
@@ -111380,7 +111651,7 @@
       "post": {
         "operationId": "uploadMedia",
         "summary": "Upload a media asset",
-        "description": "Uploads a file to S3 and creates a media asset record. The returned `id` can be used as an `imageRef` or `mediaId` in other Admin APIs.",
+        "description": "Uploads a file to S3 and creates a media asset record. The returned `id` can be used as an `imageRef` or `mediaId` in other Admin APIs. Images up to 5 MB (JPG, PNG, WEBP, GIF, AVIF, SVG), video up to 50 MB (MP4, WEBM, MOV), PDF up to 10 MB.",
         "tags": [
           "Admin / Media"
         ],
@@ -111521,6 +111792,9 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Unsupported file type, or larger than the limit for its type."
           }
         },
         "security": [

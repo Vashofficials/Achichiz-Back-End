@@ -11,6 +11,7 @@ import { NotFoundError, UnprocessableError } from '../../lib/errors.js';
 import * as repo from './product-media.repository.js';
 import type {
   AttachProductMediaBody,
+  ProductContentsBody,
   ProductMediaItem,
   ReorderProductMediaBody,
   UpdateProductMediaBody,
@@ -23,7 +24,7 @@ const toItem = (r: Row): ProductMediaItem => ({
   mediaId: r.mediaId,
   url: r.url,
   mimeType: r.mimeType,
-  kind: r.kind as ProductMediaItem['kind'],
+  kind: r.kind,
   altText: r.altText,
   position: r.position,
   variantId: r.variantId,
@@ -112,6 +113,20 @@ export async function detach(productId: string, linkId: string): Promise<void> {
   await assertProduct(productId);
   const removed = await repo.detach(productId, linkId);
   if (removed === 0) throw new NotFoundError('Gallery item', linkId);
+}
+
+export async function listContents(productId: string): Promise<{ items: string[] }> {
+  await assertProduct(productId);
+  return { items: await repo.listContents(productId) };
+}
+
+export async function replaceContents(
+  productId: string,
+  body: ProductContentsBody,
+): Promise<{ items: string[] }> {
+  await assertProduct(productId);
+  await repo.replaceContents(productId, body.items);
+  return { items: await repo.listContents(productId) };
 }
 
 export async function reorder(

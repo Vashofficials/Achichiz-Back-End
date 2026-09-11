@@ -47,6 +47,22 @@ export const mediaRef = z.object({
   position: z.number().int().describe('0-based display order within the gallery.'),
 });
 
+/**
+ * A product video. Kept apart from `images` on purpose: every existing consumer renders
+ * `images[]` straight into `<img>`, and mixing an MP4 into that array would break them
+ * silently. A client that knows about video reads this list; one that does not is unaffected.
+ */
+export const videoRef = z.object({
+  id: z.uuid().describe('Media asset id.'),
+  url: z.string().describe('CDN URL when one exists, otherwise the origin URL.'),
+  mimeType: z.string().describe('e.g. `video/mp4` — use as the `<source type>`.'),
+  altText: z.string().nullable().describe('Accessible description of the clip. May be null.'),
+  position: z
+    .number()
+    .int()
+    .describe('Position in the shared gallery order, so a client can interleave with `images`.'),
+});
+
 export const designerRef = z.object({
   id: z.uuid().describe('Designer id.'),
   handle: z.string().describe('Designer URL slug.'),
@@ -171,9 +187,20 @@ export const personalisationTemplate = z.object({
 
 export const productDetail = productSummary.extend({
   description: z.string().nullable().describe('Long-form description. Plain text.'),
+  careNote: z
+    .string()
+    .nullable()
+    .describe('Packaging/care line shown under the description. Null = use the storefront default.'),
+  deliveryNote: z
+    .string()
+    .nullable()
+    .describe('Copy for the PDP Delivery tab. Null = use the storefront default.'),
   isPerishable: z.boolean().describe('Perishable goods carry shorter delivery promises.'),
   isFragile: z.boolean().describe('Drives packaging selection and courier choice.'),
-  images: z.array(mediaRef).describe('Full gallery in display order. `image` is the first of these.'),
+  images: z
+    .array(mediaRef)
+    .describe('Image gallery in display order. `image` is the first of these. Never contains video.'),
+  videos: z.array(videoRef).describe('Product videos in gallery order. Empty when none are attached.'),
   contents: z.array(z.string()).describe('The "what is inside" bullets, in order.'),
   variants: z.array(productVariant).describe('Every active variant. Always at least one.'),
   addOns: z

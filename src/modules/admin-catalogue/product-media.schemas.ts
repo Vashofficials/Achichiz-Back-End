@@ -76,6 +76,24 @@ export const reorderProductMediaBody = z.object({
     .describe('`product_media.id` values in the desired order. Position is the array index.'),
 });
 
+/**
+ * "What's inside" bullets (`product_content_items`). The table has been read by the PDP
+ * since launch but had no admin write path, so every product showed the storefront's
+ * placeholder list. Written as a whole list: the editor is a short ordered list of lines,
+ * and replace-all is the only shape that makes reordering and deleting trivially correct.
+ */
+export const productContentsBody = z.object({
+  items: z
+    .array(z.string().trim().min(1, 'A bullet cannot be empty.').max(200))
+    .max(30)
+    .describe('Bullets in display order. An empty array clears the list.'),
+});
+
+export const productContents = z.object({
+  items: z.array(z.string()).describe('Bullets in display order.'),
+});
+
+export type ProductContentsBody = z.infer<typeof productContentsBody>;
 export type ProductMediaItem = z.infer<typeof productMediaItem>;
 export type AttachProductMediaBody = z.infer<typeof attachProductMediaBody>;
 export type UpdateProductMediaBody = z.infer<typeof updateProductMediaBody>;

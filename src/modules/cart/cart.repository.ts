@@ -145,7 +145,7 @@ const primaryImageFor = (productId: unknown): ReturnType<typeof sql<string | nul
     SELECT coalesce(${mediaAssets.cdnUrl}, ${mediaAssets.url})
       FROM ${productMedia}
       JOIN ${mediaAssets} ON ${mediaAssets.id} = ${productMedia.mediaId} AND ${mediaAssets.deletedAt} IS NULL
-     WHERE ${productMedia.productId} = ${productId}
+     WHERE ${productMedia.productId} = ${productId} AND ${mediaAssets.kind} = 'image'
      ORDER BY ${productMedia.position} ASC
      LIMIT 1)`;
 

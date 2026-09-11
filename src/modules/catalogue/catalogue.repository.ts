@@ -47,6 +47,9 @@ export type MediaRow = {
   position: number;
 };
 
+/** A gallery entry of any kind. The PDP splits these into `images` and `videos`. */
+export type GalleryRow = MediaRow & { kind: string; mimeType: string };
+
 export type SeoRow = {
   metaTitle: string | null;
   metaDescription: string | null;
@@ -65,6 +68,8 @@ export type ProductRow = {
   title: string;
   subtitle: string | null;
   description: string | null;
+  careNote: string | null;
+  deliveryNote: string | null;
   kind: string;
   designerId: string | null;
   designerHandle: string | null;
@@ -285,7 +290,9 @@ const primaryImage = sql<MediaRow | null>`(
   )
   FROM product_media pm
   JOIN media_assets m ON m.id = pm.media_id
-  WHERE pm.product_id = ${products.id} AND m.deleted_at IS NULL
+  -- Images only: a card thumbnail is an <img>. A video placed first in the gallery
+  -- must not become the listing image.
+  WHERE pm.product_id = ${products.id} AND m.deleted_at IS NULL AND m.kind = 'image'
   ORDER BY pm.position, pm.id
   LIMIT 1
 )`;
@@ -338,6 +345,8 @@ const productSelection = {
   title: products.title,
   subtitle: products.subtitle,
   description: products.description,
+  careNote: products.careNote,
+  deliveryNote: products.deliveryNote,
   kind: products.kind,
   designerId: products.designerId,
   designerHandle: designers.handle,
@@ -555,13 +564,15 @@ export async function listVariants(productId: string): Promise<VariantRow[]> {
     .orderBy(asc(productVariants.position), asc(productVariants.sku));
 }
 
-export async function listProductMedia(productId: string): Promise<MediaRow[]> {
+export async function listProductMedia(productId: string): Promise<GalleryRow[]> {
   return db
     .select({
       id: mediaAssets.id,
       url: sql<string>`coalesce(${mediaAssets.cdnUrl}, ${mediaAssets.url})`,
       altText: sql<string | null>`coalesce(${productMedia.altText}, ${mediaAssets.altText})`,
       position: productMedia.position,
+      kind: mediaAssets.kind,
+      mimeType: mediaAssets.mimeType,
     })
     .from(productMedia)
     .innerJoin(mediaAssets, and(eq(mediaAssets.id, productMedia.mediaId), isNull(mediaAssets.deletedAt)))

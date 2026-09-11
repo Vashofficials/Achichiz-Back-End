@@ -1005,6 +1005,28 @@
                           ],
                           "description": "Long-form description. Plain text."
                         },
+                        "careNote": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Packaging/care line shown under the description. Null = use the storefront default."
+                        },
+                        "deliveryNote": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Copy for the PDP Delivery tab. Null = use the storefront default."
+                        },
                         "isPerishable": {
                           "type": "boolean",
                           "description": "Perishable goods carry shorter delivery promises."
@@ -1054,7 +1076,55 @@
                             ],
                             "additionalProperties": false
                           },
-                          "description": "Full gallery in display order. `image` is the first of these."
+                          "description": "Image gallery in display order. `image` is the first of these. Never contains video."
+                        },
+                        "videos": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                                "description": "Media asset id."
+                              },
+                              "url": {
+                                "type": "string",
+                                "description": "CDN URL when one exists, otherwise the origin URL."
+                              },
+                              "mimeType": {
+                                "type": "string",
+                                "description": "e.g. `video/mp4` — use as the `<source type>`."
+                              },
+                              "altText": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Accessible description of the clip. May be null."
+                              },
+                              "position": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Position in the shared gallery order, so a client can interleave with `images`."
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "url",
+                              "mimeType",
+                              "altText",
+                              "position"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "description": "Product videos in gallery order. Empty when none are attached."
                         },
                         "contents": {
                           "type": "array",
@@ -1442,9 +1512,12 @@
                         "reviewCount",
                         "publishedAt",
                         "description",
+                        "careNote",
+                        "deliveryNote",
                         "isPerishable",
                         "isFragile",
                         "images",
+                        "videos",
                         "contents",
                         "variants",
                         "addOns",
@@ -22102,6 +22175,9 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Unsupported file type, or larger than the limit for its type."
           }
         },
         "security": [

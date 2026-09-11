@@ -1,18 +1,23 @@
 import { Router } from 'express';
-import multer from 'multer';
+import type { Request } from 'express';
 import { defineRoute } from '../../lib/openapi/define-route.js';
 import { created } from '../../lib/http.js';
 import { BadRequestError } from '../../lib/errors.js';
-import * as service from './media.service.js';
 import { mediaAssetSummary } from './media.schemas.js';
 
 export const mediaRouter = Router();
 
-// Buffer in memory (up to 5MB)
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-});
+/**
+ * The multipart body has already been parsed and every file stored by `fileInterceptor`
+ * (mounted by `defineRoute` because these routes declare `multipart/form-data`). These
+ * handlers used to run multer a second time over the already-consumed stream, which is why
+ * every upload through them failed with "Unexpected end of form".
+ */
+const firstUpload = (req: Request) => {
+  const asset = req.uploadedAssets?.[0];
+  if (!asset) throw new BadRequestError('No file provided. Send it in a multipart field named "file".');
+  return asset;
+};
 
 defineRoute(mediaRouter, {
   method: 'post',
@@ -20,7 +25,8 @@ defineRoute(mediaRouter, {
   surface: 'admin',
   operationId: 'uploadMedia',
   summary: 'Upload a media asset',
-  description: 'Uploads a file to S3 and creates a media asset record. The returned `id` can be used as an `imageRef` or `mediaId` in other Admin APIs.',
+  description:
+    'Uploads a file to S3 and creates a media asset record. The returned `id` can be used as an `imageRef` or `mediaId` in other Admin APIs. Images up to 5 MB (JPG, PNG, WEBP, GIF, AVIF, SVG), video up to 50 MB (MP4, WEBM, MOV), PDF up to 10 MB.',
   tags: ['Admin / Media'],
   auth: 'staff',
   permission: { module: 'dashboard', action: 'view' },
@@ -33,27 +39,9 @@ defineRoute(mediaRouter, {
       schema: mediaAssetSummary,
     },
     400: { description: 'No file provided or file too large.' },
+    422: { description: 'Unsupported file type, or larger than the limit for its type.' },
   },
-  handler: async ({ req, res, auth }) => {
-    return new Promise((resolve, reject) => {
-      // Multer's callback is void-returning: running the async work inside it
-      // rather than passing an async function keeps rejections handled.
-      upload.single('file')(req, res, (err: unknown) => {
-        if (err) {
-          reject(new BadRequestError(err instanceof Error ? err.message : 'The upload could not be read.'));
-          return;
-        }
-        if (!req.file) {
-          reject(new BadRequestError('No file provided'));
-          return;
-        }
-        void service
-          .uploadMedia(req.file, auth.staffId)
-          .then((asset) => resolve(created(asset)))
-          .catch((e: unknown) => reject(e instanceof Error ? e : new Error(String(e))));
-      });
-    });
-  },
+  handler: ({ req }) => created(firstUpload(req)),
 });
 
 defineRoute(mediaRouter, {
@@ -62,7 +50,8 @@ defineRoute(mediaRouter, {
   surface: 'storefront',
   operationId: 'uploadCustomerMedia',
   summary: 'Upload a media asset',
-  description: 'Uploads a file to S3 and creates a media asset record. The returned `id` can be used in storefront APIs (like reviews or custom orders).',
+  description:
+    'Uploads a file to S3 and creates a media asset record. The returned `id` can be used in storefront APIs (like reviews or custom orders).',
   tags: ['Store / Media'],
   auth: 'customer',
   request: {
@@ -74,27 +63,7 @@ defineRoute(mediaRouter, {
       schema: mediaAssetSummary,
     },
     400: { description: 'No file provided or file too large.' },
+    422: { description: 'Unsupported file type, or larger than the limit for its type.' },
   },
-  handler: async ({ req, res }) => {
-    return new Promise((resolve, reject) => {
-      // Multer's callback is void-returning: running the async work inside it
-      // rather than passing an async function keeps rejections handled.
-      upload.single('file')(req, res, (err: unknown) => {
-        if (err) {
-          reject(new BadRequestError(err instanceof Error ? err.message : 'The upload could not be read.'));
-          return;
-        }
-        if (!req.file) {
-          reject(new BadRequestError('No file provided'));
-          return;
-        }
-        // Customers don't have a staff ID, so uploadedBy stays null.
-        void service
-          .uploadMedia(req.file, null)
-          .then((asset) => resolve(created(asset)))
-          .catch((e: unknown) => reject(e instanceof Error ? e : new Error(String(e))));
-      });
-    });
-  },
+  handler: ({ req }) => created(firstUpload(req)),
 });
-

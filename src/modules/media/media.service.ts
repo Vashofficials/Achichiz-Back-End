@@ -2,6 +2,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { env } from '../../config/env.js';
 import * as repo from './media.repository.js';
 import { ulid } from 'ulid';
+import { UnprocessableError, UpstreamError } from '../../lib/errors.js';
 
 let s3Client: S3Client | null = null;
 
@@ -54,7 +55,19 @@ export async function uploadMedia(file: Express.Multer.File, staffUserId: string
       ? `${env.S3_PUBLIC_BASE_URL}/${storageKey}`
       : `https://${env.S3_BUCKET}.s3.${env.AWS_REGION || 'ap-south-1'}.amazonaws.com/${storageKey}`;
   } else {
-    // Graceful fallback for local development/testing without live AWS credentials
+    // Local development only. A data: URL is stored inline in `media_assets.url` and then
+    // shipped in every catalogue response that references it, so it is refused where it
+    // would do real damage: in production (an unconfigured bucket must fail loudly, not
+    // quietly bloat the database), and for video (a 50 MB clip becomes a 67 MB text column).
+    if (env.isProduction) {
+      throw new UpstreamError('Media storage is not configured on this server (S3 bucket/credentials missing).');
+    }
+    if (getMediaKind(file.mimetype) === 'video') {
+      throw new UnprocessableError(
+        'Video upload needs S3 storage, which is not configured in this environment.',
+        'media_storage_unavailable',
+      );
+    }
     url = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
   }
 

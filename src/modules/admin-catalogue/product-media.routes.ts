@@ -9,15 +9,16 @@
  */
 
 import { Router } from 'express';
-import multer from 'multer';
 import { z } from 'zod';
 import { defineRoute } from '../../lib/openapi/define-route.js';
 import { created, noContent, ok } from '../../lib/http.js';
 import { BadRequestError } from '../../lib/errors.js';
-import * as media from '../media/media.service.js';
+import { UPLOAD_LIMITS } from '../../middleware/file-interceptor.js';
 import * as service from './product-media.service.js';
 import {
   attachProductMediaBody,
+  productContents,
+  productContentsBody,
   productIdParam,
   productMediaIdParam,
   productMediaItem,
@@ -27,14 +28,7 @@ import {
 
 export const productMediaRouter: Router = Router();
 
-const MAX_FILES = 10;
-const MAX_BYTES = 5 * 1024 * 1024;
-
-const uploader = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_BYTES, files: MAX_FILES },
-});
-
+const MB = 1024 * 1024;
 const gallery = z.array(productMediaItem);
 
 defineRoute(productMediaRouter, {
@@ -60,10 +54,12 @@ defineRoute(productMediaRouter, {
   path: '/v1/admin/products/:productId/media/upload',
   surface: 'admin',
   operationId: 'uploadProductMedia',
-  summary: 'Upload images and attach them to a product',
+  summary: 'Upload images or short videos and attach them to a product',
   description:
-    `Multipart upload of up to ${MAX_FILES} files (field name \`files\`, ${MAX_BYTES / 1024 / 1024}MB each). ` +
-    'Each file is stored in S3, recorded as a media asset, and appended to the product gallery ' +
+    `Multipart upload of up to ${UPLOAD_LIMITS.maxFiles} files (field name \`files\`). Images up to ` +
+    `${UPLOAD_LIMITS.imageBytes / MB} MB (JPG, PNG, WEBP, GIF, AVIF), short videos up to ` +
+    `${UPLOAD_LIMITS.videoBytes / MB} MB (MP4, WEBM, MOV). The whole batch is validated before ` +
+    'anything is stored. Each file is stored in S3, recorded as a media asset, and appended to the product gallery ' +
     'in one call. Returns the complete gallery with resolved URLs — no second request needed ' +
     'to render the result.',
   tags: ['Admin / Catalogue'],
@@ -75,34 +71,18 @@ defineRoute(productMediaRouter, {
     400: { description: 'No files provided, or a file was too large.' },
     404: { description: 'No such product.' },
   },
-  handler: async ({ req, res, params, auth }) =>
-    new Promise((resolve, reject) => {
-      // Multer's callback is void-returning, so the async work runs inside it rather than
-      // making the callback async — that keeps rejections attached to this promise.
-      uploader.array('files', MAX_FILES)(req, res, (err: unknown) => {
-        if (err) {
-          reject(new BadRequestError(err instanceof Error ? err.message : 'The upload could not be read.'));
-          return;
-        }
-        const files = Array.isArray(req.files) ? req.files : [];
-        if (files.length === 0) {
-          reject(new BadRequestError('No files provided. Send one or more parts named `files`.'));
-          return;
-        }
-
-        void (async () => {
-          const assets = [];
-          for (const file of files) {
-            assets.push(await media.uploadMedia(file, auth.staffId));
-          }
-          return service.attach(params.productId, {
-            items: assets.map((a) => ({ mediaId: a.id })),
-          });
-        })()
-          .then((result) => resolve(created(result)))
-          .catch((e: unknown) => reject(e instanceof Error ? e : new Error(String(e))));
-      });
-    }),
+  // The files were parsed, validated and stored by `fileInterceptor` before this runs. This
+  // handler used to call multer again over the consumed stream, so any upload — and reliably
+  // a multi-file one — failed with "Unexpected end of form".
+  handler: async ({ req, params }) => {
+    const assets = req.uploadedAssets ?? [];
+    if (assets.length === 0) {
+      throw new BadRequestError('No files provided. Send one or more parts named `files`.');
+    }
+    return created(
+      await service.attach(params.productId, { items: assets.map((a) => ({ mediaId: a.id })) }),
+    );
+  },
 });
 
 defineRoute(productMediaRouter, {
@@ -165,6 +145,45 @@ defineRoute(productMediaRouter, {
     422: { description: 'The variant does not belong to this product.' },
   },
   handler: async ({ params, body }) => ok(await service.update(params.productId, params.linkId, body)),
+});
+
+defineRoute(productMediaRouter, {
+  method: 'get',
+  path: '/v1/admin/products/:productId/contents',
+  surface: 'admin',
+  operationId: 'getProductContents',
+  summary: 'Read the "What\'s inside" list',
+  description: 'The bullets the product page shows under "What\'s inside", in display order.',
+  tags: ['Admin / Catalogue'],
+  auth: 'staff',
+  permission: { module: 'catalogue', action: 'view' },
+  request: { params: productIdParam },
+  responses: {
+    200: { description: 'The list.', schema: productContents },
+    404: { description: 'No such product.' },
+  },
+  handler: async ({ params }) => ok(await service.listContents(params.productId)),
+});
+
+defineRoute(productMediaRouter, {
+  method: 'put',
+  path: '/v1/admin/products/:productId/contents',
+  surface: 'admin',
+  operationId: 'replaceProductContents',
+  summary: 'Replace the "What\'s inside" list',
+  description:
+    'Replaces every bullet with the supplied list, atomically — a failure leaves the old list ' +
+    'intact. Send `[]` to clear it. The storefront picks the change up within two minutes ' +
+    '(catalogue cache TTL).',
+  tags: ['Admin / Catalogue'],
+  auth: 'staff',
+  permission: { module: 'catalogue', action: 'edit' },
+  request: { params: productIdParam, body: productContentsBody },
+  responses: {
+    200: { description: 'The list as saved.', schema: productContents },
+    404: { description: 'No such product.' },
+  },
+  handler: async ({ params, body }) => ok(await service.replaceContents(params.productId, body)),
 });
 
 defineRoute(productMediaRouter, {

@@ -201,6 +201,10 @@ export const products = pgTable(
     title: text('title').notNull(),
     subtitle: text('subtitle'),
     description: text('description'),
+    /** PDP packaging/care line under the description. NULL = storefront default. (0007) */
+    careNote: text('care_note'),
+    /** PDP Delivery tab copy. NULL = storefront default. (0007) */
+    deliveryNote: text('delivery_note'),
     /** Fulfilment class — NOT the storefront's merchandising category (§1.1). */
     kind: text('kind').notNull().default('single_gift').$type<ProductKind>(),
     designerId: uuid('designer_id').references((): AnyPgColumn => designers.id, {
