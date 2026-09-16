@@ -57,6 +57,7 @@ import {
   giftCards,
   hamperItems,
   personalisationTemplates,
+  productCollections,
   productVariants,
   products,
   quotations,
@@ -96,6 +97,7 @@ import {
 import { enrichLeads } from './enrich.leads.js';
 import { syncDeliveryZonePincodes } from './hooks.delivery-zones.js';
 import { eq } from 'drizzle-orm';
+import { db } from '../../config/db.js';
 import type { FilterSpec, ResourceDescriptor } from './resource.types.js';
 
 /** Identity, so an entry is checked against `ResourceDescriptor` where it is written. */
@@ -219,6 +221,36 @@ const productsResource = defineResource({
   defaultSort: { field: 'updatedAt', direction: 'desc' },
   defaultPerPage: 12,
   softDeleteColumn: products.deletedAt,
+  afterSave: async (productId: string, body: Record<string, unknown>) => {
+    const collId = typeof body.primaryCollectionId === 'string' ? body.primaryCollectionId.trim() : null;
+    if (collId) {
+      await db
+        .insert(productCollections)
+        .values({
+          productId,
+          collectionId: collId,
+          position: 0,
+        })
+        .onConflictDoNothing();
+
+      const parentRows = await db
+        .select({ parentId: collections.parentId })
+        .from(collections)
+        .where(eq(collections.id, collId))
+        .limit(1);
+      const parentId = parentRows[0]?.parentId;
+      if (parentId) {
+        await db
+          .insert(productCollections)
+          .values({
+            productId,
+            collectionId: parentId,
+            position: 0,
+          })
+          .onConflictDoNothing();
+      }
+    }
+  },
   bulkActions: [
     { action: 'publish', label: 'Publish', requires: 'edit', set: { status: 'active' }, description: 'Fails for any product with no HSN code or no publish date — the database enforces both.' },
     { action: 'unpublish', label: 'Move to draft', requires: 'edit', set: { status: 'draft' } },
