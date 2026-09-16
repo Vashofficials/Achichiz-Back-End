@@ -87,16 +87,20 @@ function relevanceScore(filters: SearchFilters): SQL<number> {
   const tsq = buildTsQuery(filters.q);
   const subject = trigramTarget(filters.q);
 
+  // Numeric weight constants are inlined via sql.raw() rather than bound as
+  // query parameters. Drizzle binds `${number}` as text parameters, and
+  // Postgres cannot resolve operators like `real * text` inside ORDER BY
+  // expressions, which causes a 500 at runtime.
   const textRank = tsq
-    ? sql`ts_rank(${searchDocument}, to_tsquery('english', ${tsq})) * ${MATCH_EXACT}`
+    ? sql`ts_rank(${searchDocument}, to_tsquery('english', ${tsq})) * ${sql.raw(String(MATCH_EXACT))}`
     : sql`0`;
 
   return sql<number>`(
     ${textRank}
-    + CASE WHEN lower(${products.title}) LIKE ${likePrefix(filters.q)} THEN ${MATCH_PREFIX} ELSE 0 END
-    + CASE WHEN lower(${products.title}) LIKE ${likeContains(filters.q)} THEN ${MATCH_BODY} ELSE 0 END
-    + similarity(${trigramSubject}, ${subject}) * ${FUZZY_WEIGHT}
-    + CASE WHEN ${isBestSeller} THEN ${BEST_SELLER_BOOST} ELSE 0 END
+    + CASE WHEN lower(${products.title}) LIKE ${likePrefix(filters.q)} THEN ${sql.raw(String(MATCH_PREFIX))} ELSE 0 END
+    + CASE WHEN lower(${products.title}) LIKE ${likeContains(filters.q)} THEN ${sql.raw(String(MATCH_BODY))} ELSE 0 END
+    + similarity(${trigramSubject}, ${subject}) * ${sql.raw(String(FUZZY_WEIGHT))}
+    + CASE WHEN ${isBestSeller} THEN ${sql.raw(String(BEST_SELLER_BOOST))} ELSE 0 END
   )::float8`;
 }
 
