@@ -13,7 +13,7 @@
  * multiplies rows and makes every aggregate wrong.
  */
 
-import { and, asc, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, ne, sql } from 'drizzle-orm';
 import { db, type Executor } from '../../config/db.js';
 import {
   addOns,
@@ -384,7 +384,8 @@ export async function findVariantForAdd(
   variantId: string,
   exec: Executor = db,
 ): Promise<VariantForAddRow | null> {
-  const rows = await exec
+  // 1. Direct match by product_variants.id
+  const directMatch = await exec
     .select({
       variantId: productVariants.id,
       productId: products.id,
@@ -401,7 +402,39 @@ export async function findVariantForAdd(
     .innerJoin(products, eq(productVariants.productId, products.id))
     .where(eq(productVariants.id, variantId))
     .limit(1);
-  return rows[0] ?? null;
+
+  if (directMatch[0]) {
+    return directMatch[0];
+  }
+
+  // 2. Fallback: variantId may be a product id (e.g. from storefront listing cards).
+  // Find the product's default or primary active variant.
+  const productFallback = await exec
+    .select({
+      variantId: productVariants.id,
+      productId: products.id,
+      productHandle: products.handle,
+      title: products.title,
+      variantLabel: productVariants.optionLabel,
+      sku: productVariants.sku,
+      pricePaise: productVariants.pricePaise,
+      isPersonalisable: products.isPersonalisable,
+      sellable: sellableExpr,
+      availableQty: availableQtyFor(productVariants.id),
+    })
+    .from(productVariants)
+    .innerJoin(products, eq(productVariants.productId, products.id))
+    .where(
+      and(
+        eq(products.id, variantId),
+        eq(productVariants.status, 'active'),
+        isNull(productVariants.deletedAt),
+      ),
+    )
+    .orderBy(desc(productVariants.isDefault), asc(productVariants.position))
+    .limit(1);
+
+  return productFallback[0] ?? null;
 }
 
 export async function findAddOnsByIds(ids: readonly string[], exec: Executor = db): Promise<AddOnRow[]> {
