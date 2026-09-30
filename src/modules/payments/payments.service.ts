@@ -385,6 +385,10 @@ export async function applyPaymentCaptured(input: {
       status,
     });
 
+    if (order.cartId && fullyPaid) {
+      await repo.markCartConverted(tx, order.cartId, order.id);
+    }
+
     await repo.insertTimelineEvent(tx, {
       orderId: order.id,
       eventType: 'payment.captured',

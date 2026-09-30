@@ -691,7 +691,11 @@ export async function createOrder(
       );
     }
 
-    await repo.markCartConverted(tx, ctx.cart.id, order.id);
+    // Mark cart converted immediately for cash-on-delivery (COD) because the order is confirmed upon creation.
+    // For prepaid orders (Razorpay, UPI, etc.), the cart is marked converted once payment is captured.
+    if (!prepaid) {
+      await repo.markCartConverted(tx, ctx.cart.id, order.id);
+    }
 
     return { id: order.id, orderNo, placedAt: order.placedAt };
   });

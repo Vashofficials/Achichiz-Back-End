@@ -197,6 +197,9 @@ export async function cancelMyOrder(
 
     await repo.releaseOrderReservations(tx, order.id);
     await repo.reverseCouponRedemption(tx, order.id, 'Order cancelled by the customer.');
+    if (order.cartId) {
+      await repo.reopenCart(tx, order.cartId);
+    }
 
     // Only the status and the cancellation columns change. The money columns are
     // untouched on purpose: the deferred check_order_totals() trigger fires on

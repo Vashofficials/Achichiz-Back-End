@@ -10,6 +10,7 @@
 import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { db, type Executor, type Tx } from '../../config/db.js';
 import {
+  carts,
   orderTimeline,
   orders,
   payments,
@@ -259,10 +260,9 @@ export async function nextRefundNumber(tx: Tx, year: number): Promise<string> {
   return refundNo;
 }
 
-/*
- * `payment_events` is deliberately NOT touched here. The inbound gateway event
- * log belongs to the webhooks module, which owns the idempotency boundary; this
- * module owns what an event MEANS. Keeping them apart is what stops "have I seen
- * this event" and "has this payment been captured" turning into one tangled
- * condition.
- */
+export async function markCartConverted(tx: Tx, cartId: string, orderId: string): Promise<void> {
+  await tx
+    .update(carts)
+    .set({ stage: 'converted', convertedOrderId: orderId, updatedAt: new Date() })
+    .where(eq(carts.id, cartId));
+}

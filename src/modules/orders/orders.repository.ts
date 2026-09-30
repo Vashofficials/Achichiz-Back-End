@@ -10,6 +10,7 @@
 import { and, asc, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { db, type Executor, type Tx } from '../../config/db.js';
 import {
+  carts,
   couponRedemptions,
   coupons,
   inventoryLevels,
@@ -249,4 +250,11 @@ export async function insertTimelineEvent(
   values: typeof orderTimeline.$inferInsert,
 ): Promise<void> {
   await tx.insert(orderTimeline).values(values);
+}
+
+export async function reopenCart(tx: Tx, cartId: string): Promise<void> {
+  await tx
+    .update(carts)
+    .set({ stage: 'cart', convertedOrderId: null, updatedAt: new Date() })
+    .where(eq(carts.id, cartId));
 }
