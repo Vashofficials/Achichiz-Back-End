@@ -2,6 +2,7 @@ import { Router, type Request } from 'express';
 import { z } from 'zod';
 import { defineRoute } from '../../lib/openapi/define-route.js';
 import { created, noContent, ok } from '../../lib/http.js';
+import { NotFoundError } from '../../lib/errors.js';
 import * as adminAuth from './admin-auth.service.js';
 import {
   clearStaffRefreshCookie,
@@ -78,6 +79,33 @@ defineRoute(adminAuthRouter, {
   handler: async ({ body, req, res }) => {
     const { result, refreshToken } = await adminAuth.login(body, metaOf(req, body.deviceLabel));
     if (refreshToken) setStaffRefreshCookie(res, refreshToken);
+    return ok(result);
+  },
+});
+
+defineRoute(adminAuthRouter, {
+  method: 'post',
+  path: '/v1/admin/auth/dev-login',
+  surface: 'admin',
+  operationId: 'adminDevLogin',
+  summary: 'Dev sign-in for testing',
+  description: 'Issues a direct staff session for local development / testing without Firebase.',
+  tags: ['Admin auth'],
+  auth: 'public',
+  request: {
+    body: z.object({
+      email: z.string().email().default('vashtechnical@gmail.com'),
+    }),
+  },
+  responses: {
+    200: { description: 'Authenticated session', schema: loginResult },
+  },
+  handler: async ({ body, req, res }) => {
+    if (process.env['NODE_ENV'] === 'production') {
+      throw new NotFoundError('Endpoint not available in production');
+    }
+    const { result, refreshToken } = await adminAuth.devLogin(body.email, metaOf(req));
+    setStaffRefreshCookie(res, refreshToken);
     return ok(result);
   },
 });

@@ -18,7 +18,7 @@ function getS3Client() {
         secretAccessKey: env.S3_SECRET_ACCESS_KEY,
       },
       endpoint: env.S3_ENDPOINT || undefined,
-      forcePathStyle: !!env.S3_ENDPOINT,
+      forcePathStyle: !!env.S3_ENDPOINT && !env.S3_ENDPOINT.includes('amazonaws.com'),
     });
   }
   return s3Client;
@@ -41,15 +41,19 @@ export async function uploadMedia(file: Express.Multer.File, staffUserId: string
   let url: string;
   if (env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY && env.S3_BUCKET) {
     const client = getS3Client();
-    await client.send(
-      new PutObjectCommand({
-        Bucket: env.S3_BUCKET,
-        Key: storageKey,
-        Body: file.buffer,
-        ContentType: file.mimetype,
-        CacheControl: 'public, max-age=31536000',
-      })
-    );
+    try {
+      await client.send(
+        new PutObjectCommand({
+          Bucket: env.S3_BUCKET,
+          Key: storageKey,
+          Body: file.buffer,
+          ContentType: file.mimetype,
+          CacheControl: 'public, max-age=31536000',
+        })
+      );
+    } catch (err: unknown) {
+      throw new UpstreamError(`Media storage upload failed: ${(err as Error)?.message || 'S3 upload failed'}`);
+    }
 
     url = env.S3_PUBLIC_BASE_URL 
       ? `${env.S3_PUBLIC_BASE_URL}/${storageKey}`

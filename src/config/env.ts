@@ -94,7 +94,7 @@ const schema = z.object({
     .transform((v) => v === 'true'),
   DOCS_ADMIN_IP_ALLOWLIST: z.string().default(''),
 
-  FREE_SHIPPING_THRESHOLD_PAISE: z.coerce.number().int().nonnegative().default(99900),
+  FREE_SHIPPING_THRESHOLD_PAISE: z.coerce.number().int().nonnegative().default(0),
   SHIPPING_FEE_PAISE: z.coerce.number().int().nonnegative().default(14900),
 });
 

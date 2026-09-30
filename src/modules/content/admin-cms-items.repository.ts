@@ -112,6 +112,10 @@ export async function createItem(
     })
     .returning({ id: cmsSectionItems.id });
 
+  if (!inserted) {
+    throw new Error('Failed to insert CMS section item.');
+  }
+
   const detail = await getItemById(sectionId, inserted.id, exec);
   if (!detail) {
     throw new Error('Failed to retrieve inserted CMS section item.');
@@ -163,13 +167,15 @@ export async function reorderItems(
 ): Promise<void> {
   await db.transaction(async (tx) => {
     for (let i = 0; i < itemIds.length; i++) {
+      const targetId = itemIds[i];
+      if (!targetId) continue;
       await tx
         .update(cmsSectionItems)
         .set({ position: i })
         .where(
           and(
             eq(cmsSectionItems.sectionId, sectionId),
-            eq(cmsSectionItems.id, itemIds[i]),
+            eq(cmsSectionItems.id, targetId),
           ),
         );
     }

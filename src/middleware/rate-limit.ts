@@ -109,13 +109,17 @@ function buildLimiter(name: LimiterName): RateLimitRequestHandler {
      * rate limiter. Degrading to unlimited for the duration of a store outage is
      * the lesser risk; the outage itself is what pages someone.
      */
+    validate: false,
     passOnStoreError: true,
     keyGenerator: (req) => `${name}:${clientKey(req, rule.byUser ?? false)}`,
-    store: new RedisStore({
-      // node-redis / ioredis signature bridge
-      sendCommand: (...args: string[]) => cache.call(...(args as [string, ...string[]])) as Promise<never>,
-      prefix: 'rl:',
-    }),
+    store:
+      cache.status === 'ready'
+        ? new RedisStore({
+            // node-redis / ioredis signature bridge
+            sendCommand: (...args: string[]) => cache.call(...(args as [string, ...string[]])) as Promise<never>,
+            prefix: 'rl:',
+          })
+        : undefined,
     handler: (_req, _res, next) => {
       next(new RateLimitError('Too many requests. Please wait and try again.'));
     },

@@ -149,7 +149,12 @@ export async function markStepUp(sessionId: string): Promise<void> {
 }
 
 export async function hasRecentStepUp(sessionId: string): Promise<boolean> {
-  return (await cache.exists(stepUpKey(sessionId))) === 1;
+  if (cache.status !== 'ready') return false;
+  try {
+    return (await cache.exists(stepUpKey(sessionId))) === 1;
+  } catch {
+    return false;
+  }
 }
 
 export async function clearStepUp(sessionId: string): Promise<void> {

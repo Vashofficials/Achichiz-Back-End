@@ -246,6 +246,21 @@ export async function login(
   };
 }
 
+export async function devLogin(
+  email: string,
+  meta: RequestMeta,
+): Promise<{ result: LoginResultResponse; refreshToken: string }> {
+  const found = await repo.findByEmail(email);
+  if (!found) throw new NotFoundError('Staff user', email);
+  const { staff, roleName } = found;
+  const permissions = await repo.permissionsForRole(staff.roleId);
+  const issued = await issueSession(staff.id, roleName, permissions, meta);
+  return {
+    result: { status: 'authenticated', challengeToken: null, tokens: issued.tokens },
+    refreshToken: issued.refreshToken,
+  };
+}
+
 /* ------------------------------------------------------- second factor */
 
 /**

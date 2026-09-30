@@ -26,7 +26,12 @@ export async function revokeSessions(sessionIds: readonly string[]): Promise<voi
 }
 
 export async function isSessionRevoked(sessionId: string): Promise<boolean> {
-  return (await cache.exists(key(sessionId))) === 1;
+  if (cache.status !== 'ready') return false;
+  try {
+    return (await cache.exists(key(sessionId))) === 1;
+  } catch {
+    return false;
+  }
 }
 
 export const refreshTokenTtlMs = env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000;

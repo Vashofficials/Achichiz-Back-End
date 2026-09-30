@@ -78,10 +78,15 @@ apiRouter.use(leadsRouter);
 
 import { adminReportsRouter } from './modules/admin-reports/admin-reports.routes.js';
 
+import { adminNotificationsRouter } from './modules/admin-notifications/admin-notifications.routes.js';
+import { adminActivityLogsRouter } from './modules/admin-activity-logs/admin-activity-logs.routes.js';
+
 // ── admin (staff) ────────────────────────────────────────────────────────
 apiRouter.use(adminAuthRouter);
 apiRouter.use(rbacRouter);
 apiRouter.use(adminStaffRouter);
+apiRouter.use(adminNotificationsRouter);
+apiRouter.use(adminActivityLogsRouter);
 apiRouter.use(adminApiKeysRouter); // Must come before adminResourceRouter to intercept POST /v1/admin/api-keys
 apiRouter.use(productMediaRouter); // Before adminResourceRouter: /products/:id/media must not be swallowed by the generic engine.
 apiRouter.use(collectionProductsRouter); // Before adminResourceRouter: /collections/:id/products must not be swallowed by the generic engine.

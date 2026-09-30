@@ -123,7 +123,7 @@ export async function insertRow(
     sql`, `,
   );
   const valueList = sql.join(
-    entries.map(([, value]) => sql`${value}`),
+    entries.map(([, value]) => (Array.isArray(value) ? sql`${sql.param(value)}` : sql`${value}`)),
     sql`, `,
   );
 
@@ -160,7 +160,11 @@ export async function updateRow(
   if (entries.length === 0) return true;
 
   const assignments = sql.join(
-    entries.map(([key, value]) => sql`${sql.identifier(physical(descriptor, key))} = ${value}`),
+    entries.map(([key, value]) =>
+      Array.isArray(value)
+        ? sql`${sql.identifier(physical(descriptor, key))} = ${sql.param(value)}`
+        : sql`${sql.identifier(physical(descriptor, key))} = ${value}`,
+    ),
     sql`, `,
   );
   const where = and(eq(descriptor.primaryKey, id), aliveGuard(descriptor));
