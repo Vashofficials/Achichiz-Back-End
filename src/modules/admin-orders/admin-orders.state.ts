@@ -157,6 +157,7 @@ export const STAFF_TRANSITIONS: Record<OrderStatus, readonly TransitionEdge[]> =
   // From here the parcel is with a courier and the facts come from its scans.
   shipped: [
     { to: 'out_for_delivery', systemOnly: true, label: 'Out for delivery', eventType: 'shipment.out_for_delivery' },
+    { to: 'delivered', action: 'edit', label: 'Delivered', eventType: 'order.delivered', sideEffects: ['Direct or local delivery handover'] },
     { to: 'rto', action: 'edit', label: 'Return to origin', eventType: 'order.rto' },
   ],
   out_for_delivery: [
