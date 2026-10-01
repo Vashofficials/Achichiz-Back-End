@@ -101,6 +101,9 @@ export const STAFF_TRANSITIONS: Record<OrderStatus, readonly TransitionEdge[]> =
       eventType: 'order.personalisation_pending',
       sideEffects: ['Only meaningful when a line carries personalisation instructions'],
     },
+    { to: 'quality_check', action: 'edit', label: 'In quality check', eventType: 'order.quality_check' },
+    { to: 'packed', action: 'edit', label: 'Packed', eventType: 'order.packed', sideEffects: ['Ready catalog stock packed without workshop assembly'] },
+    { to: 'ready_to_ship', action: 'edit', label: 'Ready to ship', eventType: 'order.ready_to_ship', sideEffects: ['Shipping label and manifest are generated'] },
     cancelEdge,
     refundEdge,
   ],
@@ -112,6 +115,8 @@ export const STAFF_TRANSITIONS: Record<OrderStatus, readonly TransitionEdge[]> =
       eventType: 'order.personalisation_pending',
     },
     { to: 'quality_check', action: 'edit', label: 'In quality check', eventType: 'order.quality_check' },
+    { to: 'packed', action: 'edit', label: 'Packed', eventType: 'order.packed' },
+    { to: 'ready_to_ship', action: 'edit', label: 'Ready to ship', eventType: 'order.ready_to_ship' },
     cancelEdge,
   ],
   personalisation_pending: [
