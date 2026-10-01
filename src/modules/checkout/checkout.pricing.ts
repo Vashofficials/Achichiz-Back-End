@@ -106,6 +106,9 @@ export type CouponRow = {
   scopeCollectionIds: readonly string[];
   excludedProductIds: readonly string[];
   excludedCollectionIds: readonly string[];
+  bogoBuyQty?: number | null;
+  bogoGetQty?: number | null;
+  freeGiftVariantId?: string | null;
 };
 
 export type ShippingConfig = {
@@ -248,13 +251,6 @@ export function evaluateCoupon(
   lines: readonly PricedLineInput[],
   ctx: { merchandisePaise: Paise; customerOrderCount: number },
 ): CouponEvaluation {
-  if (coupon.discountType === 'bogo' || coupon.discountType === 'free_gift') {
-    throw new UnprocessableError(
-      `Coupon ${coupon.code} cannot be applied online. Please contact support.`,
-      'coupon_type_unsupported',
-    );
-  }
-
   if (coupon.appliesTo === 'first_order' && ctx.customerOrderCount > 0) {
     throw new UnprocessableError(
       `Coupon ${coupon.code} is valid on your first order only.`,
@@ -290,13 +286,75 @@ export function evaluateCoupon(
     0,
   );
 
-  let discount: Paise;
+  let discount: Paise = 0;
+  let activeEligibleIds: readonly string[] = eligibleIds;
+
   if (coupon.discountType === 'percent') {
     const bp = coupon.discountBp ?? 0;
     discount = Math.round((eligibleValue * bp) / 10_000);
-    if (coupon.maxDiscountPaise !== null) discount = Math.min(discount, coupon.maxDiscountPaise);
-  } else {
+    if (coupon.maxDiscountPaise !== null && coupon.maxDiscountPaise > 0) {
+      discount = Math.min(discount, coupon.maxDiscountPaise);
+    }
+  } else if (coupon.discountType === 'flat') {
     discount = coupon.discountPaise ?? 0;
+    if (coupon.maxDiscountPaise !== null && coupon.maxDiscountPaise > 0) {
+      discount = Math.min(discount, coupon.maxDiscountPaise);
+    }
+  } else if (coupon.discountType === 'bogo') {
+    const buyQty = Math.max(1, coupon.bogoBuyQty ?? 1);
+    const getQty = Math.max(1, coupon.bogoGetQty ?? 1);
+    const setSize = buyQty + getQty;
+    const totalEligibleUnits = eligible.reduce((acc, l) => acc + l.quantity, 0);
+
+    if (totalEligibleUnits < setSize) {
+      throw new UnprocessableError(
+        `Coupon ${coupon.code} requires purchasing at least ${setSize} eligible item${setSize > 1 ? 's' : ''}.`,
+        'coupon_bogo_min_items',
+      );
+    }
+
+    const sets = Math.floor(totalEligibleUnits / setSize);
+    const freeCount = sets * getQty;
+
+    // Expand all eligible units with their lineId and unit price
+    const units: { lineId: string; price: Paise }[] = [];
+    for (const line of eligible) {
+      const unitPrice = line.unitPricePaise + line.addOnsPaise;
+      for (let i = 0; i < line.quantity; i++) {
+        units.push({ lineId: line.lineId, price: unitPrice });
+      }
+    }
+
+    // Sort ascending so cheapest units are discounted (standard BOGO)
+    units.sort((a, b) => a.price - b.price);
+    const freeUnits = units.slice(0, freeCount);
+    discount = freeUnits.reduce((acc, u) => acc + u.price, 0);
+
+    if (coupon.maxDiscountPaise !== null && coupon.maxDiscountPaise > 0) {
+      discount = Math.min(discount, coupon.maxDiscountPaise);
+    }
+
+    const freeLineIds = Array.from(new Set(freeUnits.map((u) => u.lineId)));
+    if (freeLineIds.length > 0) activeEligibleIds = freeLineIds;
+  } else if (coupon.discountType === 'free_gift') {
+    if (coupon.freeGiftVariantId) {
+      const giftLine = lines.find((l) => l.variantId === coupon.freeGiftVariantId);
+      if (!giftLine) {
+        throw new UnprocessableError(
+          `Coupon ${coupon.code} requires adding the promotional gift item to your cart.`,
+          'coupon_free_gift_required',
+        );
+      }
+      discount = giftLine.unitPricePaise + giftLine.addOnsPaise;
+      activeEligibleIds = [giftLine.lineId];
+    } else {
+      // Complimentary gift discount amount or first eligible item
+      discount = coupon.discountPaise ?? (eligible[0] ? eligible[0].unitPricePaise + eligible[0].addOnsPaise : 0);
+    }
+
+    if (coupon.maxDiscountPaise !== null && coupon.maxDiscountPaise > 0) {
+      discount = Math.min(discount, coupon.maxDiscountPaise);
+    }
   }
 
   // A discount may never exceed what it is discounting. Without this clamp a
@@ -304,7 +362,7 @@ export function evaluateCoupon(
   // `nonneg_paise` would reject at the write — after the payment intent exists.
   discount = Math.max(0, Math.min(discount, eligibleValue));
 
-  return { discountPaise: discount, freeShipping: false, eligibleLineIds: eligibleIds };
+  return { discountPaise: discount, freeShipping: false, eligibleLineIds: activeEligibleIds };
 }
 
 /**

@@ -133,6 +133,44 @@ function toDbPatch(descriptor: ResourceDescriptor, body: Record<string, unknown>
     Object.assign(patch, descriptor.baseSet);
   }
 
+  if (descriptor.slug === 'coupons') {
+    if (typeof patch.code === 'string') {
+      patch.code = patch.code.toUpperCase().trim();
+    }
+    if (patch.maxDiscountPaise === 0 || patch.maxDiscountPaise === undefined) {
+      patch.maxDiscountPaise = null;
+    }
+    const type = patch.discountType as string | undefined;
+    if (type === 'percent') {
+      patch.discountPaise = null;
+      patch.bogoBuyQty = null;
+      patch.bogoGetQty = null;
+      patch.freeGiftVariantId = null;
+    } else if (type === 'flat') {
+      patch.discountBp = null;
+      patch.bogoBuyQty = null;
+      patch.bogoGetQty = null;
+      patch.freeGiftVariantId = null;
+    } else if (type === 'free_shipping') {
+      patch.discountBp = null;
+      patch.discountPaise = null;
+      patch.maxDiscountPaise = null;
+      patch.bogoBuyQty = null;
+      patch.bogoGetQty = null;
+      patch.freeGiftVariantId = null;
+    } else if (type === 'bogo') {
+      patch.discountBp = null;
+      patch.discountPaise = null;
+      patch.freeGiftVariantId = null;
+      if (patch.bogoBuyQty === null || patch.bogoBuyQty === undefined) patch.bogoBuyQty = 1;
+      if (patch.bogoGetQty === null || patch.bogoGetQty === undefined) patch.bogoGetQty = 1;
+    } else if (type === 'free_gift') {
+      patch.discountBp = null;
+      patch.bogoBuyQty = null;
+      patch.bogoGetQty = null;
+    }
+  }
+
   return patch;
 }
 

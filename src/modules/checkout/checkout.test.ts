@@ -161,15 +161,40 @@ describe('evaluateCoupon', () => {
     ).toThrowError(expect.objectContaining({ code: 'coupon_not_applicable' }));
   });
 
-  it('refuses BOGO and free-gift coupons rather than quietly discounting nothing', () => {
-    for (const discountType of ['bogo', 'free_gift'] as const) {
-      expect(() =>
-        evaluateCoupon(coupon({ discountType }), [line()], {
-          merchandisePaise: 149_900,
-          customerOrderCount: 0,
-        }),
-      ).toThrowError(UnprocessableError);
-    }
+  it('evaluates BOGO coupons when enough items are in the cart', () => {
+    // Fails when cart has fewer than required items
+    expect(() =>
+      evaluateCoupon(coupon({ discountType: 'bogo', bogoBuyQty: 1, bogoGetQty: 1 }), [line({ quantity: 1, unitPricePaise: 10_000 })], {
+        merchandisePaise: 10_000,
+        customerOrderCount: 0,
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'coupon_bogo_min_items' }));
+
+    // Discounts 1 free item when customer buys 2
+    const res = evaluateCoupon(
+      coupon({ discountType: 'bogo', bogoBuyQty: 1, bogoGetQty: 1 }),
+      [line({ quantity: 2, unitPricePaise: 10_000 })],
+      { merchandisePaise: 20_000, customerOrderCount: 0 },
+    );
+    expect(res.discountPaise).toBe(10_000);
+  });
+
+  it('evaluates free gift coupons correctly', () => {
+    // Requires gift variant if variant ID is specified
+    expect(() =>
+      evaluateCoupon(coupon({ discountType: 'free_gift', freeGiftVariantId: 'gift-var' }), [line({ variantId: 'other-var' })], {
+        merchandisePaise: 10_000,
+        customerOrderCount: 0,
+      }),
+    ).toThrowError(expect.objectContaining({ code: 'coupon_free_gift_required' }));
+
+    // Discounts gift variant when present in cart
+    const res = evaluateCoupon(
+      coupon({ discountType: 'free_gift', freeGiftVariantId: 'gift-var' }),
+      [line({ variantId: 'gift-var', unitPricePaise: 5_000 })],
+      { merchandisePaise: 5_000, customerOrderCount: 0 },
+    );
+    expect(res.discountPaise).toBe(5_000);
   });
 
   it('excludes a product even when the coupon applies to everything', () => {

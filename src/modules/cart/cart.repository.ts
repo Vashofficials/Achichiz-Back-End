@@ -100,6 +100,9 @@ export type CouponRowWithScope = {
   discountPaise: number | null;
   maxDiscountPaise: number | null;
   minOrderPaise: number;
+  bogoBuyQty: number | null;
+  bogoGetQty: number | null;
+  freeGiftVariantId: string | null;
   appliesTo: 'all' | 'collections' | 'products' | 'first_order';
   status: string;
   startsAt: Date;
@@ -467,6 +470,9 @@ export async function findCouponByCode(
       discountPaise: coupons.discountPaise,
       maxDiscountPaise: coupons.maxDiscountPaise,
       minOrderPaise: coupons.minOrderPaise,
+      bogoBuyQty: coupons.bogoBuyQty,
+      bogoGetQty: coupons.bogoGetQty,
+      freeGiftVariantId: coupons.freeGiftVariantId,
       appliesTo: coupons.appliesTo,
       status: coupons.status,
       startsAt: coupons.startsAt,
